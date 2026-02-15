@@ -2,7 +2,8 @@ import SwiftUI
 
 @main
 struct LunarVApp: App {
-    @StateObject private var viewModel = LunarMenuBarViewModel()
+    @StateObject private var settings = AppSettings.shared
+    @StateObject private var viewModel = LunarMenuBarViewModel(settings: AppSettings.shared)
 
     var body: some Scene {
         MenuBarExtra {
@@ -13,5 +14,10 @@ struct LunarVApp: App {
                 .monospacedDigit()
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            AppSettingsView()
+                .environmentObject(settings)
+        }
     }
 }

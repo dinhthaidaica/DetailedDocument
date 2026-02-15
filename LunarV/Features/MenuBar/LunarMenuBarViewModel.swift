@@ -16,15 +16,18 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private let solarCalendar: Calendar
     private let lunarConverter: any LunarDateConverting
+    private let settings: AppSettings
     private let vietnamTimeZone: TimeZone
     private var refreshTask: Task<Void, Never>?
     private var systemNotificationObservers: [NSObjectProtocol] = []
     private var workspaceNotificationObservers: [NSObjectProtocol] = []
+    private var settingsCancellables = Set<AnyCancellable>()
     private var monthCellsCache: [YearMonth: [LunarMonthDayCell]] = [:]
 
     init(
         solarCalendar: Calendar = Calendar(identifier: .gregorian),
-        lunarConverter: (any LunarDateConverting)? = nil
+        lunarConverter: (any LunarDateConverting)? = nil,
+        settings: AppSettings? = nil
     ) {
         let vietnamTimeZone = Self.defaultVietnamTimeZone
         var calendar = solarCalendar
@@ -35,7 +38,9 @@ final class LunarMenuBarViewModel: ObservableObject {
         self.vietnamTimeZone = vietnamTimeZone
         self.solarCalendar = calendar
         self.lunarConverter = lunarConverter ?? VietnameseLunarCalendarConverter(timeZone: 7.0)
+        self.settings = settings ?? AppSettings.shared
 
+        startObservingSettings()
         startObservingSystemChanges()
         refresh()
     }
@@ -52,6 +57,8 @@ final class LunarMenuBarViewModel: ObservableObject {
         for observer in workspaceNotificationObservers {
             workspaceCenter.removeObserver(observer)
         }
+
+        settingsCancellables.removeAll()
     }
 
     func refresh() {
@@ -66,8 +73,33 @@ final class LunarMenuBarViewModel: ObservableObject {
             year: components.year
         )
 
-        menuBarTitle = String(format: "%02d/%02d ÂL", lunarDate.day, lunarDate.month)
-        info = buildInfo(now: now, solar: components, lunar: lunarDate)
+        let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: lunarDate.year)
+        let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: lunarDate.year)
+
+        let titleContext = MenuBarTitleContext(
+            lunarDay: lunarDate.day,
+            lunarMonth: lunarDate.month,
+            lunarYear: lunarDate.year,
+            isLeapMonth: lunarDate.isLeapMonth,
+            canChiYear: canChiYear,
+            zodiac: zodiac,
+            solarDay: components.day,
+            solarMonth: components.month,
+            solarYear: components.year
+        )
+
+        menuBarTitle = MenuBarTitleFormatter.render(
+            preset: settings.menuBarDisplayPreset,
+            customTemplate: settings.customMenuBarTemplate,
+            context: titleContext
+        )
+        info = buildInfo(
+            now: now,
+            solar: components,
+            lunar: lunarDate,
+            canChiYear: canChiYear,
+            zodiac: zodiac
+        )
 
         scheduleRefresh(from: now)
     }
@@ -75,11 +107,12 @@ final class LunarMenuBarViewModel: ObservableObject {
     private func buildInfo(
         now: Date,
         solar: (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?),
-        lunar: LunarDate
+        lunar: LunarDate,
+        canChiYear: String,
+        zodiac: String
     ) -> LunarMenuBarInfo {
         let canChiDay = VietnameseCalendarMetadata.canChiDay(day: solar.day, month: solar.month, year: solar.year)
         let canChiMonth = VietnameseCalendarMetadata.canChiMonth(lunarMonth: lunar.month, lunarYear: lunar.year)
-        let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: lunar.year)
         let currentHourCanChi = VietnameseCalendarMetadata.canChiHour(
             date: now,
             day: solar.day,
@@ -104,7 +137,7 @@ final class LunarMenuBarViewModel: ObservableObject {
             canChiMonthText: canChiMonth,
             canChiYearText: canChiYear,
             solarTermText: VietnameseCalendarMetadata.solarTerm(date: now, timeZone: vietnamTimeZone),
-            zodiacText: VietnameseCalendarMetadata.zodiac(lunarYear: lunar.year),
+            zodiacText: zodiac,
             currentHourCanChiText: currentHourCanChi,
             weekOfYearText: formattedWeekOfYear(solar.weekOfYear),
             dayOfYearText: formattedDayOfYear(solar.dayOfYear),
@@ -233,6 +266,17 @@ final class LunarMenuBarViewModel: ObservableObject {
             }
         }
         workspaceNotificationObservers = [wakeObserver]
+    }
+
+    private func startObservingSettings() {
+        Publishers.CombineLatest(settings.$menuBarDisplayPreset, settings.$customMenuBarTemplate)
+            .dropFirst()
+            .sink { [weak self] _, _ in
+                Task { @MainActor [weak self] in
+                    self?.refresh()
+                }
+            }
+            .store(in: &settingsCancellables)
     }
 
     private func nextMinuteStart(from now: Date) -> Date {

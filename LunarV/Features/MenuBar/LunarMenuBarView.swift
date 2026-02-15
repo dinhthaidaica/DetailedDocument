@@ -4,6 +4,7 @@ import SwiftUI
 struct LunarMenuBarView: View {
     @Environment(\.controlActiveState) private var controlActiveState
     @State private var isHeroHovered = false
+    @State private var isShowingQuitDialog = false
     @ObservedObject var viewModel: LunarMenuBarViewModel
 
     private let calendarColumns = Array(
@@ -16,18 +17,62 @@ struct LunarMenuBarView: View {
         ZStack {
             NativePanelBackground()
 
-            ScrollView {
-                VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
-                    heroCard
-                    canChiCard
-                    detailCard
-                    monthCalendarCard
+            VStack(spacing: 0) {
+                topToolbar
+                    .padding(.horizontal, MenuBarMetrics.panelPadding)
+                    .padding(.top, MenuBarMetrics.panelPadding)
+                    .padding(.bottom, 8)
+
+                ScrollView {
+                    VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
+                        heroCard
+                        canChiCard
+                        detailCard
+                        monthCalendarCard
+                    }
+                    .padding(.horizontal, MenuBarMetrics.panelPadding)
+                    .padding(.bottom, MenuBarMetrics.panelPadding)
                 }
-                .padding(MenuBarMetrics.panelPadding)
             }
         }
         .scrollIndicators(.hidden)
         .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height)
+        .confirmationDialog(
+            "Thoát LunarV?",
+            isPresented: $isShowingQuitDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Thoát ứng dụng", role: .destructive) {
+                NSApp.terminate(nil)
+            }
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("LunarV sẽ dừng chạy và biến mất khỏi menu bar.")
+        }
+    }
+
+    private var topToolbar: some View {
+        HStack {
+            Button {
+                isShowingQuitDialog = true
+            } label: {
+                toolbarIcon(systemName: "power")
+                    .foregroundStyle(.red.opacity(controlActiveState == .active ? 0.85 : 0.65))
+            }
+            .buttonStyle(.plain)
+            .help("Thoát ứng dụng")
+            .accessibilityLabel("Thoát ứng dụng")
+
+            Spacer()
+
+            SettingsLink {
+                toolbarIcon(systemName: "gearshape")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("Mở cài đặt")
+            .accessibilityLabel("Mở cài đặt")
+        }
     }
 
     private var heroCard: some View {
@@ -176,6 +221,21 @@ struct LunarMenuBarView: View {
             return Color.accentColor.opacity(0.16)
         }
         return .clear
+    }
+
+    @ViewBuilder
+    private func toolbarIcon(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 12, weight: .semibold))
+            .frame(width: 28, height: 24)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(.regularMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+            )
     }
 }
 
