@@ -82,6 +82,7 @@ struct AppSettingsView: View {
         .formStyle(.grouped)
         .padding(20)
         .frame(width: 560)
+        .background(SettingsWindowBehavior())
         .onAppear {
             launchAtLoginManager.refreshStatus()
         }
