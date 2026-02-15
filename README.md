@@ -59,11 +59,14 @@ xcodebuild -project LunarV.xcodeproj -scheme LunarV -configuration Debug -sdk ma
 ## Release DMG (GitHub Actions)
 
 - Workflow: `.github/workflows/release-dmg.yml`
-- Auto trigger when pushing tag `v*` (for example `v1.0.0`)
+- Auto trigger when pushing tag `v*.*.*` (for example `v1.0.0`)
 - Manual trigger from **Actions > Release DMG > Run workflow** (optional `version`)
 - Output: release `.dmg` with:
   - `LunarV.app`
   - `Applications` shortcut (drag-and-drop install style)
+- Upload thêm:
+  - DMG artifact
+  - build log artifact
 
 ## Accuracy Notes
 
