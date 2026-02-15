@@ -1,0 +1,60 @@
+name: Release DMG
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for DMG filename (example: 1.2.0)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-dmg:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: vars
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [[ -n "${INPUT_VERSION:-}" ]]; then
+            VERSION="${INPUT_VERSION}"
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="nightly-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
+          fi
+
+          SAFE_VERSION="$(echo "${VERSION}" | tr '/' '-')"
+          echo "version=${SAFE_VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build Release DMG
+        id: build
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          ./scripts/build_release_dmg.sh
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LunarV-${{ steps.vars.outputs.version }}-dmg
+          path: ${{ steps.build.outputs.dmg_path }}
+          if-no-files-found: error
+
+      - name: Create GitHub release with DMG
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.dmg_path }}
+          generate_release_notes: true
