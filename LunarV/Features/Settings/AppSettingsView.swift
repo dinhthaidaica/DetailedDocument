@@ -1,37 +1,172 @@
+import AppKit
 import SwiftUI
 
 struct AppSettingsView: View {
     @EnvironmentObject private var settings: AppSettings
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
+    @State private var selectedTab: SettingsTab = .appearance
+    @State private var isShowingResetDialog = false
 
     private let previewConverter = VietnameseLunarCalendarConverter(timeZone: 7.0)
     private let templateTokens = MenuBarTemplateToken.allCases
 
     var body: some View {
+        VStack(spacing: 14) {
+            headerCard
+
+            TabView(selection: $selectedTab) {
+                appearanceTab
+                    .tabItem {
+                        Label("Hiển thị", systemImage: "menubar.rectangle")
+                    }
+                    .tag(SettingsTab.appearance)
+
+                systemTab
+                    .tabItem {
+                        Label("Hệ thống", systemImage: "powerplug")
+                    }
+                    .tag(SettingsTab.system)
+            }
+        }
+        .padding(20)
+        .frame(width: 640, height: 560)
+        .background(SettingsWindowBehavior())
+        .onAppear {
+            launchAtLoginManager.refreshStatus()
+        }
+        .confirmationDialog(
+            "Khôi phục cài đặt hiển thị mặc định?",
+            isPresented: $isShowingResetDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Khôi phục", role: .destructive) {
+                settings.resetMenuBarDisplaySettings()
+            }
+            Button("Huỷ", role: .cancel) {}
+        } message: {
+            Text("Preset sẽ về 'Gọn' và mẫu tuỳ chỉnh sẽ bị xoá.")
+        }
+    }
+
+    private var headerCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 20, weight: .semibold))
+                .frame(width: 42, height: 42)
+                .background(
+                    Circle()
+                        .fill(.thinMaterial)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Cài đặt LunarV")
+                    .font(.title3.weight(.semibold))
+                Text("Cá nhân hoá cách hiển thị lịch âm trên menu bar")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Xem trước menu bar")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    Text(previewMenuBarTitle)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .lineLimit(1)
+
+                    Button {
+                        copyPreviewToPasteboard()
+                    } label: {
+                        Image(systemName: "document.on.document")
+                    }
+                    .buttonStyle(.plain)
+                    .help("Sao chép nội dung xem trước")
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(.thinMaterial)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(nsColor: .separatorColor).opacity(0.25), lineWidth: 1)
+                )
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.regularMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+        )
+    }
+
+    private var appearanceTab: some View {
         Form {
-            Section("Hiển thị menu bar") {
-                Picker("Kiểu hiển thị", selection: $settings.menuBarDisplayPreset) {
+            Section("Kiểu hiển thị menu bar") {
+                Picker("Preset", selection: $settings.menuBarDisplayPreset) {
                     ForEach(MenuBarDisplayPreset.allCases) { preset in
                         Text(preset.title).tag(preset)
                     }
                 }
+                .pickerStyle(.segmented)
 
                 Text(settings.menuBarDisplayPreset.subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
 
-                if settings.menuBarDisplayPreset == .custom {
-                    TextField("Mẫu hiển thị", text: $settings.customMenuBarTemplate)
+            if settings.menuBarDisplayPreset == .custom {
+                Section("Mẫu tuỳ chỉnh") {
+                    TextField("Ví dụ: {dd}/{mm} {al} • {cy}", text: $settings.customMenuBarTemplate)
                         .textFieldStyle(.roundedBorder)
 
+                    Text("Mẫu gợi ý")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 8) {
+                        ForEach(templateSamples) { sample in
+                            Button(sample.title) {
+                                applyTemplate(sample.template)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .help(sample.template)
+                        }
+                    }
+
+                    Text("Chạm token để chèn nhanh")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
                     LazyVGrid(
-                        columns: [GridItem(.adaptive(minimum: 74), spacing: 8)],
+                        columns: [GridItem(.adaptive(minimum: 96), spacing: 8)],
                         alignment: .leading,
                         spacing: 8
                     ) {
                         ForEach(templateTokens) { token in
-                            Button(token.rawValue) {
+                            Button {
                                 insertToken(token.rawValue)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(token.rawValue)
+                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                        .foregroundStyle(.primary)
+                                    Text(token.shortLabel)
+                                        .font(.system(size: 9, weight: .medium, design: .rounded))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
@@ -42,50 +177,67 @@ struct AppSettingsView: View {
                     Text("Token khả dụng: {d}, {dd}, {m}, {mm}, {cy}, {z}, {al}, {leap}, {sd}, {sdd}, {sm}, {smm}, {yyyy}, {sy}")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-
-                    Text("Ví dụ: {dd}/{mm} {al} • {cy}")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                 }
-
-                LabeledContent("Xem trước") {
-                    Text(previewMenuBarTitle)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                }
-
-                Button("Khôi phục mặc định") {
-                    settings.resetMenuBarDisplaySettings()
-                }
-                .buttonStyle(.link)
             }
 
-            Section("Khởi động cùng hệ thống") {
-                Toggle("Mở LunarV khi đăng nhập", isOn: launchAtLoginBinding)
-                Text("Thiết lập này dùng ServiceManagement của macOS và áp dụng ngay lập tức.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if let statusHint = launchAtLoginManager.statusHint {
-                    Text(statusHint)
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-
-                if let errorMessage = launchAtLoginManager.errorMessage {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
+            Section("Khôi phục") {
+                Button(role: .destructive) {
+                    isShowingResetDialog = true
+                } label: {
+                    Label("Khôi phục cài đặt hiển thị", systemImage: "arrow.counterclockwise")
                 }
             }
         }
         .formStyle(.grouped)
-        .padding(20)
-        .frame(width: 560)
-        .background(SettingsWindowBehavior())
-        .onAppear {
-            launchAtLoginManager.refreshStatus()
+    }
+
+    private var systemTab: some View {
+        Form {
+            Section("Khởi động cùng hệ thống") {
+                Toggle("Mở LunarV khi đăng nhập", isOn: launchAtLoginBinding)
+
+                Text("Thiết lập này dùng ServiceManagement của macOS và áp dụng ngay.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let statusHint = launchAtLoginManager.statusHint {
+                    StatusMessageRow(
+                        icon: "exclamationmark.triangle.fill",
+                        tint: .orange,
+                        message: statusHint
+                    )
+                }
+
+                if let errorMessage = launchAtLoginManager.errorMessage {
+                    StatusMessageRow(
+                        icon: "xmark.octagon.fill",
+                        tint: .red,
+                        message: errorMessage
+                    )
+                }
+
+                if launchAtLoginManager.statusHint != nil {
+                    Button("Mở Cài đặt hệ thống > Đăng nhập") {
+                        openLoginItemsSettings()
+                    }
+                }
+
+                Button("Làm mới trạng thái") {
+                    launchAtLoginManager.refreshStatus()
+                }
+                .buttonStyle(.link)
+            }
+
+            Section("Thông tin") {
+                LabeledContent("Phiên bản") {
+                    Text(appVersionText)
+                }
+                LabeledContent("Múi giờ lịch âm") {
+                    Text("Asia/Ho_Chi_Minh (GMT+7)")
+                }
+            }
         }
+        .formStyle(.grouped)
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -93,6 +245,37 @@ struct AppSettingsView: View {
             get: { launchAtLoginManager.isEnabled },
             set: { launchAtLoginManager.setEnabled($0) }
         )
+    }
+
+    private var templateSamples: [TemplateSample] {
+        [
+            TemplateSample(title: "Gọn", template: "{dd}/{mm} {al}"),
+            TemplateSample(title: "Tiêu chuẩn", template: "{dd}/{mm} {al} {cy}"),
+            TemplateSample(title: "Chi tiết", template: "{dd}/{mm} {al} • {cy} • {z}"),
+        ]
+    }
+
+    private var appVersionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        return "\(version) (\(build))"
+    }
+
+    private func applyTemplate(_ template: String) {
+        settings.menuBarDisplayPreset = .custom
+        settings.customMenuBarTemplate = template
+    }
+
+    private func copyPreviewToPasteboard() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(previewMenuBarTitle, forType: .string)
+    }
+
+    private func openLoginItemsSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
 
     private func insertToken(_ token: String) {
@@ -151,6 +334,36 @@ struct AppSettingsView: View {
         .environmentObject(AppSettings())
 }
 
+private enum SettingsTab: Hashable {
+    case appearance
+    case system
+}
+
+private struct TemplateSample: Identifiable {
+    let title: String
+    let template: String
+
+    var id: String { "\(title)-\(template)" }
+}
+
+private struct StatusMessageRow: View {
+    let icon: String
+    let tint: Color
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(tint)
+                .frame(width: 14)
+                .padding(.top, 1)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 private enum MenuBarTemplateToken: String, CaseIterable, Identifiable {
     case d = "{d}"
     case dd = "{dd}"
@@ -168,6 +381,39 @@ private enum MenuBarTemplateToken: String, CaseIterable, Identifiable {
     case leap = "{leap}"
 
     var id: String { rawValue }
+
+    var shortLabel: String {
+        switch self {
+        case .d:
+            return "Ngày âm"
+        case .dd:
+            return "Ngày âm 2 số"
+        case .m:
+            return "Tháng âm"
+        case .mm:
+            return "Tháng âm 2 số"
+        case .yyyy:
+            return "Năm âm số"
+        case .sy:
+            return "Năm dương số"
+        case .sd:
+            return "Ngày dương"
+        case .sdd:
+            return "Ngày dương 2 số"
+        case .sm:
+            return "Tháng dương"
+        case .smm:
+            return "Tháng dương 2 số"
+        case .cy:
+            return "Can chi năm"
+        case .z:
+            return "Con giáp"
+        case .al:
+            return "ÂL"
+        case .leap:
+            return "Tháng nhuận"
+        }
+    }
 
     var helpText: String {
         switch self {
