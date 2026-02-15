@@ -14,6 +14,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select Stable Xcode
+        run: |
+          CANDIDATE=""
+
+          if [[ -d "/Applications/Xcode.app" ]]; then
+            REAL_PATH="$(realpath /Applications/Xcode.app)"
+            if echo "$REAL_PATH" | grep -qiE 'release[_-]?candidate|beta'; then
+              echo "Xcode.app points to pre-release build ($REAL_PATH), searching for stable Xcode_*..."
+            else
+              CANDIDATE="/Applications/Xcode.app"
+            fi
+          fi
+
+          if [[ -z "$CANDIDATE" ]]; then
+            CANDIDATE="$(ls -d /Applications/Xcode_*.app 2>/dev/null | grep -viE 'release[_-]?candidate|beta' | sort -V | tail -1 || true)"
+          fi
+
+          if [[ -n "$CANDIDATE" ]]; then
+            echo "Using Xcode at $CANDIDATE"
+            sudo xcode-select -s "$CANDIDATE/Contents/Developer"
+          else
+            echo "No stable alternative found. Keeping current Xcode selection."
+          fi
+
+          xcodebuild -version
+
       - name: Build macOS app
         run: |
           xcodebuild \
@@ -21,5 +47,7 @@ jobs:
             -scheme LunarV \
             -configuration Debug \
             -sdk macosx \
+            -destination "generic/platform=macOS" \
             CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
             build

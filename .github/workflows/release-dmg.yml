@@ -30,13 +30,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Select Latest Xcode
+      - name: Select Stable Xcode
         run: |
-          if compgen -G "/Applications/Xcode_*.app" > /dev/null; then
-            LATEST_XCODE=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
-            echo "Using Xcode at $LATEST_XCODE"
-            sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          CANDIDATE=""
+
+          if [[ -d "/Applications/Xcode.app" ]]; then
+            REAL_PATH="$(realpath /Applications/Xcode.app)"
+            if echo "$REAL_PATH" | grep -qiE 'release[_-]?candidate|beta'; then
+              echo "Xcode.app points to pre-release build ($REAL_PATH), searching for stable Xcode_*..."
+            else
+              CANDIDATE="/Applications/Xcode.app"
+            fi
           fi
+
+          if [[ -z "$CANDIDATE" ]]; then
+            CANDIDATE="$(ls -d /Applications/Xcode_*.app 2>/dev/null | grep -viE 'release[_-]?candidate|beta' | sort -V | tail -1 || true)"
+          fi
+
+          if [[ -n "$CANDIDATE" ]]; then
+            echo "Using Xcode at $CANDIDATE"
+            sudo xcode-select -s "$CANDIDATE/Contents/Developer"
+          else
+            echo "No stable alternative found. Keeping current Xcode selection."
+          fi
+
           xcodebuild -version
 
       - name: Resolve version
@@ -61,6 +78,7 @@ jobs:
         env:
           VERSION: ${{ steps.vars.outputs.version }}
           XCODEBUILD_LOG: build.log
+          XCODEBUILD_MAX_ATTEMPTS: "2"
         run: ./scripts/build_release_dmg.sh
 
       - name: Upload DMG artifact

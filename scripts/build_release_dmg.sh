@@ -10,29 +10,50 @@ DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-build}"
 OUTPUT_DIR="${OUTPUT_DIR:-dist}"
 VERSION="${VERSION:-local}"
 XCODEBUILD_LOG="${XCODEBUILD_LOG:-build.log}"
+XCODEBUILD_MAX_ATTEMPTS="${XCODEBUILD_MAX_ATTEMPTS:-2}"
 
 rm -rf "${DERIVED_DATA_PATH}" "${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
-xcodebuild \
-  -project "${PROJECT}" \
-  -scheme "${SCHEME}" \
-  -configuration "${CONFIGURATION}" \
-  -sdk macosx \
-  -destination "generic/platform=macOS" \
-  -derivedDataPath "${DERIVED_DATA_PATH}" \
-  CODE_SIGNING_ALLOWED=NO \
-  CODE_SIGNING_REQUIRED=NO \
-  clean build 2>&1 | tee "${XCODEBUILD_LOG}"
+: > "${XCODEBUILD_LOG}"
+
+run_xcodebuild() {
+  local attempt="$1"
+  echo "== xcodebuild attempt ${attempt}/${XCODEBUILD_MAX_ATTEMPTS} ==" | tee -a "${XCODEBUILD_LOG}"
+
+  xcodebuild \
+    -project "${PROJECT}" \
+    -scheme "${SCHEME}" \
+    -configuration "${CONFIGURATION}" \
+    -sdk macosx \
+    -destination "generic/platform=macOS" \
+    -derivedDataPath "${DERIVED_DATA_PATH}" \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGNING_REQUIRED=NO \
+    clean build 2>&1 | tee -a "${XCODEBUILD_LOG}"
+}
+
+attempt=1
+while true; do
+  if run_xcodebuild "${attempt}"; then
+    break
+  fi
+
+  if (( attempt >= XCODEBUILD_MAX_ATTEMPTS )); then
+    echo "xcodebuild failed after ${attempt} attempt(s)." >&2
+    exit 1
+  fi
+
+  attempt=$((attempt + 1))
+  echo "xcodebuild failed, retrying in 5 seconds..." | tee -a "${XCODEBUILD_LOG}"
+  sleep 5
+done
 
 APP_PATH="${DERIVED_DATA_PATH}/Build/Products/${CONFIGURATION}/${APP_NAME}.app"
 if [[ ! -d "${APP_PATH}" ]]; then
   echo "Could not find built app at: ${APP_PATH}" >&2
   exit 1
 fi
-
-# Remove extended attributes to reduce quarantine-related issues.
-xattr -cr "${APP_PATH}" || true
 
 STAGING_DIR="$(mktemp -d)"
 trap 'rm -rf "${STAGING_DIR}"' EXIT
