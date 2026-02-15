@@ -1,0 +1,39 @@
+{
+  "fill" : {
+    "solid" : "display-p3:0.29754,0.00576,0.00852,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:0.74514,1.00000,0.00000,1.00000"
+          },
+          "image-name" : "Lunar.png",
+          "name" : "Lunar",
+          "position" : {
+            "scale" : 0.24,
+            "translation-in-points" : [
+              5.059999999999945,
+              -4.944999999999936
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

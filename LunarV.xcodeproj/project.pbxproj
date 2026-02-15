@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		462A57A02F425E9500853CB4 /* Lunar.icon in Resources */ = {isa = PBXBuildFile; fileRef = 462A579F2F425E9500853CB4 /* Lunar.icon */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		462A574B2F424D1000853CB4 /* LunarV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LunarV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		462A579F2F425E9500853CB4 /* Lunar.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Lunar.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +37,7 @@
 		462A57422F424D1000853CB4 = {
 			isa = PBXGroup;
 			children = (
+				462A579F2F425E9500853CB4 /* Lunar.icon */,
 				462A574D2F424D1000853CB4 /* LunarV */,
 				462A574C2F424D1000853CB4 /* Products */,
 			);
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				462A57A02F425E9500853CB4 /* Lunar.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
