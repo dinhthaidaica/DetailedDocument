@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build macOS app
+        run: |
+          xcodebuild \
+            -project LunarV.xcodeproj \
+            -scheme LunarV \
+            -configuration Debug \
+            -sdk macosx \
+            CODE_SIGNING_ALLOWED=NO \
+            build
