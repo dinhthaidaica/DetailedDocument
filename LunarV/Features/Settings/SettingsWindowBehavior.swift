@@ -43,15 +43,16 @@ struct SettingsWindowBehavior: NSViewRepresentable {
     private static func configure(_ window: NSWindow?, keepOnTop: Bool, coordinator: Coordinator) {
         guard let window else { return }
 
-        // Cập nhật level cửa sổ mỗi khi setting thay đổi hoặc cửa sổ mới được gán
         window.level = keepOnTop ? .floating : .normal
 
         if coordinator.trackedWindow !== window {
             coordinator.trackedWindow = window
+            window.identifier = NSUserInterfaceItemIdentifier("settings.lunarv")
+            window.minSize = NSSize(width: 720, height: 500)
+            window.isMovableByWindowBackground = true
             window.collectionBehavior.insert(.moveToActiveSpace)
             window.collectionBehavior.insert(.fullScreenAuxiliary)
-            
-            // Chỉ thực hiện focus/order front khi cửa sổ lần đầu xuất hiện
+
             NSApp.activate(ignoringOtherApps: true)
             window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)

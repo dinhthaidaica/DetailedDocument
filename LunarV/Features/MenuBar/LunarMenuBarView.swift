@@ -8,6 +8,7 @@ import SwiftUI
 struct LunarMenuBarView: View {
     @Environment(\.controlActiveState) private var controlActiveState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openWindow) private var openWindow
     @State private var isHeroHovered = false
     @State private var hasAppeared = false
     @State private var converterMode: DateConverterMode = .solarToLunar
@@ -145,7 +146,9 @@ struct LunarMenuBarView: View {
                     copyCurrentDate()
                 }
                 
-                SettingsLink {
+                Button {
+                    openWindow(id: "settings")
+                } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 13, weight: .medium))
                         .frame(width: 28, height: 28)

@@ -93,11 +93,30 @@ struct LunarVApp: App {
             .id(menuBarLabelIdentity)
         }
         .menuBarExtraStyle(.window)
+        .commands {
+            LunarVCommands()
+        }
 
-        Settings {
+        Window("", id: "settings") {
             AppSettingsView()
                 .environmentObject(settings)
                 .environmentObject(notificationManager)
+        }
+        .defaultSize(width: 820, height: 600)
+        .windowStyle(.hiddenTitleBar)
+        .restorationBehavior(.disabled)
+    }
+}
+
+private struct LunarVCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Cài đặt...") {
+                openWindow(id: "settings")
+            }
+            .keyboardShortcut(",", modifiers: .command)
         }
     }
 }

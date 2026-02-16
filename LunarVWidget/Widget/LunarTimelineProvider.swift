@@ -6,50 +6,75 @@ import Foundation
 import WidgetKit
 
 struct LunarTimelineProvider: TimelineProvider {
-    private static let lunarService = VietnameseLunarDateService()
+    // Avoid sharing Foundation calendar/state across concurrent timeline callbacks.
     private static let realTimeWindowMinutes = 180
+    private static let timelineStepMinutes = 5
 
     func placeholder(in context: Context) -> LunarEntry {
         LunarEntry(date: Date(), info: .placeholder)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (LunarEntry) -> Void) {
-        completion(makeEntry(for: Date()))
+        if context.isPreview {
+            completion(LunarEntry(date: Date(), info: .placeholder))
+            return
+        }
+
+        let service = VietnameseLunarDateService()
+        completion(makeEntry(for: Date(), service: service))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<LunarEntry>) -> Void) {
+        if context.isPreview {
+            let previewEntry = LunarEntry(date: Date(), info: .placeholder)
+            completion(Timeline(entries: [previewEntry], policy: .atEnd))
+            return
+        }
+
+        let service = VietnameseLunarDateService()
         let now = Date()
-        let minuteAnchor = Self.lunarService.calendar.dateInterval(of: .minute, for: now)?.start ?? now
-        let dates = timelineDates(from: minuteAnchor, minutesAhead: Self.realTimeWindowMinutes)
-        let entries = dates.map(makeEntry(for:))
-        let reloadDate = Self.lunarService.calendar.date(byAdding: .minute, value: Self.realTimeWindowMinutes + 1, to: minuteAnchor)
+        let minuteAnchor = service.calendar.dateInterval(of: .minute, for: now)?.start ?? now
+        let dates = timelineDates(
+            from: minuteAnchor,
+            minutesAhead: Self.realTimeWindowMinutes,
+            stepMinutes: Self.timelineStepMinutes,
+            calendar: service.calendar
+        )
+        let entries = dates.map { makeEntry(for: $0, service: service) }
+        let reloadDate = service.calendar.date(byAdding: .minute, value: Self.realTimeWindowMinutes + 1, to: minuteAnchor)
             ?? now.addingTimeInterval(TimeInterval((Self.realTimeWindowMinutes + 1) * 60))
         completion(Timeline(entries: entries, policy: .after(reloadDate)))
     }
 
-    private func timelineDates(from anchor: Date, minutesAhead: Int) -> [Date] {
+    private func timelineDates(
+        from anchor: Date,
+        minutesAhead: Int,
+        stepMinutes: Int,
+        calendar: Calendar
+    ) -> [Date] {
+        let safeStep = max(stepMinutes, 1)
         var dates: [Date] = []
-        dates.reserveCapacity(minutesAhead + 1)
+        dates.reserveCapacity(minutesAhead / safeStep + 1)
 
-        for offset in 0 ... minutesAhead {
-            if let date = Self.lunarService.calendar.date(byAdding: .minute, value: offset, to: anchor) {
+        for offset in stride(from: 0, through: minutesAhead, by: safeStep) {
+            if let date = calendar.date(byAdding: .minute, value: offset, to: anchor) {
                 dates.append(date)
             }
         }
         return dates
     }
 
-    private func makeEntry(for date: Date) -> LunarEntry {
-        LunarEntry(date: date, info: info(for: date) ?? .placeholder)
+    private func makeEntry(for date: Date, service: VietnameseLunarDateService) -> LunarEntry {
+        LunarEntry(date: date, info: info(for: date, service: service) ?? .placeholder)
     }
 
-    private func info(for date: Date) -> WidgetLunarInfo? {
-        guard let snapshot = Self.lunarService.snapshot(for: date) else {
+    private func info(for date: Date, service: VietnameseLunarDateService) -> WidgetLunarInfo? {
+        guard let snapshot = service.snapshot(for: date) else {
             return nil
         }
 
         return WidgetLunarInfo(
-            weekday: Self.lunarService.weekdayName(from: snapshot.solar.weekday),
+            weekday: service.weekdayName(from: snapshot.solar.weekday),
             solarDate: snapshot.solar.formattedDate,
             lunarDay: "\(snapshot.lunar.day)",
             lunarMonthYear: "Tháng \(snapshot.lunar.month) năm \(snapshot.canChiYear)",
