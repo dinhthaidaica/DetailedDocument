@@ -4,17 +4,36 @@
 //
 import Foundation
 
+enum LunarGuidanceLevelInfo: Hashable {
+    case favorable
+    case neutral
+    case caution
+}
+
+struct LunarActivityInsightInfo: Identifiable {
+    let id = UUID()
+    let categoryText: String
+    let level: LunarGuidanceLevelInfo
+    let reason: String
+}
+
 struct LunarDayGuidanceInfo {
     let title: String
     let summary: String
+    let score: Int
+    let ratingText: String
     let recommendedActivities: [String]
     let avoidActivities: [String]
+    let activityInsights: [LunarActivityInsightInfo]
 
     static let placeholder = LunarDayGuidanceInfo(
         title: "--",
         summary: "--",
+        score: 0,
+        ratingText: "--",
         recommendedActivities: [],
-        avoidActivities: []
+        avoidActivities: [],
+        activityInsights: []
     )
 }
 

@@ -271,26 +271,45 @@ struct LunarMenuBarView: View {
     private var guidanceCard: some View {
         SectionCard(title: "Gợi ý trong ngày") {
             VStack(alignment: .leading, spacing: 10) {
-                Text(viewModel.info.dayGuidance.title)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(viewModel.info.dayGuidance.title)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(Color.accentColor)
+                        Text(viewModel.info.dayGuidance.ratingText)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    GuidanceScoreView(score: viewModel.info.dayGuidance.score)
+                }
 
                 Text(viewModel.info.dayGuidance.summary)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                GuidanceBlock(
-                    title: "Nên ưu tiên",
-                    items: viewModel.info.dayGuidance.recommendedActivities,
-                    tint: .green
-                )
+                VStack(spacing: 8) {
+                    ForEach(viewModel.info.dayGuidance.activityInsights) { insight in
+                        ActivityInsightRow(insight: insight)
+                    }
+                }
 
-                GuidanceBlock(
-                    title: "Nên hạn chế",
-                    items: viewModel.info.dayGuidance.avoidActivities,
-                    tint: .orange
-                )
+                if !viewModel.info.dayGuidance.recommendedActivities.isEmpty {
+                    GuidanceBlock(
+                        title: "Nên ưu tiên",
+                        items: viewModel.info.dayGuidance.recommendedActivities,
+                        tint: .green
+                    )
+                }
+
+                if !viewModel.info.dayGuidance.avoidActivities.isEmpty {
+                    GuidanceBlock(
+                        title: "Nên hạn chế",
+                        items: viewModel.info.dayGuidance.avoidActivities,
+                        tint: .orange
+                    )
+                }
             }
         }
     }
@@ -599,6 +618,73 @@ private struct HourPeriodPill: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
         )
+    }
+}
+
+private struct GuidanceScoreView: View {
+    let score: Int
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(score)")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(scoreColor)
+            Text("/100")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .frame(width: 52, height: 52)
+        .background(scoreColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(scoreColor.opacity(0.35), lineWidth: 1)
+        )
+    }
+
+    private var scoreColor: Color {
+        switch score {
+        case 80...:
+            return .green
+        case 70...79:
+            return .mint
+        case 55...69:
+            return .orange
+        default:
+            return .red
+        }
+    }
+}
+
+private struct ActivityInsightRow: View {
+    let insight: LunarActivityInsightInfo
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(insight.categoryText)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(levelColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(levelColor.opacity(0.12), in: Capsule())
+
+            Text(insight.reason)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var levelColor: Color {
+        switch insight.level {
+        case .favorable:
+            return .green
+        case .neutral:
+            return .blue
+        case .caution:
+            return .orange
+        }
     }
 }
 

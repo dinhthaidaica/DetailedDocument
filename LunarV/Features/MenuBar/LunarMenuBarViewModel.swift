@@ -143,11 +143,21 @@ final class LunarMenuBarViewModel: ObservableObject {
         let auspiciousHours = snapshot.hourPeriods.filter(\.isAuspicious)
         let inauspiciousHours = snapshot.hourPeriods.filter { !$0.isAuspicious }
         let nextAuspiciousHourText = formattedNextAuspiciousHour(snapshot.nextAuspiciousHour, now: now)
+        let activityInsights = snapshot.dayGuidance.activityInsights.map { insight in
+            LunarActivityInsightInfo(
+                categoryText: insight.category.rawValue,
+                level: mapGuidanceLevel(insight.level),
+                reason: insight.reason
+            )
+        }
         let dayGuidance = LunarDayGuidanceInfo(
             title: snapshot.dayGuidance.title,
             summary: snapshot.dayGuidance.summary,
+            score: snapshot.dayGuidance.score,
+            ratingText: snapshot.dayGuidance.rating.title,
             recommendedActivities: snapshot.dayGuidance.recommendedActivities,
-            avoidActivities: snapshot.dayGuidance.avoidActivities
+            avoidActivities: snapshot.dayGuidance.avoidActivities,
+            activityInsights: activityInsights
         )
 
         return LunarMenuBarInfo(
@@ -331,6 +341,17 @@ final class LunarMenuBarViewModel: ObservableObject {
         }
 
         return "\(window.period.canChi) \(window.period.timeRange) • \(dayLabel) • \(progressText)"
+    }
+
+    private func mapGuidanceLevel(_ level: VietnameseGuidanceLevel) -> LunarGuidanceLevelInfo {
+        switch level {
+        case .favorable:
+            return .favorable
+        case .neutral:
+            return .neutral
+        case .caution:
+            return .caution
+        }
     }
 
     private func scheduleRefresh(from now: Date) {

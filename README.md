@@ -12,6 +12,7 @@
   - Giờ hoàng đạo (Can Chi theo giờ)
   - Ngũ hành ngày, tuổi xung, nhóm tam hợp
   - Gợi ý nên làm / hạn chế theo ngũ hành ngày và mùa tiết khí
+  - Chỉ số ngày (0-100) và ma trận mức độ thuận lợi theo nhóm hoạt động
 - Lưới tháng hiển thị song song ngày dương / ngày âm.
 - Widget cho Desktop và Notification Center.
 - Giao diện macOS thuần với `MenuBarExtra`, `NSVisualEffectView` và semantic colors.
