@@ -15,6 +15,10 @@ struct LunarVApp: App {
         settings.menuBarTitleFontSizeCGFloat
     }
 
+    private var menuBarSystemFont: NSFont {
+        NSFont.menuBarFont(ofSize: menuBarTitleFontSizeCGFloat)
+    }
+
     private var menuBarLeadingIconRenderSize: CGFloat {
         let statusBarMax = max(NSStatusBar.system.thickness - 2, 10)
         return min(settings.menuBarLeadingIconSizeCGFloat, statusBarMax)
@@ -34,7 +38,7 @@ struct LunarVApp: App {
             return nil
         }
 
-        let font = NSFont.monospacedDigitSystemFont(ofSize: menuBarTitleFontSizeCGFloat, weight: .semibold)
+        let font = menuBarSystemFont
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: NSColor.black,
@@ -83,8 +87,7 @@ struct LunarVApp: App {
                     Image(nsImage: menuBarLabelImage)
                 } else {
                     Text(viewModel.menuBarTitle)
-                        .font(.system(size: menuBarTitleFontSizeCGFloat, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
+                        .font(Font(menuBarSystemFont))
                 }
             }
             .id(menuBarLabelIdentity)

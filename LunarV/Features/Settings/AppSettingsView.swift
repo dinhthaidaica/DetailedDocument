@@ -305,7 +305,6 @@ struct AppSettingsView: View {
                 .interpolation(.high)
                 .scaledToFit()
                 .frame(width: 180, height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
 
             Text("Quét mã QR để ủng hộ dự án.")
                 .font(.caption)
@@ -313,7 +312,6 @@ struct AppSettingsView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
     }
 
     // MARK: - Helpers
@@ -336,8 +334,7 @@ struct AppSettingsView: View {
                     }
 
                     Text(previewMenuBarTitle)
-                        .font(.system(size: settings.menuBarTitleFontSizeCGFloat, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
+                        .font(Font(NSFont.menuBarFont(ofSize: settings.menuBarTitleFontSizeCGFloat)))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
