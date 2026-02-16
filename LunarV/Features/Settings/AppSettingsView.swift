@@ -225,6 +225,7 @@ struct AppSettingsView: View {
     private var menuBarLeadingIconControl: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle("Hiển thị icon bên trái ngày trên Menu Bar", isOn: menuBarLeadingIconVisibilityBinding)
+                .lunarSettingsSwitchToggle()
 
             if settings.showMenuBarLeadingIconValue {
                 HStack {
@@ -340,6 +341,7 @@ struct AppSettingsView: View {
                 ) {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle("Luôn ở trên cùng (Floating)", isOn: $settings.keepSettingsOnTop)
+                            .lunarSettingsSwitchToggle()
                         Text("Khi bật, cửa sổ Cài đặt sẽ luôn nằm trên các cửa sổ khác để bạn dễ dàng tuỳ chỉnh và quan sát Menu Bar.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -352,6 +354,7 @@ struct AppSettingsView: View {
                     icon: "power.circle.fill"
                 ) {
                     Toggle("Mở LunarV khi đăng nhập máy tính", isOn: launchAtLoginBinding)
+                        .lunarSettingsSwitchToggle()
                 }
 
                 LunarSettingsCard(
@@ -361,6 +364,7 @@ struct AppSettingsView: View {
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         Toggle("Bật thông báo ngày lễ", isOn: holidayNotificationBinding)
+                            .lunarSettingsSwitchToggle()
 
                         Divider()
 
@@ -971,6 +975,12 @@ private extension View {
     func lunarSettingsBackground() -> some View {
         modifier(LunarSettingsBackgroundModifier())
     }
+
+    func lunarSettingsSwitchToggle() -> some View {
+        toggleStyle(.switch)
+            .controlSize(.small)
+            .tint(Color.accentColor)
+    }
 }
 
 // MARK: - Token Components
@@ -1000,6 +1010,7 @@ private struct PanelCardOrderRow: View {
 
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
+                .lunarSettingsSwitchToggle()
                 .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
         }
         .padding(.vertical, 2)
