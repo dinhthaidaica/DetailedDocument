@@ -25,8 +25,7 @@ struct AppSettingsView: View {
         .navigationSplitViewStyle(.balanced)
         .frame(width: 820, height: 600)
         .containerBackground(.thinMaterial, for: .window)
-        .tint(settings.customAccentColor)
-        .accentColor(settings.customAccentColor)
+        .tint(.accentColor)
         .toolbar(removing: .title)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .overlay(alignment: .top) {
@@ -49,7 +48,7 @@ struct AppSettingsView: View {
             Button("Xác nhận khôi phục", role: .destructive) { settings.resetAllSettings() }
             Button("Huỷ", role: .cancel) {}
         } message: {
-            Text("Tất cả các tuỳ chỉnh về hiển thị và màu sắc sẽ quay về giá trị ban đầu.")
+            Text("Tất cả các tuỳ chỉnh về hiển thị và thông báo sẽ quay về giá trị ban đầu.")
         }
     }
 
@@ -90,7 +89,7 @@ struct AppSettingsView: View {
             LazyVStack(spacing: 18) {
                 LunarSettingsHeader(
                     title: "Giao diện",
-                    subtitle: "Tùy chỉnh màu sắc và cách hiển thị LunarV trên thanh Menu Bar.",
+                    subtitle: "Tùy chỉnh cách hiển thị LunarV trên thanh Menu Bar.",
                     icon: "paintbrush.fill"
                 ) {
                     VStack(alignment: .trailing, spacing: 6) {
@@ -99,19 +98,6 @@ struct AppSettingsView: View {
                             text: settings.showMenuBarLeadingIconValue ? "Icon: Bật" : "Icon: Tắt",
                             color: settings.showMenuBarLeadingIconValue ? .green : .secondary
                         )
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Màu sắc chủ đạo",
-                    subtitle: "Accent color cho điểm nhấn chính",
-                    icon: "paintpalette.fill"
-                ) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        ColorPicker("Màu nhấn (Accent Color)", selection: $settings.customAccentColor)
-                        Text("Màu này sẽ áp dụng cho icon và các điểm nhấn trên giao diện.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -321,8 +307,7 @@ struct AppSettingsView: View {
             ForEach(settings.panelCardOrder) { card in
                 PanelCardOrderRow(
                     card: card,
-                    isVisible: panelCardVisibilityBinding(for: card),
-                    accentColor: settings.customAccentColor
+                    isVisible: panelCardVisibilityBinding(for: card)
                 )
                 .listRowInsets(EdgeInsets(top: 5, leading: 8, bottom: 5, trailing: 8))
                 .listRowSeparator(.hidden)
@@ -598,8 +583,8 @@ struct AppSettingsView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(settings.customAccentColor.opacity(0.12), in: Capsule())
-                .overlay(Capsule().stroke(settings.customAccentColor.opacity(0.3), lineWidth: 1))
+                .background(Color.accentColor.opacity(0.12), in: Capsule())
+                .overlay(Capsule().stroke(Color.accentColor.opacity(0.3), lineWidth: 1))
             }
         }
         .frame(maxWidth: .infinity)
@@ -1058,19 +1043,18 @@ private extension View {
 private struct PanelCardOrderRow: View {
     let card: PanelCardKind
     @Binding var isVisible: Bool
-    let accentColor: Color
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(accentColor.opacity(0.12))
+                    .fill(Color.accentColor.opacity(0.12))
                     .frame(width: 26, height: 26)
 
                 Image(systemName: card.icon)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {

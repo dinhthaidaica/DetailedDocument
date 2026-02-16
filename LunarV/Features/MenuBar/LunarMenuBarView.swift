@@ -76,7 +76,7 @@ struct LunarMenuBarView: View {
                 .scrollIndicators(.hidden)
             }
         }
-        .tint(viewModel.settings.customAccentColor)
+        .tint(.accentColor)
         .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height, alignment: .top)
         .task {
             if !hasAppeared {

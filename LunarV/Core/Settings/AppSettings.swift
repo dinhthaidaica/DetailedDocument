@@ -145,9 +145,6 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
     @AppStorage("settings.panel.cardOrder") private var panelCardOrderRaw: String = PanelCardKind.serialized(PanelCardKind.defaultOrder)
 
-    // MARK: - Appearance
-    @AppStorage("settings.appearance.customAccentColor") var customAccentColor: Color = .blue
-
     // MARK: - Window Behavior
     @AppStorage("settings.window.keepSettingsOnTop") var keepSettingsOnTop: Bool = true
 
@@ -284,7 +281,6 @@ final class AppSettings: ObservableObject {
         showDetailSection = true
         showDateConverter = true
         resetPanelCardOrder()
-        customAccentColor = .blue
         enableHolidayNotifications = false
         holidayReminderLeadDays = 1
         holidayReminderHour = 8
@@ -321,30 +317,5 @@ final class AppSettings: ObservableObject {
 
     private static func clampedMenuBarLeadingIconSize(_ value: Double) -> Double {
         min(max(value, menuBarLeadingIconSizeRange.lowerBound), menuBarLeadingIconSizeRange.upperBound)
-    }
-}
-
-// MARK: - Color Persistence
-extension Color: @retroactive RawRepresentable {
-    public init?(rawValue: String) {
-        guard let data = Data(base64Encoded: rawValue) else { return nil }
-        do {
-            if let nsColor = try NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: data) {
-                self = Color(nsColor: nsColor)
-            } else {
-                return nil
-            }
-        } catch {
-            return nil
-        }
-    }
-
-    public var rawValue: String {
-        do {
-            let data = try NSKeyedArchiver.archivedData(withRootObject: NSColor(self), requiringSecureCoding: false)
-            return data.base64EncodedString()
-        } catch {
-            return ""
-        }
     }
 }
