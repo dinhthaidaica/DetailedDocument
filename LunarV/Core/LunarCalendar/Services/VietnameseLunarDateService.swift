@@ -115,6 +115,10 @@ struct VietnameseLunarDateService {
             year: solar.year,
             calendar: calendar
         )
+        let dayElement = VietnameseCalendarMetadata.dayElement(day: solar.day, month: solar.month, year: solar.year)
+        let oppositeZodiac = VietnameseCalendarMetadata.oppositeZodiac(day: solar.day, month: solar.month, year: solar.year)
+        let tamHopGroup = VietnameseCalendarMetadata.tamHopGroup(day: solar.day, month: solar.month, year: solar.year)
+        let hourPeriods = VietnameseCalendarMetadata.hourPeriods(day: solar.day, month: solar.month, year: solar.year)
 
         return VietnameseLunarSnapshot(
             solar: solar,
@@ -124,7 +128,11 @@ struct VietnameseLunarDateService {
             canChiYear: canChiYear,
             zodiac: zodiac,
             solarTerm: solarTerm,
-            currentHourCanChi: currentHourCanChi
+            currentHourCanChi: currentHourCanChi,
+            dayElement: dayElement,
+            oppositeZodiac: oppositeZodiac,
+            tamHopGroup: tamHopGroup,
+            hourPeriods: hourPeriods
         )
     }
 

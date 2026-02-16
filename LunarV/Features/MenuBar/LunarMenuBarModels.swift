@@ -34,6 +34,11 @@ struct LunarMenuBarInfo {
     let solarTermText: String
     let zodiacText: String
     let currentHourCanChiText: String
+    let dayElementText: String
+    let oppositeZodiacText: String
+    let tamHopGroupText: String
+    let auspiciousHours: [VietnameseHourPeriod]
+    let inauspiciousHours: [VietnameseHourPeriod]
     let weekOfYearText: String
     let dayOfYearText: String
     let monthTitleText: String
@@ -56,6 +61,11 @@ struct LunarMenuBarInfo {
         solarTermText: "--",
         zodiacText: "--",
         currentHourCanChiText: "--",
+        dayElementText: "--",
+        oppositeZodiacText: "--",
+        tamHopGroupText: "--",
+        auspiciousHours: [],
+        inauspiciousHours: [],
         weekOfYearText: "--",
         dayOfYearText: "--",
         monthTitleText: "--",

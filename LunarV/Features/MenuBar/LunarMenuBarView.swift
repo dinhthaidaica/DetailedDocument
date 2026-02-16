@@ -24,6 +24,10 @@ struct LunarMenuBarView: View {
         repeating: GridItem(.flexible(minimum: MenuBarMetrics.calendarMinimumCellWidth), spacing: MenuBarMetrics.calendarGridSpacing),
         count: 7
     )
+    private let hourColumns = Array(
+        repeating: GridItem(.flexible(minimum: 130), spacing: 8),
+        count: 2
+    )
     private let weekdayHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 
     var body: some View {
@@ -61,6 +65,10 @@ struct LunarMenuBarView: View {
                         
                         if viewModel.settings.showCanChiSection {
                             canChiCard
+                        }
+
+                        if viewModel.settings.showAuspiciousHoursSection {
+                            auspiciousHoursCard
                         }
 
                         if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
@@ -221,6 +229,29 @@ struct LunarMenuBarView: View {
             }
         }
     }
+
+    private var auspiciousHoursCard: some View {
+        SectionCard(title: "Giờ hoàng đạo") {
+            VStack(alignment: .leading, spacing: 10) {
+                InfoRow(icon: "leaf.fill", label: "Ngũ hành ngày", value: viewModel.info.dayElementText)
+                InfoRow(icon: "arrow.left.and.right.circle", label: "Tuổi xung", value: viewModel.info.oppositeZodiacText)
+                InfoRow(icon: "person.3.sequence.fill", label: "Tam hợp", value: viewModel.info.tamHopGroupText)
+
+                LazyVGrid(columns: hourColumns, spacing: 8) {
+                    ForEach(viewModel.info.auspiciousHours) { hour in
+                        HourPeriodPill(hour: hour)
+                    }
+                }
+
+                if !viewModel.info.inauspiciousHours.isEmpty {
+                    Text("Giờ hắc đạo: \(formattedHourSummary(viewModel.info.inauspiciousHours))")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
     
     private var holidaysCard: some View {
         SectionCard(title: "Sự kiện sắp tới") {
@@ -280,6 +311,7 @@ struct LunarMenuBarView: View {
         SectionCard(title: "Thông tin khác") {
             VStack(spacing: 10) {
                 InfoRow(icon: "calendar.badge.clock", label: "Ngày âm lịch", value: viewModel.info.lunarDateText)
+                InfoRow(icon: "clock.arrow.circlepath", label: "Giờ Can Chi hiện tại", value: viewModel.info.currentHourCanChiText)
                 HStack(spacing: 10) {
                     StatTile(title: "Tuần thứ", value: viewModel.info.weekOfYearText)
                     StatTile(title: "Ngày thứ", value: viewModel.info.dayOfYearText)
@@ -416,6 +448,12 @@ struct LunarMenuBarView: View {
         NSPasteboard.general.setString(text, forType: .string)
     }
 
+    private func formattedHourSummary(_ hours: [VietnameseHourPeriod]) -> String {
+        hours
+            .map { "\($0.branch) (\($0.timeRange))" }
+            .joined(separator: ", ")
+    }
+
     private func refreshSolarToLunarSnapshot() {
         solarToLunarSnapshot = viewModel.snapshot(for: solarConversionDate)
     }
@@ -497,6 +535,28 @@ private struct StatTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading).padding(10)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct HourPeriodPill: View {
+    let hour: VietnameseHourPeriod
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(hour.canChi)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.primary)
+            Text(hour.timeRange)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
+        )
     }
 }
 

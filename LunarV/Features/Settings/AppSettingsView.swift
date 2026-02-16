@@ -124,6 +124,7 @@ struct AppSettingsView: View {
                 Toggle("Thông tin Can chi & Con giáp", isOn: $settings.showCanChiSection)
                 Toggle("Danh sách sự kiện sắp tới", isOn: $settings.showHolidaySection)
                 Toggle("Lịch tháng", isOn: $settings.showMonthCalendar)
+                Toggle("Giờ hoàng đạo trong ngày", isOn: $settings.showAuspiciousHoursSection)
                 Toggle("Thông tin vạn niên khác", isOn: $settings.showDetailSection)
                 Toggle("Bộ chuyển đổi Âm - Dương", isOn: $settings.showDateConverter)
             }

@@ -10,6 +10,7 @@
   - Tiết khí
   - Con giáp
   - Giờ hoàng đạo (Can Chi theo giờ)
+  - Ngũ hành ngày, tuổi xung, nhóm tam hợp
 - Lưới tháng hiển thị song song ngày dương / ngày âm.
 - Widget cho Desktop và Notification Center.
 - Giao diện macOS thuần với `MenuBarExtra`, `NSVisualEffectView` và semantic colors.

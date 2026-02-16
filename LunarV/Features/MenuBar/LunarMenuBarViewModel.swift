@@ -140,6 +140,8 @@ final class LunarMenuBarViewModel: ObservableObject {
         let lunarMonthText = snapshot.lunar.isLeapMonth ? "Tháng \(snapshot.lunar.month) nhuận" : "Tháng \(snapshot.lunar.month)"
         
         let phase = LunarPhase.from(day: snapshot.lunar.day)
+        let auspiciousHours = snapshot.hourPeriods.filter(\.isAuspicious)
+        let inauspiciousHours = snapshot.hourPeriods.filter { !$0.isAuspicious }
 
         return LunarMenuBarInfo(
             weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday),
@@ -154,6 +156,11 @@ final class LunarMenuBarViewModel: ObservableObject {
             solarTermText: snapshot.solarTerm,
             zodiacText: snapshot.zodiac,
             currentHourCanChiText: snapshot.currentHourCanChi,
+            dayElementText: snapshot.dayElement,
+            oppositeZodiacText: snapshot.oppositeZodiac,
+            tamHopGroupText: snapshot.tamHopGroup,
+            auspiciousHours: auspiciousHours,
+            inauspiciousHours: inauspiciousHours,
             weekOfYearText: formattedWeekOfYear(snapshot.solar.weekOfYear),
             dayOfYearText: formattedDayOfYear(snapshot.solar.dayOfYear),
             monthTitleText: monthTitle,
