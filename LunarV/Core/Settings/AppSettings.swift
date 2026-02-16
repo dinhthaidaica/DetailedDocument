@@ -23,6 +23,9 @@ final class AppSettings: ObservableObject {
     // MARK: - Appearance
     @AppStorage("settings.appearance.customAccentColor") var customAccentColor: Color = .blue
 
+    // MARK: - Window Behavior
+    @AppStorage("settings.window.keepSettingsOnTop") var keepSettingsOnTop: Bool = true
+
     private init() {}
 
     func resetMenuBarDisplaySettings() {

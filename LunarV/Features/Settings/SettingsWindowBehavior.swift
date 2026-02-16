@@ -15,6 +15,8 @@ final class SettingsWindowObserverView: NSView {
 }
 
 struct SettingsWindowBehavior: NSViewRepresentable {
+    let keepOnTop: Bool
+
     final class Coordinator {
         weak var trackedWindow: NSWindow?
     }
@@ -26,30 +28,33 @@ struct SettingsWindowBehavior: NSViewRepresentable {
     func makeNSView(context: Context) -> SettingsWindowObserverView {
         let view = SettingsWindowObserverView(frame: .zero)
         view.onWindowChanged = { window in
-            Self.configure(window, coordinator: context.coordinator)
+            Self.configure(window, keepOnTop: keepOnTop, coordinator: context.coordinator)
         }
         return view
     }
 
     func updateNSView(_ nsView: SettingsWindowObserverView, context: Context) {
         nsView.onWindowChanged = { window in
-            Self.configure(window, coordinator: context.coordinator)
+            Self.configure(window, keepOnTop: keepOnTop, coordinator: context.coordinator)
         }
-        Self.configure(nsView.window, coordinator: context.coordinator)
+        Self.configure(nsView.window, keepOnTop: keepOnTop, coordinator: context.coordinator)
     }
 
-    private static func configure(_ window: NSWindow?, coordinator: Coordinator) {
+    private static func configure(_ window: NSWindow?, keepOnTop: Bool, coordinator: Coordinator) {
         guard let window else { return }
+
+        // Cập nhật level cửa sổ mỗi khi setting thay đổi hoặc cửa sổ mới được gán
+        window.level = keepOnTop ? .floating : .normal
 
         if coordinator.trackedWindow !== window {
             coordinator.trackedWindow = window
-            window.level = .floating
             window.collectionBehavior.insert(.moveToActiveSpace)
             window.collectionBehavior.insert(.fullScreenAuxiliary)
+            
+            // Chỉ thực hiện focus/order front khi cửa sổ lần đầu xuất hiện
+            NSApp.activate(ignoringOtherApps: true)
+            window.orderFrontRegardless()
+            window.makeKeyAndOrderFront(nil)
         }
-
-        NSApp.activate(ignoringOtherApps: true)
-        window.orderFrontRegardless()
-        window.makeKeyAndOrderFront(nil)
     }
 }
