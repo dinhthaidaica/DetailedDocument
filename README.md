@@ -11,6 +11,7 @@
   - Con giáp
   - Giờ hoàng đạo (Can Chi theo giờ)
   - Ngũ hành ngày, tuổi xung, nhóm tam hợp
+  - Trực ngày (Thập nhị kiến trừ) với gợi ý nên làm / nên tránh
   - Gợi ý nên làm / hạn chế theo ngũ hành ngày và mùa tiết khí
   - Chỉ số ngày (0-100) và ma trận mức độ thuận lợi theo nhóm hoạt động
 - Lưới tháng hiển thị song song ngày dương / ngày âm.

@@ -289,10 +289,28 @@ struct LunarMenuBarView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
+                DayOfficerPanel(officer: viewModel.info.dayOfficer)
+
                 VStack(spacing: 8) {
                     ForEach(viewModel.info.dayGuidance.activityInsights) { insight in
                         ActivityInsightRow(insight: insight)
                     }
+                }
+
+                if !viewModel.info.dayOfficer.recommendedActivities.isEmpty {
+                    GuidanceBlock(
+                        title: "Theo Trực ngày - Nên làm",
+                        items: viewModel.info.dayOfficer.recommendedActivities,
+                        tint: .mint
+                    )
+                }
+
+                if !viewModel.info.dayOfficer.avoidActivities.isEmpty {
+                    GuidanceBlock(
+                        title: "Theo Trực ngày - Nên tránh",
+                        items: viewModel.info.dayOfficer.avoidActivities,
+                        tint: .pink
+                    )
                 }
 
                 if !viewModel.info.dayGuidance.recommendedActivities.isEmpty {
@@ -651,6 +669,64 @@ private struct GuidanceScoreView: View {
             return .orange
         default:
             return .red
+        }
+    }
+}
+
+private struct DayOfficerPanel: View {
+    let officer: LunarDayOfficerInfo
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Trực \(officer.name)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(levelColor)
+                Spacer()
+                Text(levelTitle)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(levelColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(levelColor.opacity(0.14), in: Capsule())
+            }
+
+            Text(officer.calculationNote)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            Text(officer.summary)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(10)
+        .background(levelColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(levelColor.opacity(0.22), lineWidth: 1)
+        )
+    }
+
+    private var levelTitle: String {
+        switch officer.level {
+        case .favorable:
+            return "Thuận lợi"
+        case .neutral:
+            return "Cân bằng"
+        case .caution:
+            return "Thận trọng"
+        }
+    }
+
+    private var levelColor: Color {
+        switch officer.level {
+        case .favorable:
+            return .green
+        case .neutral:
+            return .blue
+        case .caution:
+            return .orange
         }
     }
 }

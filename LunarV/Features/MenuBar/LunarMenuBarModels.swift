@@ -17,6 +17,24 @@ struct LunarActivityInsightInfo: Identifiable {
     let reason: String
 }
 
+struct LunarDayOfficerInfo {
+    let name: String
+    let level: LunarGuidanceLevelInfo
+    let summary: String
+    let calculationNote: String
+    let recommendedActivities: [String]
+    let avoidActivities: [String]
+
+    static let placeholder = LunarDayOfficerInfo(
+        name: "--",
+        level: .neutral,
+        summary: "--",
+        calculationNote: "--",
+        recommendedActivities: [],
+        avoidActivities: []
+    )
+}
+
 struct LunarDayGuidanceInfo {
     let title: String
     let summary: String
@@ -74,6 +92,7 @@ struct LunarMenuBarInfo {
     let auspiciousHours: [VietnameseHourPeriod]
     let inauspiciousHours: [VietnameseHourPeriod]
     let dayGuidance: LunarDayGuidanceInfo
+    let dayOfficer: LunarDayOfficerInfo
     let weekOfYearText: String
     let dayOfYearText: String
     let monthTitleText: String
@@ -103,6 +122,7 @@ struct LunarMenuBarInfo {
         auspiciousHours: [],
         inauspiciousHours: [],
         dayGuidance: .placeholder,
+        dayOfficer: .placeholder,
         weekOfYearText: "--",
         dayOfYearText: "--",
         monthTitleText: "--",

@@ -159,6 +159,14 @@ final class LunarMenuBarViewModel: ObservableObject {
             avoidActivities: snapshot.dayGuidance.avoidActivities,
             activityInsights: activityInsights
         )
+        let dayOfficer = LunarDayOfficerInfo(
+            name: snapshot.dayOfficer.name,
+            level: mapGuidanceLevel(snapshot.dayOfficer.level),
+            summary: snapshot.dayOfficer.summary,
+            calculationNote: snapshot.dayOfficer.calculationNote,
+            recommendedActivities: snapshot.dayOfficer.recommendedActivities,
+            avoidActivities: snapshot.dayOfficer.avoidActivities
+        )
 
         return LunarMenuBarInfo(
             weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday),
@@ -180,6 +188,7 @@ final class LunarMenuBarViewModel: ObservableObject {
             auspiciousHours: auspiciousHours,
             inauspiciousHours: inauspiciousHours,
             dayGuidance: dayGuidance,
+            dayOfficer: dayOfficer,
             weekOfYearText: formattedWeekOfYear(snapshot.solar.weekOfYear),
             dayOfYearText: formattedDayOfYear(snapshot.solar.dayOfYear),
             monthTitleText: monthTitle,

@@ -28,5 +28,6 @@ struct VietnameseLunarSnapshot {
     let tamHopGroup: String
     let hourPeriods: [VietnameseHourPeriod]
     let dayGuidance: VietnameseDayGuidance
+    let dayOfficer: VietnameseDayOfficer
     let nextAuspiciousHour: VietnameseAuspiciousHourWindow?
 }

@@ -57,6 +57,22 @@ enum VietnameseCalendarMetadata {
         stemElements[dayStemIndex(day: day, month: month, year: year)]
     }
 
+    static func dayBranch(day: Int, month: Int, year: Int) -> String {
+        earthlyBranches[dayBranchIndex(day: day, month: month, year: year)]
+    }
+
+    static func dayBranchOrdinal(day: Int, month: Int, year: Int) -> Int {
+        dayBranchIndex(day: day, month: month, year: year)
+    }
+
+    static func lunarMonthBranch(lunarMonth: Int) -> String {
+        earthlyBranches[lunarMonthBranchOrdinal(lunarMonth: lunarMonth)]
+    }
+
+    static func lunarMonthBranchOrdinal(lunarMonth: Int) -> Int {
+        positiveMod(lunarMonth + 1, 12)
+    }
+
     static func oppositeZodiac(day: Int, month: Int, year: Int) -> String {
         let branchIndex = dayBranchIndex(day: day, month: month, year: year)
         return earthlyBranches[positiveMod(branchIndex + 6, 12)]

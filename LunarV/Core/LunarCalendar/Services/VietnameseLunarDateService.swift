@@ -152,6 +152,12 @@ struct VietnameseLunarDateService {
         let tamHopGroup = VietnameseCalendarMetadata.tamHopGroup(day: solar.day, month: solar.month, year: solar.year)
         let hourPeriods = VietnameseCalendarMetadata.hourPeriods(day: solar.day, month: solar.month, year: solar.year)
         let dayGuidance = VietnameseDayGuidanceProvider.guidance(dayElement: dayElement, solarTerm: solarTerm)
+        let dayOfficer = VietnameseDayOfficerProvider.officer(
+            lunarMonth: lunar.month,
+            solarDay: solar.day,
+            solarMonth: solar.month,
+            solarYear: solar.year
+        )
         let nextAuspiciousHour = nextAuspiciousHour(from: date)
 
         return VietnameseLunarSnapshot(
@@ -168,6 +174,7 @@ struct VietnameseLunarDateService {
             tamHopGroup: tamHopGroup,
             hourPeriods: hourPeriods,
             dayGuidance: dayGuidance,
+            dayOfficer: dayOfficer,
             nextAuspiciousHour: nextAuspiciousHour
         )
     }
