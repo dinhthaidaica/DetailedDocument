@@ -311,7 +311,7 @@ private struct FlowLayout: Layout {
         var currentX: CGFloat = 0
         var currentY: CGFloat = 0
         var lineHeight: CGFloat = 0
-        var maxWidth: CGFloat = proposal.width ?? 0
+        let maxWidth: CGFloat = proposal.width ?? 0
         var totalHeight: CGFloat = 0
 
         for subview in subviews {

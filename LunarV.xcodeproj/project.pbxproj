@@ -7,23 +7,85 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB152F42BC8C001E0406 /* WidgetKit.framework */; };
+		460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB172F42BC8C001E0406 /* SwiftUI.framework */; };
+		460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		462A57A02F425E9500853CB4 /* Lunar.icon in Resources */ = {isa = PBXBuildFile; fileRef = 462A579F2F425E9500853CB4 /* Lunar.icon */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 462A57432F424D1000853CB4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 460CAB122F42BC8C001E0406;
+			remoteInfo = LunarVWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		460CAB2C2F42BC8D001E0406 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LunarVWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		460CAB152F42BC8C001E0406 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		460CAB172F42BC8C001E0406 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		462A574B2F424D1000853CB4 /* LunarV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LunarV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		462A579F2F425E9500853CB4 /* Lunar.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Lunar.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		460CAB282F42BC8D001E0406 /* Exceptions for "LunarVWidget" folder in "LunarVWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		460CAB192F42BC8C001E0406 /* LunarVWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				460CAB282F42BC8D001E0406 /* Exceptions for "LunarVWidget" folder in "LunarVWidgetExtension" target */,
+			);
+			path = LunarVWidget;
+			sourceTree = "<group>";
+		};
 		462A574D2F424D1000853CB4 /* LunarV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LunarV;
 			sourceTree = "<group>";
 		};
+		46D5A8D92F43A2A200853CB4 /* LunarV/Core/LunarCalendar */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LunarV/Core/LunarCalendar;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		460CAB102F42BC8C001E0406 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */,
+				460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		462A57482F424D1000853CB4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -34,12 +96,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		460CAB142F42BC8C001E0406 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				460CAB152F42BC8C001E0406 /* WidgetKit.framework */,
+				460CAB172F42BC8C001E0406 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		462A57422F424D1000853CB4 = {
 			isa = PBXGroup;
 			children = (
 				462A579F2F425E9500853CB4 /* Lunar.icon */,
 				462A574D2F424D1000853CB4 /* LunarV */,
+				460CAB192F42BC8C001E0406 /* LunarVWidget */,
+				460CAB142F42BC8C001E0406 /* Frameworks */,
 				462A574C2F424D1000853CB4 /* Products */,
+				46CE6E2C2F42C1D600115810 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -47,13 +121,45 @@
 			isa = PBXGroup;
 			children = (
 				462A574B2F424D1000853CB4 /* LunarV.app */,
+				460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		46CE6E2C2F42C1D600115810 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				46D5A8D92F43A2A200853CB4 /* LunarV/Core/LunarCalendar */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 460CAB292F42BC8D001E0406 /* Build configuration list for PBXNativeTarget "LunarVWidgetExtension" */;
+			buildPhases = (
+				460CAB0F2F42BC8C001E0406 /* Sources */,
+				460CAB102F42BC8C001E0406 /* Frameworks */,
+				460CAB112F42BC8C001E0406 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				460CAB192F42BC8C001E0406 /* LunarVWidget */,
+				46D5A8D92F43A2A200853CB4 /* LunarV/Core/LunarCalendar */,
+			);
+			name = LunarVWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = LunarVWidgetExtension;
+			productReference = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		462A574A2F424D1000853CB4 /* LunarV */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 462A57562F424D1100853CB4 /* Build configuration list for PBXNativeTarget "LunarV" */;
@@ -61,10 +167,12 @@
 				462A57472F424D1000853CB4 /* Sources */,
 				462A57482F424D1000853CB4 /* Frameworks */,
 				462A57492F424D1000853CB4 /* Resources */,
+				460CAB2C2F42BC8D001E0406 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				460CAB262F42BC8D001E0406 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				462A574D2F424D1000853CB4 /* LunarV */,
@@ -86,6 +194,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					460CAB122F42BC8C001E0406 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					462A574A2F424D1000853CB4 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -106,11 +217,19 @@
 			projectRoot = "";
 			targets = (
 				462A574A2F424D1000853CB4 /* LunarV */,
+				460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		460CAB112F42BC8C001E0406 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		462A57492F424D1000853CB4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -122,6 +241,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		460CAB0F2F42BC8C001E0406 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		462A57472F424D1000853CB4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -131,7 +257,79 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		460CAB262F42BC8D001E0406 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */;
+			targetProxy = 460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		460CAB2A2F42BC8D001E0406 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F9XPW22T8M;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LunarVWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LunarVWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = phamhungtien.LunarV.LunarVWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		460CAB2B2F42BC8D001E0406 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F9XPW22T8M;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LunarVWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LunarVWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = phamhungtien.LunarV.LunarVWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		462A57542F424D1100853CB4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -323,6 +521,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		460CAB292F42BC8D001E0406 /* Build configuration list for PBXNativeTarget "LunarVWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				460CAB2A2F42BC8D001E0406 /* Debug */,
+				460CAB2B2F42BC8D001E0406 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		462A57462F424D1000853CB4 /* Build configuration list for PBXProject "LunarV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

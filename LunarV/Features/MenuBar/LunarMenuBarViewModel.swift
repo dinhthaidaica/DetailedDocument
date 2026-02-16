@@ -30,6 +30,8 @@ final class LunarMenuBarViewModel: ObservableObject {
     private var workspaceNotificationObservers: [NSObjectProtocol] = []
     private var settingsCancellables = Set<AnyCancellable>()
     private var monthCellsCache: [YearMonth: [LunarMonthDayCell]] = [:]
+    private var cachedUpcomingHolidays: [LunarHoliday] = []
+    private var cachedUpcomingHolidaysAnchor: Date?
 
     init(
         solarCalendar: Calendar = Calendar(identifier: .gregorian),
@@ -175,8 +177,20 @@ final class LunarMenuBarViewModel: ObservableObject {
             monthCells: monthCells,
             lunarPhaseIcon: phase.icon,
             lunarPhaseName: phase.name,
-            upcomingHolidays: calculateUpcomingHolidays(now: now)
+            upcomingHolidays: upcomingHolidays(for: now)
         )
+    }
+
+    private func upcomingHolidays(for now: Date) -> [LunarHoliday] {
+        let dayStart = solarCalendar.startOfDay(for: now)
+        if let anchor = cachedUpcomingHolidaysAnchor, solarCalendar.isDate(anchor, inSameDayAs: dayStart) {
+            return cachedUpcomingHolidays
+        }
+
+        let refreshed = calculateUpcomingHolidays(now: dayStart)
+        cachedUpcomingHolidays = refreshed
+        cachedUpcomingHolidaysAnchor = dayStart
+        return refreshed
     }
 
     private func buildMonthCells(year: Int, month: Int, today: (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?)) -> [LunarMonthDayCell] {
@@ -299,11 +313,8 @@ final class LunarMenuBarViewModel: ObservableObject {
     private func scheduleRefresh(from now: Date) {
         refreshTask?.cancel()
 
-        let nextMinute = nextMinuteStart(from: now)
-        let nextMidnight = nextDayStart(from: now)
-        let nextCanChiHour = nextCanChiHourBoundary(from: now)
-        let nextRefreshDate = min(nextMinute, min(nextMidnight, nextCanChiHour))
-        let delay = max(nextRefreshDate.timeIntervalSince(now) + 0.2, 0.2)
+        let nextRefreshDate = nextSecondStart(from: now)
+        let delay = max(nextRefreshDate.timeIntervalSince(now) + 0.05, 0.05)
 
         refreshTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -355,27 +366,12 @@ final class LunarMenuBarViewModel: ObservableObject {
             .store(in: &settingsCancellables)
     }
 
-    private func nextMinuteStart(from now: Date) -> Date {
-        guard let minuteStart = solarCalendar.dateInterval(of: .minute, for: now)?.start else {
-            return now.addingTimeInterval(60)
+    private func nextSecondStart(from now: Date) -> Date {
+        guard let secondStart = solarCalendar.dateInterval(of: .second, for: now)?.start else {
+            return now.addingTimeInterval(1)
         }
 
-        return solarCalendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
-    }
-
-    private func nextDayStart(from now: Date) -> Date {
-        let startOfToday = solarCalendar.startOfDay(for: now)
-        return solarCalendar.date(byAdding: .day, value: 1, to: startOfToday) ?? now.addingTimeInterval(86_400)
-    }
-
-    private func nextCanChiHourBoundary(from now: Date) -> Date {
-        guard let hourStart = solarCalendar.dateInterval(of: .hour, for: now)?.start else {
-            return now.addingTimeInterval(7_200)
-        }
-
-        let hour = solarCalendar.component(.hour, from: now)
-        let hourOffset = hour.isMultiple(of: 2) ? 1 : 2
-        return solarCalendar.date(byAdding: .hour, value: hourOffset, to: hourStart) ?? now.addingTimeInterval(7_200)
+        return solarCalendar.date(byAdding: .second, value: 1, to: secondStart) ?? now.addingTimeInterval(1)
     }
 
     private func solarDayComponents(from date: Date) -> (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?)? {
