@@ -125,6 +125,7 @@ final class AppSettings: ObservableObject {
     static let menuBarTitleFontSizeRange: ClosedRange<Double> = 11 ... 16
     static let defaultMenuBarLeadingIconSize: Double = 14
     static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
+    static let menuBarIconTitleSpacing: CGFloat = 4
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact

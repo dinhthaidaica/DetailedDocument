@@ -22,9 +22,9 @@ struct LunarVApp: App {
 
     private var menuBarLabelIdentity: String {
         let title = viewModel.menuBarTitle
-        let titleSize = Int(settings.menuBarTitleFontSizeValue)
+        let titleSize = settings.menuBarTitleFontSizeValue
         let iconVisibility = settings.showMenuBarLeadingIconValue ? 1 : 0
-        let iconSize = Int(settings.menuBarLeadingIconSizeValue)
+        let iconSize = settings.menuBarLeadingIconSizeValue
         return "\(title)|\(titleSize)|\(iconVisibility)|\(iconSize)"
     }
 
@@ -42,7 +42,7 @@ struct LunarVApp: App {
         let attributedText = NSAttributedString(string: text, attributes: attributes)
         let textSize = attributedText.size()
 
-        let spacing: CGFloat = settings.showMenuBarLeadingIconValue ? 6 : 0
+        let spacing: CGFloat = settings.showMenuBarLeadingIconValue ? AppSettings.menuBarIconTitleSpacing : 0
         let iconSize: CGFloat = settings.showMenuBarLeadingIconValue ? menuBarLeadingIconRenderSize : 0
 
         let width = ceil(iconSize + spacing + textSize.width)

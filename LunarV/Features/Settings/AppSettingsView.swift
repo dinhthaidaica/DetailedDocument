@@ -125,24 +125,15 @@ struct AppSettingsView: View {
                 Text("Kích cỡ chữ trên Menu Bar")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer(minLength: 0)
-                Text("\(Int(settings.menuBarTitleFontSizeValue))pt")
+                Text("\(settings.menuBarTitleFontSizeValue.formatted(.number.precision(.fractionLength(1))))pt")
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
 
             Slider(
                 value: menuBarTitleFontSizeBinding,
-                in: AppSettings.menuBarTitleFontSizeRange,
-                step: 1
+                in: AppSettings.menuBarTitleFontSizeRange
             )
-
-            HStack {
-                Text("11pt")
-                Spacer(minLength: 0)
-                Text("16pt")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
 
             HStack {
                 Text("Cỡ chữ này áp dụng cho phần ngày hiển thị trên thanh Menu Bar.")
@@ -168,24 +159,15 @@ struct AppSettingsView: View {
                     Text("Kích cỡ icon")
                         .font(.system(size: 13, weight: .semibold))
                     Spacer(minLength: 0)
-                    Text("\(Int(settings.menuBarLeadingIconSizeValue))pt")
+                    Text("\(settings.menuBarLeadingIconSizeValue.formatted(.number.precision(.fractionLength(1))))pt")
                         .font(.system(size: 12, weight: .bold, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
 
                 Slider(
                     value: menuBarLeadingIconSizeBinding,
-                    in: AppSettings.menuBarLeadingIconSizeRange,
-                    step: 1
+                    in: AppSettings.menuBarLeadingIconSizeRange
                 )
-
-                HStack {
-                    Text("10pt")
-                    Spacer(minLength: 0)
-                    Text("18pt")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
                 Text("Apple khuyến nghị icon menu bar nên gọn để cân bằng với chữ và độ dày thanh menu.")
                     .font(.caption)
@@ -340,7 +322,7 @@ struct AppSettingsView: View {
         VStack(spacing: 8) {
             Text("XEM TRƯỚC").font(.system(size: 9, weight: .heavy)).foregroundStyle(.tertiary)
             HStack {
-                HStack(spacing: 6) {
+                HStack(spacing: AppSettings.menuBarIconTitleSpacing) {
                     if settings.showMenuBarLeadingIconValue {
                         Image("LunarVMenubar")
                             .resizable()
