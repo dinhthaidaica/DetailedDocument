@@ -2,8 +2,17 @@
 //  LunarV - Lịch Âm Việt Nam
 //  Phát triển bởi Phạm Hùng Tiến
 //
+import AppKit
 import AppIntents
 import SwiftUI
+
+private enum IntentLunarContext {
+    static let lunarService = VietnameseLunarDateService()
+
+    static func currentSnapshot() -> VietnameseLunarSnapshot? {
+        lunarService.snapshot(for: Date())
+    }
+}
 
 // MARK: - Intents
 
@@ -13,14 +22,11 @@ struct GetLunarDateIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let now = Date()
-        let calendar = Calendar(identifier: .gregorian)
-        let components = calendar.dateComponents([.day, .month, .year], from: now)
-        
-        let converter = VietnameseLunarCalendarConverter(timeZone: 7.0)
-        let lunar = converter.solarToLunar(day: components.day!, month: components.month!, year: components.year!)
-        
-        let result = "\(lunar.day)/\(lunar.month)\(lunar.isLeapMonth ? " nhuận" : "")"
+        guard let snapshot = IntentLunarContext.currentSnapshot() else {
+            return .result(value: "--/--")
+        }
+
+        let result = "\(snapshot.lunar.day)/\(snapshot.lunar.month)\(snapshot.lunar.isLeapMonth ? " nhuận" : "")"
         return .result(value: result)
     }
 }
@@ -31,14 +37,11 @@ struct GetCanChiIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let now = Date()
-        let calendar = Calendar(identifier: .gregorian)
-        let components = calendar.dateComponents([.day, .month, .year], from: now)
-        
-        let canChiDay = VietnameseCalendarMetadata.canChiDay(day: components.day!, month: components.month!, year: components.year!)
-        let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: components.year!) 
-        
-        let result = "Ngày \(canChiDay), năm \(canChiYear)"
+        guard let snapshot = IntentLunarContext.currentSnapshot() else {
+            return .result(value: "--")
+        }
+
+        let result = "Ngày \(snapshot.canChiDay), năm \(snapshot.canChiYear)"
         return .result(value: result)
     }
 }
@@ -49,15 +52,11 @@ struct CopyLunarDateIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let now = Date()
-        let calendar = Calendar(identifier: .gregorian)
-        let components = calendar.dateComponents([.day, .month, .year], from: now)
-        
-        let converter = VietnameseLunarCalendarConverter(timeZone: 7.0)
-        let lunar = converter.solarToLunar(day: components.day!, month: components.month!, year: components.year!)
-        let canChiDay = VietnameseCalendarMetadata.canChiDay(day: components.day!, month: components.month!, year: components.year!)
-        
-        let text = "Hôm nay âm lịch là ngày \(lunar.day) tháng \(lunar.month) năm \(canChiDay)"
+        guard let snapshot = IntentLunarContext.currentSnapshot() else {
+            return .result(dialog: "Không thể lấy dữ liệu lịch âm ở thời điểm hiện tại.")
+        }
+
+        let text = "Hôm nay âm lịch là ngày \(snapshot.lunar.day) tháng \(snapshot.lunar.month) năm \(snapshot.canChiYear)"
         
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)

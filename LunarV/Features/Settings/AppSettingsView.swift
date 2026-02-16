@@ -10,7 +10,7 @@ struct AppSettingsView: View {
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var isShowingResetDialog = false
 
-    private let previewConverter = VietnameseLunarCalendarConverter(timeZone: 7.0)
+    private let previewLunarService = VietnameseLunarDateService()
 
     var body: some View {
         TabView {
@@ -215,15 +215,19 @@ struct AppSettingsView: View {
 
     private var previewMenuBarTitle: String {
         let now = Date()
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")!
-        let comp = cal.dateComponents([.day, .month, .year], from: now)
-        let lunar = previewConverter.solarToLunar(day: comp.day!, month: comp.month!, year: comp.year!)
+        guard let snapshot = previewLunarService.snapshot(for: now) else {
+            return "--"
+        }
         let context = MenuBarTitleContext(
-            lunarDay: lunar.day, lunarMonth: lunar.month, lunarYear: lunar.year, isLeapMonth: lunar.isLeapMonth,
-            canChiYear: VietnameseCalendarMetadata.canChiYear(lunarYear: lunar.year),
-            zodiac: VietnameseCalendarMetadata.zodiac(lunarYear: lunar.year),
-            solarDay: comp.day!, solarMonth: comp.month!, solarYear: comp.year!
+            lunarDay: snapshot.lunar.day,
+            lunarMonth: snapshot.lunar.month,
+            lunarYear: snapshot.lunar.year,
+            isLeapMonth: snapshot.lunar.isLeapMonth,
+            canChiYear: snapshot.canChiYear,
+            zodiac: snapshot.zodiac,
+            solarDay: snapshot.solar.day,
+            solarMonth: snapshot.solar.month,
+            solarYear: snapshot.solar.year
         )
         return MenuBarTitleFormatter.render(preset: settings.menuBarDisplayPreset, customTemplate: settings.customMenuBarTemplate, context: context)
     }
