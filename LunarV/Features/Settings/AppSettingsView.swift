@@ -109,12 +109,15 @@ struct AppSettingsView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         previewCard
 
-                        Picker("Chế độ", selection: $settings.menuBarDisplayPreset) {
-                            ForEach(MenuBarDisplayPreset.allCases) { preset in
-                                Text(preset.title).tag(preset)
+                        settingsPickerRow(title: "Chế độ", isEnabled: true) {
+                            Picker("Chế độ", selection: $settings.menuBarDisplayPreset) {
+                                ForEach(MenuBarDisplayPreset.allCases) { preset in
+                                    Text(preset.title).tag(preset)
+                                }
                             }
+                            .pickerStyle(.menu)
+                            .controlSize(.regular)
                         }
-                        .pickerStyle(.segmented)
 
                         if settings.menuBarDisplayPreset == .custom {
                             customTemplateEditor
@@ -184,17 +187,29 @@ struct AppSettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Kích cỡ chữ trên Menu Bar")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .medium))
                 Spacer(minLength: 0)
                 Text("\(settings.menuBarTitleFontSizeValue.formatted(.number.precision(.fractionLength(1))))pt")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
 
             Slider(
                 value: menuBarTitleFontSizeBinding,
                 in: AppSettings.menuBarTitleFontSizeRange
-            )
+            ) {
+                Text("Kích cỡ chữ")
+            } minimumValueLabel: {
+                Text("\(Int(AppSettings.menuBarTitleFontSizeRange.lowerBound))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } maximumValueLabel: {
+                Text("\(Int(AppSettings.menuBarTitleFontSizeRange.upperBound))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .controlSize(.small)
+            .tint(.accentColor)
 
             HStack {
                 Text("Cỡ chữ này áp dụng cho phần ngày hiển thị trên thanh Menu Bar.")
@@ -206,7 +221,7 @@ struct AppSettingsView: View {
                 Button("Mặc định 12pt") {
                     settings.setMenuBarTitleFontSize(AppSettings.defaultMenuBarTitleFontSize)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.link)
             }
         }
     }
@@ -221,22 +236,31 @@ struct AppSettingsView: View {
             if settings.showMenuBarLeadingIconValue {
                 HStack {
                     Text("Kích cỡ icon")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13, weight: .medium))
                     Spacer(minLength: 0)
                     Text("\(settings.menuBarLeadingIconSizeValue.formatted(.number.precision(.fractionLength(1))))pt")
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
 
                 Slider(
                     value: menuBarLeadingIconSizeBinding,
                     in: AppSettings.menuBarLeadingIconSizeRange
-                )
+                ) {
+                    Text("Kích cỡ icon")
+                } minimumValueLabel: {
+                    Text("\(Int(AppSettings.menuBarLeadingIconSizeRange.lowerBound))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } maximumValueLabel: {
+                    Text("\(Int(AppSettings.menuBarLeadingIconSizeRange.upperBound))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .controlSize(.small)
+                .tint(.accentColor)
 
                 Text("Apple khuyến nghị icon menu bar nên gọn để cân bằng với chữ và độ dày thanh menu.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("Icon và chữ hiện có hai thanh điều chỉnh riêng.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
