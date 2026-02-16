@@ -4,6 +4,20 @@
 //
 import Foundation
 
+struct LunarDayGuidanceInfo {
+    let title: String
+    let summary: String
+    let recommendedActivities: [String]
+    let avoidActivities: [String]
+
+    static let placeholder = LunarDayGuidanceInfo(
+        title: "--",
+        summary: "--",
+        recommendedActivities: [],
+        avoidActivities: []
+    )
+}
+
 struct LunarMonthDayCell: Identifiable {
     let id: Int
     let solarDay: Int?
@@ -37,8 +51,10 @@ struct LunarMenuBarInfo {
     let dayElementText: String
     let oppositeZodiacText: String
     let tamHopGroupText: String
+    let nextAuspiciousHourText: String
     let auspiciousHours: [VietnameseHourPeriod]
     let inauspiciousHours: [VietnameseHourPeriod]
+    let dayGuidance: LunarDayGuidanceInfo
     let weekOfYearText: String
     let dayOfYearText: String
     let monthTitleText: String
@@ -64,8 +80,10 @@ struct LunarMenuBarInfo {
         dayElementText: "--",
         oppositeZodiacText: "--",
         tamHopGroupText: "--",
+        nextAuspiciousHourText: "--",
         auspiciousHours: [],
         inauspiciousHours: [],
+        dayGuidance: .placeholder,
         weekOfYearText: "--",
         dayOfYearText: "--",
         monthTitleText: "--",

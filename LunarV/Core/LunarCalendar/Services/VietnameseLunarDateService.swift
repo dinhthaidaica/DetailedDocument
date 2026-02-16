@@ -97,6 +97,38 @@ struct VietnameseLunarDateService {
         return nil
     }
 
+    func nextAuspiciousHour(from date: Date, lookAheadDays: Int = 2) -> VietnameseAuspiciousHourWindow? {
+        let boundedLookAheadDays = max(lookAheadDays, 0)
+        let dayStart = calendar.startOfDay(for: date)
+
+        for dayOffset in 0 ... boundedLookAheadDays {
+            guard
+                let targetDay = calendar.date(byAdding: .day, value: dayOffset, to: dayStart),
+                let solar = solarComponents(from: targetDay)
+            else {
+                continue
+            }
+
+            let periods = VietnameseCalendarMetadata.hourPeriods(day: solar.day, month: solar.month, year: solar.year)
+            for period in periods where period.isAuspicious {
+                guard
+                    let interval = hourInterval(for: period.branchIndex, on: targetDay),
+                    interval.end > date
+                else {
+                    continue
+                }
+
+                return VietnameseAuspiciousHourWindow(
+                    period: period,
+                    startDate: interval.start,
+                    endDate: interval.end
+                )
+            }
+        }
+
+        return nil
+    }
+
     func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
         guard let solar = solarComponents(from: date) else {
             return nil
@@ -119,6 +151,8 @@ struct VietnameseLunarDateService {
         let oppositeZodiac = VietnameseCalendarMetadata.oppositeZodiac(day: solar.day, month: solar.month, year: solar.year)
         let tamHopGroup = VietnameseCalendarMetadata.tamHopGroup(day: solar.day, month: solar.month, year: solar.year)
         let hourPeriods = VietnameseCalendarMetadata.hourPeriods(day: solar.day, month: solar.month, year: solar.year)
+        let dayGuidance = VietnameseDayGuidanceProvider.guidance(dayElement: dayElement, solarTerm: solarTerm)
+        let nextAuspiciousHour = nextAuspiciousHour(from: date)
 
         return VietnameseLunarSnapshot(
             solar: solar,
@@ -132,7 +166,9 @@ struct VietnameseLunarDateService {
             dayElement: dayElement,
             oppositeZodiac: oppositeZodiac,
             tamHopGroup: tamHopGroup,
-            hourPeriods: hourPeriods
+            hourPeriods: hourPeriods,
+            dayGuidance: dayGuidance,
+            nextAuspiciousHour: nextAuspiciousHour
         )
     }
 
@@ -141,5 +177,29 @@ struct VietnameseLunarDateService {
             return Self.weekdayNames[0]
         }
         return Self.weekdayNames[weekday - 1]
+    }
+
+    private func hourInterval(for branchIndex: Int, on dayDate: Date) -> DateInterval? {
+        let dayStart = calendar.startOfDay(for: dayDate)
+
+        if branchIndex == 0 {
+            guard
+                let start = calendar.date(byAdding: .hour, value: -1, to: dayStart),
+                let end = calendar.date(byAdding: .hour, value: 1, to: dayStart)
+            else {
+                return nil
+            }
+            return DateInterval(start: start, end: end)
+        }
+
+        let startOffsetHours = branchIndex * 2 - 1
+        guard
+            let start = calendar.date(byAdding: .hour, value: startOffsetHours, to: dayStart),
+            let end = calendar.date(byAdding: .hour, value: 2, to: start)
+        else {
+            return nil
+        }
+
+        return DateInterval(start: start, end: end)
     }
 }

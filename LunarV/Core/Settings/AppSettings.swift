@@ -19,6 +19,7 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showHolidaySection") var showHolidaySection: Bool = true
     @AppStorage("settings.panel.showMonthCalendar") var showMonthCalendar: Bool = true
     @AppStorage("settings.panel.showAuspiciousHoursSection") var showAuspiciousHoursSection: Bool = true
+    @AppStorage("settings.panel.showDayGuidanceSection") var showDayGuidanceSection: Bool = true
     @AppStorage("settings.panel.showDetailSection") var showDetailSection: Bool = true
     @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
 
@@ -48,6 +49,7 @@ final class AppSettings: ObservableObject {
         showHolidaySection = true
         showMonthCalendar = true
         showAuspiciousHoursSection = true
+        showDayGuidanceSection = true
         showDetailSection = true
         showDateConverter = true
         customAccentColor = .blue

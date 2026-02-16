@@ -71,6 +71,10 @@ struct LunarMenuBarView: View {
                             auspiciousHoursCard
                         }
 
+                        if viewModel.settings.showDayGuidanceSection {
+                            guidanceCard
+                        }
+
                         if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
                             holidaysCard
                         }
@@ -236,6 +240,17 @@ struct LunarMenuBarView: View {
                 InfoRow(icon: "leaf.fill", label: "Ngũ hành ngày", value: viewModel.info.dayElementText)
                 InfoRow(icon: "arrow.left.and.right.circle", label: "Tuổi xung", value: viewModel.info.oppositeZodiacText)
                 InfoRow(icon: "person.3.sequence.fill", label: "Tam hợp", value: viewModel.info.tamHopGroupText)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Khung giờ đẹp kế tiếp")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.primary.opacity(0.7))
+                    Text(viewModel.info.nextAuspiciousHourText)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(10)
+                .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
 
                 LazyVGrid(columns: hourColumns, spacing: 8) {
                     ForEach(viewModel.info.auspiciousHours) { hour in
@@ -249,6 +264,33 @@ struct LunarMenuBarView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+        }
+    }
+
+    private var guidanceCard: some View {
+        SectionCard(title: "Gợi ý trong ngày") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(viewModel.info.dayGuidance.title)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+
+                Text(viewModel.info.dayGuidance.summary)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                GuidanceBlock(
+                    title: "Nên ưu tiên",
+                    items: viewModel.info.dayGuidance.recommendedActivities,
+                    tint: .green
+                )
+
+                GuidanceBlock(
+                    title: "Nên hạn chế",
+                    items: viewModel.info.dayGuidance.avoidActivities,
+                    tint: .orange
+                )
             }
         }
     }
@@ -557,6 +599,33 @@ private struct HourPeriodPill: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
         )
+    }
+}
+
+private struct GuidanceBlock: View {
+    let title: String
+    let items: [String]
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(tint.opacity(0.9))
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(items, id: \.self) { item in
+                    HStack(alignment: .top, spacing: 6) {
+                        Circle()
+                            .fill(tint.opacity(0.8))
+                            .frame(width: 5, height: 5)
+                            .padding(.top, 5)
+                        Text(item)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+        }
     }
 }
 

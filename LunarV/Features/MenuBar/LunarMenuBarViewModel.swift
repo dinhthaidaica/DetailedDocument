@@ -142,6 +142,13 @@ final class LunarMenuBarViewModel: ObservableObject {
         let phase = LunarPhase.from(day: snapshot.lunar.day)
         let auspiciousHours = snapshot.hourPeriods.filter(\.isAuspicious)
         let inauspiciousHours = snapshot.hourPeriods.filter { !$0.isAuspicious }
+        let nextAuspiciousHourText = formattedNextAuspiciousHour(snapshot.nextAuspiciousHour, now: now)
+        let dayGuidance = LunarDayGuidanceInfo(
+            title: snapshot.dayGuidance.title,
+            summary: snapshot.dayGuidance.summary,
+            recommendedActivities: snapshot.dayGuidance.recommendedActivities,
+            avoidActivities: snapshot.dayGuidance.avoidActivities
+        )
 
         return LunarMenuBarInfo(
             weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday),
@@ -159,8 +166,10 @@ final class LunarMenuBarViewModel: ObservableObject {
             dayElementText: snapshot.dayElement,
             oppositeZodiacText: snapshot.oppositeZodiac,
             tamHopGroupText: snapshot.tamHopGroup,
+            nextAuspiciousHourText: nextAuspiciousHourText,
             auspiciousHours: auspiciousHours,
             inauspiciousHours: inauspiciousHours,
+            dayGuidance: dayGuidance,
             weekOfYearText: formattedWeekOfYear(snapshot.solar.weekOfYear),
             dayOfYearText: formattedDayOfYear(snapshot.solar.dayOfYear),
             monthTitleText: monthTitle,
@@ -283,6 +292,45 @@ final class LunarMenuBarViewModel: ObservableObject {
             text += " (nhuận)"
         }
         return text
+    }
+
+    private func formattedNextAuspiciousHour(_ window: VietnameseAuspiciousHourWindow?, now: Date) -> String {
+        guard let window else {
+            return "Không có dữ liệu"
+        }
+
+        let isActiveNow = window.startDate <= now && now < window.endDate
+
+        let dayLabel: String
+        if isActiveNow {
+            dayLabel = "Hiện tại"
+        } else if solarCalendar.isDate(window.startDate, inSameDayAs: now) {
+            dayLabel = "Hôm nay"
+        } else if
+            let tomorrow = solarCalendar.date(byAdding: .day, value: 1, to: now),
+            solarCalendar.isDate(window.startDate, inSameDayAs: tomorrow)
+        {
+            dayLabel = "Ngày mai"
+        } else {
+            dayLabel = window.startDate.formatted(.dateTime.day().month().locale(Locale(identifier: "vi_VN")))
+        }
+
+        let progressText: String
+        if isActiveNow {
+            progressText = "đang diễn ra"
+        } else {
+            let timeUntilStart = max(Int(window.startDate.timeIntervalSince(now)), 0)
+            let hours = timeUntilStart / 3600
+            let minutes = (timeUntilStart % 3600) / 60
+
+            if hours > 0 {
+                progressText = minutes > 0 ? "còn \(hours)h \(minutes)p" : "còn \(hours)h"
+            } else {
+                progressText = "còn \(max(minutes, 1)) phút"
+            }
+        }
+
+        return "\(window.period.canChi) \(window.period.timeRange) • \(dayLabel) • \(progressText)"
     }
 
     private func scheduleRefresh(from now: Date) {
