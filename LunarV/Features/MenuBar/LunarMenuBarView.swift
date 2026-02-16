@@ -412,6 +412,24 @@ extension View {
     func glassEffect<S: Shape>(_ material: Material = .regular, tint: Color = .clear, in shape: S) -> some View {
         self.background(material, in: shape)
             .background(tint, in: shape)
+            .overlay(
+                shape
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.4),
+                                .white.opacity(0.1),
+                                .black.opacity(0.05),
+                                .white.opacity(0.2)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+                    .blendMode(.overlay)
+            )
+            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }
 
