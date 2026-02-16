@@ -1,3 +1,7 @@
+//
+//  LunarV - Lịch Âm Việt Nam
+//  Phát triển bởi Phạm Hùng Tiến
+//
 import Foundation
 
 struct LunarDate: Equatable {

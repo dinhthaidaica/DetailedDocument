@@ -1,3 +1,7 @@
+//
+//  LunarV - Lịch Âm Việt Nam
+//  Phát triển bởi Phạm Hùng Tiến
+//
 import AppKit
 import SwiftUI
 
@@ -15,227 +19,234 @@ struct LunarMenuBarView: View {
     private let weekdayHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.accentColor.opacity(controlActiveState == .active ? 0.03 : 0.01),
-                    Color.clear,
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .allowsHitTesting(false)
+        ZStack(alignment: .top) {
+            // Nền chung cho toàn bộ Panel
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(controlActiveState == .active ? 0.08 : 0.03),
+                            Color.clear,
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // Toolbar thiết kế phẳng, căn chỉnh tuyệt đối với lề
                 topToolbar
                     .padding(.horizontal, MenuBarMetrics.panelPadding)
-                    .padding(.top, MenuBarMetrics.panelPadding)
-                    .padding(.bottom, 8)
+                    .padding(.vertical, 14)
+                    .background(.ultraThickMaterial.opacity(0.5))
+                    .overlay(alignment: .bottom) { 
+                        Divider().opacity(0.1) 
+                    }
 
                 ScrollView {
-                    GlassEffectContainer(spacing: 16) {
-                        VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
+                    VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
+                        if viewModel.settings.showHeroCard {
                             heroCard
-                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0)
-
-                            canChiCard
-                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.05)
-
-                            detailCard
-                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.10)
-
-                            monthCalendarCard
-                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.15)
                         }
-                        .padding(.horizontal, MenuBarMetrics.panelPadding)
-                        .padding(.bottom, MenuBarMetrics.panelPadding)
+                        
+                        if viewModel.settings.showCanChiSection {
+                            canChiCard
+                        }
+
+                        if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
+                            holidaysCard
+                        }
+
+                        if viewModel.settings.showMonthCalendar {
+                            monthCalendarCard
+                        }
+                        
+                        if viewModel.settings.showDetailSection {
+                            detailCard
+                        }
+                    }
+                    .padding(MenuBarMetrics.panelPadding)
+                    .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion)
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
+        .tint(viewModel.settings.customAccentColor)
+        .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height)
+        .task {
+            if !hasAppeared {
+                if reduceMotion {
+                    hasAppeared = true
+                } else {
+                    withAnimation(.spring(duration: 0.6)) {
+                        hasAppeared = true
                     }
                 }
             }
-        }
-        .scrollIndicators(.hidden)
-        .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height)
-        .task {
-            guard !hasAppeared else { return }
-            if reduceMotion {
-                hasAppeared = true
-            } else {
-                try? await Task.sleep(for: .milliseconds(50))
-                withAnimation {
-                    hasAppeared = true
-                }
-            }
-        }
-        .onDisappear {
-            hasAppeared = false
         }
     }
 
     // MARK: - Top Toolbar
 
     private var topToolbar: some View {
-        HStack(spacing: 10) {
-            Button {
-                confirmExit()
-            } label: {
-                toolbarIcon(systemName: "power")
-                    .foregroundStyle(.red.opacity(controlActiveState == .active ? 0.85 : 0.65))
-            }
-            .buttonStyle(.plain)
-            .help("Thoát ứng dụng")
-            .accessibilityLabel("Thoát ứng dụng")
-
-            VStack(alignment: .leading, spacing: 1) {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("LunarV")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
-                Text("Lịch âm tự động cập nhật")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                Text("Lịch âm chuyên nghiệp")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 0)
+            Spacer()
+            
+            HStack(spacing: 8) {
+                toolbarButton(icon: "doc.on.doc", help: "Sao chép ngày") {
+                    copyCurrentDate()
+                }
+                
+                SettingsLink {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 28, height: 28)
+                        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .help("Cài đặt")
 
-            SettingsLink {
-                toolbarIcon(systemName: "gearshape")
+                toolbarButton(icon: "power", help: "Thoát ứng dụng", color: .red) {
+                    confirmExit()
+                }
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Mở cài đặt")
-            .accessibilityLabel("Mở cài đặt")
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     // MARK: - Hero Card
 
     private var heroCard: some View {
         let info = viewModel.info
-        let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.35 : 0.25
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: MenuBarMetrics.heroColumnSpacing) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("HÔM NAY")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.tertiary)
+        let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.4 : 0.2
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(info.weekdayText.uppercased())
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.accentColor)
                         .tracking(1.2)
-                    Text(info.weekdayText)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    
+                    Text("Ngày \(info.lunarDayText)")
+                        .font(.system(size: 34, weight: .heavy, design: .rounded))
                         .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-                    Text(info.solarDateText)
-                        .font(.subheadline)
+                    
+                    Text(info.lunarMonthYearText)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                    Text("Âm lịch: \(info.lunarDateText)")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-                    if let leapMonthText = info.leapMonthText {
-                        Text(leapMonthText.uppercased())
-                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.primary.opacity(0.10), in: Capsule())
-                            .foregroundStyle(.primary)
-                    }
+                    
+                    Text(info.solarDateText)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(.tertiary)
                 }
 
-                Spacer(minLength: 0)
+                Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("NGÀY ÂM")
+                VStack(alignment: .trailing, spacing: 8) {
+                    Image(systemName: info.lunarPhaseIcon)
+                        .font(.system(size: 40, weight: .ultraLight))
+                        .foregroundStyle(Color.accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                    
+                    Text(info.lunarPhaseName)
                         .font(.system(size: 9, weight: .bold, design: .rounded))
                         .foregroundStyle(.tertiary)
-                        .tracking(1.0)
-                    Text(info.lunarDayText)
-                        .font(.system(size: 52, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText(countsDown: false))
-                        .animation(.spring(duration: 0.4, bounce: 0.1), value: info.lunarDayText)
-                    Text(info.lunarMonthYearText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                        .contentTransition(.numericText())
                 }
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 HeroChip(icon: "sun.max.fill", title: "Tiết khí", value: info.solarTermText)
-                HeroChip(icon: "hare.fill", title: "Con giáp", value: info.zodiacText)
+                HeroChip(icon: "clock.fill", title: "Hoàng đạo", value: info.currentHourCanChiText)
             }
         }
-        .padding(MenuBarMetrics.heroPadding)
-        .glassEffect(
-            .regular.tint(Color.accentColor.opacity(tintOpacity)),
-            in: RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous))
-        .onHover { hovering in
-            withAnimation(.spring(duration: 0.25, bounce: 0.15)) {
-                isHeroHovered = hovering
-            }
-        }
+        .padding(20)
+        .glassEffect(Material.regular, tint: Color.accentColor.opacity(tintOpacity), in: RoundedRectangle(cornerRadius: 24))
+        .onHover { h in withAnimation(.spring(duration: 0.3)) { isHeroHovered = h } }
     }
 
-    // MARK: - Section Cards
+    // MARK: - Sections
 
     private var canChiCard: some View {
-        let info = viewModel.info
-
-        return SectionCard(title: "Can chi") {
-            HStack(spacing: MenuBarMetrics.elementSpacing) {
-                CanChiPill(title: "Ngày", value: info.canChiDayText)
-                CanChiPill(title: "Tháng", value: info.canChiMonthText)
-                CanChiPill(title: "Năm", value: info.canChiYearText)
+        SectionCard(title: "Can chi & Con giáp") {
+            HStack(spacing: 10) {
+                CanChiPill(title: "Ngày", value: viewModel.info.canChiDayText)
+                CanChiPill(title: "Tháng", value: viewModel.info.canChiMonthText)
+                CanChiPill(title: "Năm", value: viewModel.info.canChiYearText)
             }
         }
     }
-
-    private var detailCard: some View {
-        let info = viewModel.info
-
-        return SectionCard(title: "Thông tin vạn niên") {
-            VStack(spacing: MenuBarMetrics.elementSpacing) {
-                InfoRow(icon: "clock", label: "Giờ can chi", value: info.currentHourCanChiText)
-                InfoRow(icon: "calendar.badge.clock", label: "Ngày âm", value: info.lunarDateText)
-                HStack(spacing: MenuBarMetrics.elementSpacing) {
-                    StatTile(title: "Tuần", value: info.weekOfYearText)
-                    StatTile(title: "Trong năm", value: info.dayOfYearText)
+    
+    private var holidaysCard: some View {
+        SectionCard(title: "Sự kiện sắp tới") {
+            VStack(spacing: 8) {
+                ForEach(viewModel.info.upcomingHolidays.prefix(3)) { holiday in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(holiday.name).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
+                            Text(holiday.dateText).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        Text(holiday.daysUntil == 0 ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
+                            .font(.system(size: 10, weight: .bold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(holiday.daysUntil == 0 ? .red.opacity(0.1) : Color.accentColor.opacity(0.1), in: Capsule())
+                            .foregroundStyle(holiday.daysUntil == 0 ? .red : Color.accentColor)
+                    }
+                    .padding(10)
+                    .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
     }
 
     private var monthCalendarCard: some View {
-        let info = viewModel.info
-
-        return SectionCard(title: "Lịch tháng", trailingText: info.monthTitleText) {
-            VStack(spacing: MenuBarMetrics.calendarGridSpacing) {
-                Text("Số lớn: dương lịch • Số nhỏ: âm lịch • Chấm vàng: mùng 1 âm")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.quaternary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                HStack(spacing: MenuBarMetrics.calendarGridSpacing) {
-                    ForEach(weekdayHeaders, id: \.self) { weekday in
-                        Text(weekday)
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(weekday == "T7" || weekday == "CN" ? Color(nsColor: .systemRed).opacity(0.85) : Color.secondary)
+        SectionCard(title: "Lịch tháng", trailingView: {
+            HStack(spacing: 10) {
+                Button("Nay") { viewModel.goToToday() }.buttonStyle(.plain)
+                    .font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
+                
+                HStack(spacing: 6) {
+                    calendarNavButton(icon: "chevron.left") { viewModel.previousMonth() }
+                    Text(viewModel.info.monthTitleText).font(.system(size: 11, weight: .bold)).frame(width: 90)
+                    calendarNavButton(icon: "chevron.right") { viewModel.nextMonth() }
+                }
+            }
+        }) {
+            VStack(spacing: 8) {
+                HStack(spacing: 0) {
+                    ForEach(weekdayHeaders, id: \.self) { day in
+                        Text(day).font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(day == "T7" || day == "CN" ? .red.opacity(0.7) : .secondary)
                             .frame(maxWidth: .infinity)
                     }
                 }
-
-                Divider()
-                    .opacity(0.4)
-
-                LazyVGrid(columns: calendarColumns, spacing: MenuBarMetrics.calendarGridSpacing) {
-                    ForEach(Array(info.monthCells.enumerated()), id: \.element.id) { index, cell in
+                LazyVGrid(columns: calendarColumns, spacing: 6) {
+                    ForEach(Array(viewModel.info.monthCells.enumerated()), id: \.element.id) { index, cell in
                         MonthDayCellView(cell: cell, weekdayIndex: index % 7)
                     }
+                }
+            }
+        }
+    }
+
+    private var detailCard: some View {
+        SectionCard(title: "Thông tin khác") {
+            VStack(spacing: 10) {
+                InfoRow(icon: "calendar.badge.clock", label: "Ngày âm lịch", value: viewModel.info.lunarDateText)
+                HStack(spacing: 10) {
+                    StatTile(title: "Tuần thứ", value: viewModel.info.weekOfYearText)
+                    StatTile(title: "Ngày thứ", value: viewModel.info.dayOfYearText)
                 }
             }
         }
@@ -244,324 +255,187 @@ struct LunarMenuBarView: View {
     // MARK: - Helpers
 
     @ViewBuilder
-    private func toolbarIcon(systemName: String) -> some View {
-        Image(systemName: systemName)
-            .font(.system(size: 12, weight: .semibold))
-            .frame(width: 28, height: 24)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    private func toolbarButton(icon: String, help: String, color: Color = .primary, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(color.opacity(0.8))
+                .frame(width: 28, height: 28)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    @ViewBuilder
+    private func calendarNavButton(icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .bold))
+                .frame(width: 20, height: 20)
+                .background(Color.primary.opacity(0.05), in: Circle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func confirmExit() {
         let alert = NSAlert()
-        alert.alertStyle = .warning
         alert.messageText = "Thoát LunarV?"
-        alert.informativeText = "LunarV sẽ dừng chạy và biến mất khỏi menu bar."
-        alert.addButton(withTitle: "Thoát ứng dụng")
+        alert.addButton(withTitle: "Thoát")
         alert.addButton(withTitle: "Huỷ")
-
-        NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            NSApp.terminate(nil)
-        }
+        if alert.runModal() == .alertFirstButtonReturn { NSApp.terminate(nil) }
+    }
+    
+    private func copyCurrentDate() {
+        let info = viewModel.info
+        let text = "\(info.weekdayText), \(info.solarDateText) (Âm lịch: \(info.lunarDateText) năm \(info.canChiYearText))"
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 }
 
-// MARK: - Entrance Animation Modifier
+// MARK: - Reusable Components
 
-private struct EntranceAnimationModifier: ViewModifier {
-    let hasAppeared: Bool
-    let reduceMotion: Bool
-    let delay: Double
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 8)
-            .animation(
-                reduceMotion ? .none : .spring(duration: 0.4, bounce: 0.1).delay(delay),
-                value: hasAppeared
-            )
-    }
-}
-
-private extension View {
-    func entranceAnimation(hasAppeared: Bool, reduceMotion: Bool, delay: Double) -> some View {
-        modifier(EntranceAnimationModifier(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: delay))
-    }
-}
-
-// MARK: - SectionCard
-
-private struct SectionCard<Content: View>: View {
-    @Environment(\.controlActiveState) private var controlActiveState
-    @State private var isHovered = false
-
+private struct SectionCard<Content: View, Trailing: View>: View {
     let title: String
-    var trailingText: String? = nil
+    var trailingView: (() -> Trailing)? = nil
     @ViewBuilder var content: Content
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: MenuBarMetrics.sectionContentSpacing) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Spacer()
-                if let trailingText {
-                    Text(trailingText)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                }
-            }
+    init(title: String, @ViewBuilder trailingView: @escaping () -> Trailing, @ViewBuilder content: () -> Content) {
+        self.title = title; self.trailingView = trailingView; self.content = content()
+    }
+    init(title: String, @ViewBuilder content: () -> Content) where Trailing == EmptyView {
+        self.title = title; self.trailingView = nil; self.content = content()
+    }
 
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(.tertiary).tracking(1)
+                Spacer()
+                trailingView?()
+            }
             content
         }
-        .padding(MenuBarMetrics.sectionPadding)
-        .glassEffect(
-            isHovered && controlActiveState == .active
-                ? .regular.tint(Color.accentColor.opacity(0.12))
-                : .regular,
-            in: RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous))
-        .onHover { hovering in
-            withAnimation(.snappy(duration: 0.2)) {
-                isHovered = hovering
-            }
-        }
+        .padding(16)
+        .glassEffect(Material.regular, in: RoundedRectangle(cornerRadius: 20))
     }
 }
-
-// MARK: - CanChiPill
 
 private struct CanChiPill: View {
     let title: String
     let value: String
-
     var body: some View {
         VStack(spacing: 4) {
-            Text(title)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.tertiary)
-            Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .foregroundStyle(.primary)
-                .contentTransition(.numericText())
+            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+            Text(value).font(.system(size: 12, weight: .semibold))
         }
-        .frame(maxWidth: .infinity, minHeight: 56)
-        .padding(.vertical, 8)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .frame(maxWidth: .infinity).padding(.vertical, 10)
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
     }
 }
-
-// MARK: - InfoRow
 
 private struct InfoRow: View {
     let icon: String
     let label: String
     let value: String
-
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tint)
-                .frame(width: 24, height: 24)
-                .background(
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.08))
-                )
-            Text(label)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
+            Image(systemName: icon).font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
+                .frame(width: 24, height: 24).background(Color.accentColor.opacity(0.1), in: Circle())
+            Text(label).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
             Spacer()
-            Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-                .contentTransition(.numericText())
+            Text(value).font(.system(size: 12, weight: .semibold))
         }
     }
 }
-
-// MARK: - StatTile
 
 private struct StatTile: View {
     let title: String
     let value: String
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.tertiary)
-            Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .contentTransition(.numericText())
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+            Text(value).font(.system(size: 12, weight: .semibold))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading).padding(10)
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
     }
 }
-
-// MARK: - MonthDayCellView
 
 private struct MonthDayCellView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var isHovered = false
     let cell: LunarMonthDayCell
     let weekdayIndex: Int
+    @State private var isHovered = false
 
     var body: some View {
-        Group {
-            if let solarDay = cell.solarDay, let lunarDay = cell.lunarDay {
-                VStack(spacing: 1) {
-                    Text("\(solarDay)")
-                        .font(.system(size: 12, weight: cell.isToday ? .bold : .semibold, design: .rounded))
-                        .foregroundStyle(solarTextColor)
-                    Text("\(lunarDay)")
-                        .font(.system(size: 9, weight: .medium, design: .rounded))
-                        .foregroundStyle(lunarTextColor)
-                }
-                .frame(maxWidth: .infinity, minHeight: 36)
-                .padding(.vertical, 2)
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(backgroundColor)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(borderColor, lineWidth: cell.isToday ? 1.5 : isHovered ? 1 : 0.5)
-                )
-                .overlay(alignment: .topTrailing) {
-                    if cell.isFirstLunarDay {
-                        Circle()
-                            .fill(Color.orange)
-                            .frame(width: 5, height: 5)
-                            .padding(4)
-                    }
-                }
-                .scaleEffect(isHovered && !cell.isToday ? 1.05 : 1.0)
-                .onHover { hovering in
-                    withAnimation(.snappy(duration: 0.15)) {
-                        isHovered = hovering
-                    }
-                }
-            } else {
-                Color.clear
-                    .frame(maxWidth: .infinity, minHeight: 36)
+        VStack(spacing: 0) {
+            if let solar = cell.solarDay, let lunar = cell.lunarDay {
+                Text("\(solar)").font(.system(size: 13, weight: cell.isToday ? .bold : .semibold))
+                    .foregroundStyle(cell.isToday ? Color.accentColor : (cell.holiday != nil || weekdayIndex >= 5 ? .red.opacity(0.8) : .primary))
+                Text("\(lunar)").font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(cell.isToday ? Color.accentColor.opacity(0.8) : .secondary)
             }
         }
-    }
-
-    private var backgroundColor: Color {
-        if cell.isToday {
-            return Color.accentColor.opacity(colorScheme == .dark ? 0.30 : 0.20)
+        .frame(maxWidth: .infinity, minHeight: 38)
+        .background(cell.isToday ? Color.accentColor.opacity(0.15) : (isHovered ? Color.primary.opacity(0.05) : .clear), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(cell.isToday ? Color.accentColor.opacity(0.5) : .clear, lineWidth: 1.5))
+        .overlay(alignment: .topTrailing) {
+            if cell.holiday != nil { Circle().fill(.red).frame(width: 4).padding(4) }
+            else if cell.isFirstLunarDay { Circle().fill(.orange).frame(width: 4).padding(4) }
         }
-        if isHovered {
-            return Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.08)
-        }
-        return Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.03)
-    }
-
-    private var borderColor: Color {
-        if cell.isToday {
-            return Color.accentColor.opacity(0.8)
-        }
-        if isHovered {
-            return Color.accentColor.opacity(0.4)
-        }
-        return Color(nsColor: .separatorColor).opacity(0.3)
-    }
-
-    private var solarTextColor: Color {
-        if cell.isToday {
-            return .primary
-        }
-        if isWeekend {
-            return Color(nsColor: .systemRed).opacity(0.9)
-        }
-        return .primary
-    }
-
-    private var lunarTextColor: Color {
-        if cell.isToday {
-            return .primary
-        }
-        if isWeekend {
-            return Color(nsColor: .systemRed).opacity(0.75)
-        }
-        return .secondary
-    }
-
-    private var isWeekend: Bool {
-        weekdayIndex == 5 || weekdayIndex == 6
+        .onHover { h in withAnimation(.snappy(duration: 0.1)) { isHovered = h } }
     }
 }
-
-// MARK: - HeroChip
 
 private struct HeroChip: View {
     let icon: String
     let title: String
     let value: String
-
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                Text(value)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .foregroundStyle(.primary)
-                    .contentTransition(.numericText())
+                Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
+                Text(value).font(.system(size: 11, weight: .semibold)).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(10)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
-// MARK: - Preview
+// MARK: - Extensions
 
-#Preview {
-    LunarMenuBarView(viewModel: LunarMenuBarViewModel())
+extension View {
+    func glassEffect<S: Shape>(_ material: Material = .regular, tint: Color = .clear, in shape: S) -> some View {
+        self.background(material, in: shape)
+            .background(tint, in: shape)
+    }
+}
+
+private struct EntranceAnimationModifier: ViewModifier {
+    let hasAppeared: Bool
+    let reduceMotion: Bool
+    func body(content: Content) -> some View {
+        content.opacity(hasAppeared ? 1 : 0).offset(y: hasAppeared ? 0 : 10)
+            .animation(reduceMotion ? .none : .spring(duration: 0.6, bounce: 0.3), value: hasAppeared)
+    }
+}
+
+extension View {
+    func entranceAnimation(hasAppeared: Bool, reduceMotion: Bool) -> some View {
+        modifier(EntranceAnimationModifier(hasAppeared: hasAppeared, reduceMotion: reduceMotion))
+    }
 }
 
 // MARK: - Metrics
 
 private enum MenuBarMetrics {
-    static let panelSize = CGSize(width: 392, height: 576)
-
+    static let panelSize = CGSize(width: 360, height: 600)
     static let panelPadding: CGFloat = 16
-    static let verticalStackSpacing: CGFloat = 10
-    static let elementSpacing: CGFloat = 8
-    static let calendarGridSpacing: CGFloat = 5
-    static let calendarMinimumCellWidth: CGFloat = 30
-
-    static let heroCornerRadius: CGFloat = 20
-    static let heroPadding: CGFloat = 16
-    static let heroColumnSpacing: CGFloat = 12
-
-    static let sectionCornerRadius: CGFloat = 16
-    static let sectionPadding: CGFloat = 14
-    static let sectionContentSpacing: CGFloat = 10
+    static let verticalStackSpacing: CGFloat = 12
+    static let calendarGridSpacing: CGFloat = 6
+    static let calendarMinimumCellWidth: CGFloat = 32
 }

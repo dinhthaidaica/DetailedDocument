@@ -1,3 +1,7 @@
+//
+//  LunarV - Lịch Âm Việt Nam
+//  Phát triển bởi Phạm Hùng Tiến
+//
 import AppKit
 import Combine
 import Foundation
@@ -6,6 +10,10 @@ import Foundation
 final class LunarMenuBarViewModel: ObservableObject {
     @Published private(set) var menuBarTitle = "--/-- ÂL"
     @Published private(set) var info = LunarMenuBarInfo.placeholder
+    @Published private(set) var viewingDate: Date
+    
+    // Xuất bản settings để View có thể quan sát
+    @Published var settings: AppSettings
 
     private struct YearMonth: Hashable {
         let year: Int
@@ -16,7 +24,6 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private let solarCalendar: Calendar
     private let lunarConverter: any LunarDateConverting
-    private let settings: AppSettings
     private let vietnamTimeZone: TimeZone
     private var refreshTask: Task<Void, Never>?
     private var systemNotificationObservers: [NSObjectProtocol] = []
@@ -38,41 +45,45 @@ final class LunarMenuBarViewModel: ObservableObject {
         self.vietnamTimeZone = vietnamTimeZone
         self.solarCalendar = calendar
         self.lunarConverter = lunarConverter ?? VietnameseLunarCalendarConverter(timeZone: 7.0)
-        self.settings = settings ?? AppSettings.shared
+        
+        let targetSettings = settings ?? AppSettings.shared
+        self.settings = targetSettings
+        self.viewingDate = Date()
 
         startObservingSettings()
         startObservingSystemChanges()
         refresh()
     }
 
-    deinit {
-        refreshTask?.cancel()
-
-        let defaultCenter = NotificationCenter.default
-        for observer in systemNotificationObservers {
-            defaultCenter.removeObserver(observer)
-        }
-
-        let workspaceCenter = NSWorkspace.shared.notificationCenter
-        for observer in workspaceNotificationObservers {
-            workspaceCenter.removeObserver(observer)
-        }
-
-        settingsCancellables.removeAll()
-    }
-
     func refresh() {
         let now = Date()
-        guard let components = solarDayComponents(from: now) else {
-            return
+        updateMenuBarTitle(now: now)
+        updateInfo(now: now, viewingDate: viewingDate)
+        scheduleRefresh(from: now)
+    }
+
+    func nextMonth() {
+        if let next = solarCalendar.date(byAdding: .month, value: 1, to: viewingDate) {
+            viewingDate = next
+            updateInfo(now: Date(), viewingDate: viewingDate)
         }
+    }
 
-        let lunarDate = lunarConverter.solarToLunar(
-            day: components.day,
-            month: components.month,
-            year: components.year
-        )
+    func previousMonth() {
+        if let prev = solarCalendar.date(byAdding: .month, value: -1, to: viewingDate) {
+            viewingDate = prev
+            updateInfo(now: Date(), viewingDate: viewingDate)
+        }
+    }
 
+    func goToToday() {
+        viewingDate = Date()
+        updateInfo(now: viewingDate, viewingDate: viewingDate)
+    }
+
+    private func updateMenuBarTitle(now: Date) {
+        guard let components = solarDayComponents(from: now) else { return }
+        let lunarDate = lunarConverter.solarToLunar(day: components.day, month: components.month, year: components.year)
         let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: lunarDate.year)
         let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: lunarDate.year)
 
@@ -93,20 +104,37 @@ final class LunarMenuBarViewModel: ObservableObject {
             customTemplate: settings.customMenuBarTemplate,
             context: titleContext
         )
+    }
+
+    private func updateInfo(now: Date, viewingDate: Date) {
+        guard let nowComponents = solarDayComponents(from: now),
+              let viewingComponents = solarDayComponents(from: viewingDate) else { return }
+
+        let lunarDate = lunarConverter.solarToLunar(
+            day: nowComponents.day,
+            month: nowComponents.month,
+            year: nowComponents.year
+        )
+
+        let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: lunarDate.year)
+        let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: lunarDate.year)
+
         info = buildInfo(
             now: now,
-            solar: components,
+            viewingDate: viewingDate,
+            solar: nowComponents,
+            viewingSolar: viewingComponents,
             lunar: lunarDate,
             canChiYear: canChiYear,
             zodiac: zodiac
         )
-
-        scheduleRefresh(from: now)
     }
 
     private func buildInfo(
         now: Date,
+        viewingDate: Date,
         solar: (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?),
+        viewingSolar: (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?),
         lunar: LunarDate,
         canChiYear: String,
         zodiac: String
@@ -121,10 +149,12 @@ final class LunarMenuBarViewModel: ObservableObject {
             calendar: solarCalendar
         )
 
-        let monthCells = buildMonthCells(year: solar.year, month: solar.month, today: solar.day)
-        let monthTitle = "Tháng \(solar.month) năm \(solar.year)"
+        let monthCells = buildMonthCells(year: viewingSolar.year, month: viewingSolar.month, today: solar)
+        let monthTitle = "Tháng \(viewingSolar.month) năm \(viewingSolar.year)"
 
         let lunarMonthText = lunar.isLeapMonth ? "Tháng \(lunar.month) nhuận" : "Tháng \(lunar.month)"
+        
+        let phase = lunarPhase(lunarDay: lunar.day)
 
         return LunarMenuBarInfo(
             weekdayText: Self.weekdayName(from: solar.weekday),
@@ -142,11 +172,14 @@ final class LunarMenuBarViewModel: ObservableObject {
             weekOfYearText: formattedWeekOfYear(solar.weekOfYear),
             dayOfYearText: formattedDayOfYear(solar.dayOfYear),
             monthTitleText: monthTitle,
-            monthCells: monthCells
+            monthCells: monthCells,
+            lunarPhaseIcon: phase.icon,
+            lunarPhaseName: phase.name,
+            upcomingHolidays: calculateUpcomingHolidays(now: now)
         )
     }
 
-    private func buildMonthCells(year: Int, month: Int, today: Int) -> [LunarMonthDayCell] {
+    private func buildMonthCells(year: Int, month: Int, today: (day: Int, month: Int, year: Int, weekday: Int?, weekOfYear: Int?, dayOfYear: Int?)) -> [LunarMonthDayCell] {
         let key = YearMonth(year: year, month: month)
         let baseCells: [LunarMonthDayCell]
 
@@ -158,6 +191,8 @@ final class LunarMenuBarViewModel: ObservableObject {
             baseCells = newCells
         }
 
+        let isViewingCurrentMonth = (year == today.year && month == today.month)
+
         return baseCells.map { cell in
             guard let solarDay = cell.solarDay else {
                 return cell
@@ -166,8 +201,9 @@ final class LunarMenuBarViewModel: ObservableObject {
                 id: cell.id,
                 solarDay: solarDay,
                 lunarDay: cell.lunarDay,
-                isToday: solarDay == today,
-                isFirstLunarDay: cell.isFirstLunarDay
+                isToday: isViewingCurrentMonth && solarDay == today.day,
+                isFirstLunarDay: cell.isFirstLunarDay,
+                holiday: cell.holiday
             )
         }
     }
@@ -187,30 +223,69 @@ final class LunarMenuBarViewModel: ObservableObject {
         var id = 0
 
         for _ in 0 ..< leadingEmptyCells {
-            cells.append(LunarMonthDayCell(id: id, solarDay: nil, lunarDay: nil, isToday: false, isFirstLunarDay: false))
+            cells.append(LunarMonthDayCell(id: id, solarDay: nil, lunarDay: nil, isToday: false, isFirstLunarDay: false, holiday: nil))
             id += 1
         }
 
         for solarDay in dayRange {
             let lunarDate = lunarConverter.solarToLunar(day: solarDay, month: month, year: year)
+            let holiday = HolidayProvider.solarHoliday(day: solarDay, month: month) ?? HolidayProvider.lunarHoliday(day: lunarDate.day, month: lunarDate.month)
+            
             cells.append(
                 LunarMonthDayCell(
                     id: id,
                     solarDay: solarDay,
                     lunarDay: lunarDate.day,
                     isToday: false,
-                    isFirstLunarDay: lunarDate.day == 1
+                    isFirstLunarDay: lunarDate.day == 1,
+                    holiday: holiday
                 )
             )
             id += 1
         }
 
         while cells.count % 7 != 0 {
-            cells.append(LunarMonthDayCell(id: id, solarDay: nil, lunarDay: nil, isToday: false, isFirstLunarDay: false))
+            cells.append(LunarMonthDayCell(id: id, solarDay: nil, lunarDay: nil, isToday: false, isFirstLunarDay: false, holiday: nil))
             id += 1
         }
 
         return cells
+    }
+
+    private func lunarPhase(lunarDay: Int) -> (icon: String, name: String) {
+        switch lunarDay {
+        case 1: return ("moonphase.new.moon", "Trăng mới")
+        case 2...7: return ("moonphase.waxing.crescent", "Trăng lưỡi liềm")
+        case 8: return ("moonphase.first.quarter", "Trăng bán nguyệt đầu tháng")
+        case 9...14: return ("moonphase.waxing.gibbous", "Trăng khuyết đầu tháng")
+        case 15: return ("moonphase.full.moon", "Trăng tròn")
+        case 16...22: return ("moonphase.waning.gibbous", "Trăng khuyết cuối tháng")
+        case 23: return ("moonphase.last.quarter", "Trăng bán nguyệt cuối tháng")
+        case 24...29: return ("moonphase.waning.crescent", "Trăng lưỡi liềm cuối tháng")
+        case 30: return ("moonphase.new.moon", "Trăng mới")
+        default: return ("moon.fill", "--")
+        }
+    }
+
+    private func calculateUpcomingHolidays(now: Date) -> [LunarHoliday] {
+        var holidays: [LunarHoliday] = []
+        
+        // Check next 30 days
+        for i in 0..<31 {
+            if let date = solarCalendar.date(byAdding: .day, value: i, to: now),
+               let comp = solarDayComponents(from: date) {
+                
+                let lunar = lunarConverter.solarToLunar(day: comp.day, month: comp.month, year: comp.year)
+                
+                if let solarHoliday = HolidayProvider.solarHoliday(day: comp.day, month: comp.month) {
+                    holidays.append(LunarHoliday(name: solarHoliday, dateText: "\(comp.day)/\(comp.month)", isLunar: false, daysUntil: i))
+                } else if let lunarHoliday = HolidayProvider.lunarHoliday(day: lunar.day, month: lunar.month) {
+                    holidays.append(LunarHoliday(name: lunarHoliday, dateText: "\(lunar.day)/\(lunar.month) ÂL", isLunar: true, daysUntil: i))
+                }
+            }
+        }
+        
+        return holidays.sorted { $0.daysUntil < $1.daysUntil }
     }
 
     private func formattedLunarDate(from lunarDate: LunarDate) -> String {
@@ -269,10 +344,11 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     private func startObservingSettings() {
-        Publishers.CombineLatest(settings.$menuBarDisplayPreset, settings.$customMenuBarTemplate)
-            .dropFirst()
-            .sink { [weak self] _, _ in
+        // Quan sát thay đổi từ settings object trực tiếp
+        settings.objectWillChange
+            .sink { [weak self] _ in
                 Task { @MainActor [weak self] in
+                    // Kích hoạt refresh khi bất kỳ setting nào thay đổi
                     self?.refresh()
                 }
             }
