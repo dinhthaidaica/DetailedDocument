@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Resources/LunarV_icon.png" alt="LunarV icon" width="148" />
+</p>
+
 # LunarV — Lịch Âm Việt Nam
 
 Ứng dụng macOS hiển thị **lịch âm Việt Nam** trực tiếp trên thanh menu, cập nhật theo thời gian thực.

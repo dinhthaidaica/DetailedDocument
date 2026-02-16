@@ -73,6 +73,10 @@ struct AppSettingsView: View {
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 4)
                     }
+
+                    Divider()
+                    menuBarTitleFontControl
+                    menuBarLeadingIconControl
                 }
                 .padding(.vertical, 8)
             }
@@ -112,6 +116,84 @@ struct AppSettingsView: View {
             }
             .padding(10)
             .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private var menuBarTitleFontControl: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Kích cỡ chữ trên Menu Bar")
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer(minLength: 0)
+                Text("\(Int(settings.menuBarTitleFontSizeValue))pt")
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+
+            Slider(
+                value: menuBarTitleFontSizeBinding,
+                in: AppSettings.menuBarTitleFontSizeRange,
+                step: 1
+            )
+
+            HStack {
+                Text("11pt")
+                Spacer(minLength: 0)
+                Text("16pt")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            HStack {
+                Text("Cỡ chữ này áp dụng cho phần ngày hiển thị trên thanh Menu Bar.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 0)
+
+                Button("Mặc định 12pt") {
+                    settings.setMenuBarTitleFontSize(AppSettings.defaultMenuBarTitleFontSize)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+
+    private var menuBarLeadingIconControl: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Hiển thị icon bên trái ngày trên Menu Bar", isOn: menuBarLeadingIconVisibilityBinding)
+
+            if settings.showMenuBarLeadingIconValue {
+                HStack {
+                    Text("Kích cỡ icon")
+                        .font(.system(size: 13, weight: .semibold))
+                    Spacer(minLength: 0)
+                    Text("\(Int(settings.menuBarLeadingIconSizeValue))pt")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+
+                Slider(
+                    value: menuBarLeadingIconSizeBinding,
+                    in: AppSettings.menuBarLeadingIconSizeRange,
+                    step: 1
+                )
+
+                HStack {
+                    Text("10pt")
+                    Spacer(minLength: 0)
+                    Text("18pt")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                Text("Apple khuyến nghị icon menu bar nên gọn để cân bằng với chữ và độ dày thanh menu.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Icon và chữ hiện có hai thanh điều chỉnh riêng.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -218,7 +300,9 @@ struct AppSettingsView: View {
             Text("Phát triển bởi Phạm Hùng Tiến, mang tinh hoa lịch cổ truyền lên hệ điều hành macOS hiện đại.")
                 .font(.callout).multilineTextAlignment(.center).padding(.horizontal, 50)
 
-            Spacer()
+            donationQRCodeCard
+
+            Spacer(minLength: 0)
 
             Button(role: .destructive) { isShowingResetDialog = true } label: {
                 Label("Khôi phục cài đặt gốc", systemImage: "arrow.counterclockwise")
@@ -228,18 +312,55 @@ struct AppSettingsView: View {
         .padding(.top, 40)
     }
 
+    private var donationQRCodeCard: some View {
+        VStack(spacing: 10) {
+            Text("Ủng hộ phát triển LunarV")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.primary)
+
+            Image("QRDonate")
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 180, height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+
+            Text("Quét mã QR để ủng hộ dự án.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
+    }
+
     // MARK: - Helpers
 
     private var previewCard: some View {
         VStack(spacing: 8) {
             Text("XEM TRƯỚC").font(.system(size: 9, weight: .heavy)).foregroundStyle(.tertiary)
             HStack {
-                Text(previewMenuBarTitle)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(settings.customAccentColor.opacity(0.12), in: Capsule())
-                    .overlay(Capsule().stroke(settings.customAccentColor.opacity(0.3), lineWidth: 1))
+                HStack(spacing: 6) {
+                    if settings.showMenuBarLeadingIconValue {
+                        Image("LunarVMenubar")
+                            .resizable()
+                            .renderingMode(.template)
+                            .interpolation(.high)
+                            .scaledToFit()
+                            .frame(
+                                width: menuBarLeadingIconPreviewSize,
+                                height: menuBarLeadingIconPreviewSize
+                            )
+                    }
+
+                    Text(previewMenuBarTitle)
+                        .font(.system(size: settings.menuBarTitleFontSizeCGFloat, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(settings.customAccentColor.opacity(0.12), in: Capsule())
+                .overlay(Capsule().stroke(settings.customAccentColor.opacity(0.3), lineWidth: 1))
             }
         }
         .frame(maxWidth: .infinity)
@@ -262,6 +383,32 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         )
+    }
+
+    private var menuBarTitleFontSizeBinding: Binding<Double> {
+        Binding(
+            get: { settings.menuBarTitleFontSizeValue },
+            set: { settings.setMenuBarTitleFontSize($0) }
+        )
+    }
+
+    private var menuBarLeadingIconSizeBinding: Binding<Double> {
+        Binding(
+            get: { settings.menuBarLeadingIconSizeValue },
+            set: { settings.setMenuBarLeadingIconSize($0) }
+        )
+    }
+
+    private var menuBarLeadingIconVisibilityBinding: Binding<Bool> {
+        Binding(
+            get: { settings.showMenuBarLeadingIconValue },
+            set: { settings.setShowMenuBarLeadingIcon($0) }
+        )
+    }
+
+    private var menuBarLeadingIconPreviewSize: CGFloat {
+        let statusBarMax = max(NSStatusBar.system.thickness - 2, 10)
+        return min(settings.menuBarLeadingIconSizeCGFloat, statusBarMax)
     }
 
     private var launchAtLoginBinding: Binding<Bool> {

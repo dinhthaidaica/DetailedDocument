@@ -10,7 +10,8 @@
 		460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB152F42BC8C001E0406 /* WidgetKit.framework */; };
 		460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB172F42BC8C001E0406 /* SwiftUI.framework */; };
 		460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		462A57A02F425E9500853CB4 /* Lunar.icon in Resources */ = {isa = PBXBuildFile; fileRef = 462A579F2F425E9500853CB4 /* Lunar.icon */; };
+		46CF02F92F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
+		46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,7 +43,7 @@
 		460CAB152F42BC8C001E0406 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		460CAB172F42BC8C001E0406 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		462A574B2F424D1000853CB4 /* LunarV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LunarV.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		462A579F2F425E9500853CB4 /* Lunar.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Lunar.icon; sourceTree = "<group>"; };
+		46CF02F82F4306BF007E6849 /* LunarV.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = LunarV.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -108,7 +109,7 @@
 		462A57422F424D1000853CB4 = {
 			isa = PBXGroup;
 			children = (
-				462A579F2F425E9500853CB4 /* Lunar.icon */,
+				46CF02F82F4306BF007E6849 /* LunarV.icon */,
 				462A574D2F424D1000853CB4 /* LunarV */,
 				460CAB192F42BC8C001E0406 /* LunarVWidget */,
 				460CAB142F42BC8C001E0406 /* Frameworks */,
@@ -227,6 +228,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46CF02F92F4306BF007E6849 /* LunarV.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,7 +236,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				462A57A02F425E9500853CB4 /* Lunar.icon in Resources */,
+				46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -453,7 +455,7 @@
 		462A57572F424D1100853CB4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Lunar;
+				ASSETCATALOG_COMPILER_APPICON_NAME = LunarV;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -487,7 +489,7 @@
 		462A57582F424D1100853CB4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Lunar;
+				ASSETCATALOG_COMPILER_APPICON_NAME = LunarV;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

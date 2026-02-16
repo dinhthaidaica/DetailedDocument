@@ -121,10 +121,17 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
 @MainActor
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
+    static let defaultMenuBarTitleFontSize: Double = 12
+    static let menuBarTitleFontSizeRange: ClosedRange<Double> = 11 ... 16
+    static let defaultMenuBarLeadingIconSize: Double = 14
+    static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
     @AppStorage("settings.menuBar.customTemplate") var customMenuBarTemplate: String = ""
+    @AppStorage("settings.menuBar.titleFontSize") private var menuBarTitleFontSizeStorage: Double = AppSettings.defaultMenuBarTitleFontSize
+    @AppStorage("settings.menuBar.showLeadingIcon") private var showMenuBarLeadingIconStorage: Bool = true
+    @AppStorage("settings.menuBar.leadingIconSize") private var menuBarLeadingIconSizeStorage: Double = AppSettings.defaultMenuBarLeadingIconSize
 
     // MARK: - Panel Sections Visibility
     @AppStorage("settings.panel.showHeroCard") var showHeroCard: Bool = true
@@ -150,7 +157,55 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.notifications.windowDays") var notificationWindowDays: Int = 60
 
     private init() {
+        normalizeMenuBarTitleFontSizeIfNeeded()
+        normalizeMenuBarLeadingIconSizeIfNeeded()
         normalizePanelCardOrderIfNeeded()
+    }
+
+    var menuBarTitleFontSizeValue: Double {
+        Self.clampedMenuBarTitleFontSize(menuBarTitleFontSizeStorage)
+    }
+
+    var menuBarTitleFontSizeCGFloat: CGFloat {
+        CGFloat(menuBarTitleFontSizeValue)
+    }
+
+    func setMenuBarTitleFontSize(_ size: Double) {
+        let clamped = Self.clampedMenuBarTitleFontSize(size)
+        guard clamped != menuBarTitleFontSizeStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarTitleFontSizeStorage = clamped
+    }
+
+    var showMenuBarLeadingIconValue: Bool {
+        showMenuBarLeadingIconStorage
+    }
+
+    func setShowMenuBarLeadingIcon(_ isVisible: Bool) {
+        guard isVisible != showMenuBarLeadingIconStorage else {
+            return
+        }
+        objectWillChange.send()
+        showMenuBarLeadingIconStorage = isVisible
+    }
+
+    var menuBarLeadingIconSizeValue: Double {
+        Self.clampedMenuBarLeadingIconSize(menuBarLeadingIconSizeStorage)
+    }
+
+    var menuBarLeadingIconSizeCGFloat: CGFloat {
+        CGFloat(menuBarLeadingIconSizeValue)
+    }
+
+    func setMenuBarLeadingIconSize(_ size: Double) {
+        let clamped = Self.clampedMenuBarLeadingIconSize(size)
+        guard clamped != menuBarLeadingIconSizeStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarLeadingIconSizeStorage = clamped
     }
 
     var panelCardOrder: [PanelCardKind] {
@@ -212,6 +267,9 @@ final class AppSettings: ObservableObject {
     func resetMenuBarDisplaySettings() {
         menuBarDisplayPreset = .compact
         customMenuBarTemplate = ""
+        setMenuBarTitleFontSize(Self.defaultMenuBarTitleFontSize)
+        setShowMenuBarLeadingIcon(true)
+        setMenuBarLeadingIconSize(Self.defaultMenuBarLeadingIconSize)
     }
     
     func resetAllSettings() {
@@ -238,6 +296,30 @@ final class AppSettings: ObservableObject {
             return
         }
         panelCardOrderRaw = normalized
+    }
+
+    private func normalizeMenuBarTitleFontSizeIfNeeded() {
+        let normalized = Self.clampedMenuBarTitleFontSize(menuBarTitleFontSizeStorage)
+        guard normalized != menuBarTitleFontSizeStorage else {
+            return
+        }
+        menuBarTitleFontSizeStorage = normalized
+    }
+
+    private func normalizeMenuBarLeadingIconSizeIfNeeded() {
+        let normalized = Self.clampedMenuBarLeadingIconSize(menuBarLeadingIconSizeStorage)
+        guard normalized != menuBarLeadingIconSizeStorage else {
+            return
+        }
+        menuBarLeadingIconSizeStorage = normalized
+    }
+
+    private static func clampedMenuBarTitleFontSize(_ value: Double) -> Double {
+        min(max(value, menuBarTitleFontSizeRange.lowerBound), menuBarTitleFontSizeRange.upperBound)
+    }
+
+    private static func clampedMenuBarLeadingIconSize(_ value: Double) -> Double {
+        min(max(value, menuBarLeadingIconSizeRange.lowerBound), menuBarLeadingIconSizeRange.upperBound)
     }
 }
 
