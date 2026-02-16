@@ -1,6 +1,6 @@
 //
-//  LunarV - Lich Am Viet Nam
-//  Phat trien boi Pham Hung Tien
+//  LunarV - Lịch Âm Việt Nam
+//  Phát triển bởi Phạm Hùng Tiến
 //
 import Foundation
 import WidgetKit

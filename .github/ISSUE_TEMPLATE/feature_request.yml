@@ -1,28 +1,28 @@
-name: Feature request
-description: Suggest an improvement
+name: Đề xuất tính năng
+description: Đề xuất cải tiến hoặc tính năng mới
 labels: [enhancement]
 body:
   - type: input
     id: summary
     attributes:
-      label: Feature summary
-      placeholder: Brief description
+      label: Tóm tắt tính năng
+      placeholder: Mô tả ngắn gọn tính năng
     validations:
       required: true
   - type: textarea
     id: problem
     attributes:
-      label: Problem statement
-      description: What problem does this solve?
+      label: Vấn đề cần giải quyết
+      description: Tính năng này giải quyết vấn đề gì?
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed solution
+      label: Giải pháp đề xuất
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
+      label: Phương án thay thế đã cân nhắc

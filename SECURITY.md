@@ -1,25 +1,23 @@
-# Security Policy
+# Chính sách bảo mật
 
-## Supported Versions
+## Phiên bản được hỗ trợ
 
-This project is currently in early development.
-Security fixes will be applied to the `main` branch.
+Các bản vá bảo mật sẽ được áp dụng trên nhánh `main` (phiên bản mới nhất).
 
-## Reporting a Vulnerability
+## Báo cáo lỗ hổng bảo mật
 
-Please do not open public issues for sensitive vulnerabilities.
+Vui lòng **không** tạo issue công khai cho các lỗ hổng bảo mật nhạy cảm.
 
-Use one of these options:
+Thay vào đó, hãy sử dụng một trong các cách sau:
 
-1. GitHub Security Advisories (preferred)
-2. Private contact with repository maintainer
+1. **GitHub Security Advisories** (ưu tiên) — tại tab Security của repository.
+2. **Liên hệ trực tiếp** với người quản lý dự án.
 
-When reporting, include:
+Khi báo cáo, vui lòng cung cấp:
 
-- A clear description of the issue
-- Steps to reproduce
-- Impact assessment
-- Suggested mitigation (if available)
+- Mô tả rõ ràng về lỗ hổng.
+- Các bước tái hiện.
+- Đánh giá mức độ ảnh hưởng.
+- Đề xuất khắc phục (nếu có).
 
-We will acknowledge reports as quickly as possible and coordinate disclosure
-responsibly.
+Chúng tôi sẽ phản hồi trong thời gian sớm nhất và phối hợp công bố một cách có trách nhiệm.

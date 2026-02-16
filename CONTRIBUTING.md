@@ -1,51 +1,53 @@
-# Contributing Guide
+# Hướng dẫn đóng góp
 
-Thank you for contributing to LunarV.
+Cảm ơn bạn đã quan tâm đến LunarV! Dưới đây là hướng dẫn để bạn có thể đóng góp hiệu quả.
 
-## Development Requirements
+## Yêu cầu phát triển
 
-- macOS
-- Xcode (latest stable recommended)
-- Swift toolchain included with Xcode
+- macOS 26.0 trở lên
+- Xcode phiên bản ổn định mới nhất
+- Swift toolchain đi kèm Xcode
 
-## Local Build
+## Build trên máy
 
 ```bash
 xcodebuild -project LunarV.xcodeproj -scheme LunarV -configuration Debug -sdk macosx build
 ```
 
-## Branching
+## Quy ước nhánh
 
-- `main`: stable branch.
-- Use feature branches for changes, for example:
+- `main`: nhánh ổn định, luôn ở trạng thái có thể release.
+- Tạo nhánh riêng cho mỗi thay đổi, ví dụ:
   - `feat/menu-ui-improvements`
   - `fix/lunar-conversion-edge-case`
 
-## Commit Messages
+## Quy ước commit
 
-Use clear, scoped messages. Conventional Commits are recommended:
+Sử dụng [Conventional Commits](https://www.conventionalcommits.org/):
 
-- `feat: ...`
-- `fix: ...`
-- `refactor: ...`
-- `docs: ...`
-- `chore: ...`
+| Prefix | Ý nghĩa |
+|---|---|
+| `feat:` | Tính năng mới |
+| `fix:` | Sửa lỗi |
+| `refactor:` | Tái cấu trúc code |
+| `docs:` | Cập nhật tài liệu |
+| `chore:` | Công việc bảo trì |
 
-## Pull Requests
+## Pull Request
 
-Before opening a PR:
+Trước khi mở PR, hãy đảm bảo:
 
-1. Build successfully.
-2. Keep changes focused.
-3. Update documentation if behavior changes.
-4. Add tests where applicable.
+1. Build thành công trên máy.
+2. Thay đổi tập trung vào một mục đích duy nhất.
+3. Cập nhật tài liệu nếu hành vi ứng dụng thay đổi.
+4. Bổ sung test nếu có thể.
 
-## Code Style
+## Quy chuẩn code
 
-- Follow existing Swift style and naming.
-- Prefer semantic colors/materials for macOS UI.
-- Keep business logic in `ViewModel`/`Core`, keep Views declarative.
+- Tuân thủ style Swift hiện có trong dự án.
+- Sử dụng semantic colors và materials cho giao diện macOS.
+- Giữ business logic trong `ViewModel` / `Core`, Views chỉ khai báo giao diện.
 
-## Reporting Issues
+## Báo lỗi
 
-Use GitHub Issues and select the relevant issue template.
+Sử dụng [GitHub Issues](../../issues/new/choose) và chọn mẫu phù hợp.

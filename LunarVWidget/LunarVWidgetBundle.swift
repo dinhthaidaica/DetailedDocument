@@ -1,7 +1,5 @@
 //
-//  LunarVWidgetBundle.swift
-//  LunarVWidget
-//
+//  LunarV - Lịch Âm Việt Nam
 //  Phát triển bởi Phạm Hùng Tiến
 //
 

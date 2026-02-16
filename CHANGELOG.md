@@ -1,18 +1,19 @@
-# Changelog
+# Nhật ký thay đổi
 
-All notable changes to this project will be documented in this file.
+Các thay đổi đáng chú ý của dự án được ghi nhận tại đây.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Dự án tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Chưa phát hành]
 
-## [0.1.0] - 2026-02-16
+## [0.1.0] — 2026-02-16
 
-### Added
+### Thêm mới
 
-- Menu bar lunar calendar application architecture (`App/Core/Features`).
-- Vietnamese lunar conversion core and metadata (Can Chi, solar term, zodiac, hour).
-- Native-style macOS menu panel UI.
-- Auto-refresh scheduler and calendar month mapping view.
-- Repository standards files (license, docs, CI, templates).
+- Kiến trúc ứng dụng lịch âm trên thanh menu (`App/Core/Features`).
+- Thuật toán chuyển đổi âm lịch Việt Nam và metadata (Can Chi, tiết khí, con giáp, giờ hoàng đạo).
+- Giao diện panel thanh menu phong cách macOS thuần.
+- Bộ lập lịch tự động làm mới và lưới tháng dương-âm.
+- Widget Extension cho Desktop và Notification Center.
+- Các file tiêu chuẩn cho repository (giấy phép, tài liệu, CI, templates).

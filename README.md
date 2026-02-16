@@ -1,91 +1,90 @@
-# LunarV
+# LunarV — Lịch Âm Việt Nam
 
-A native macOS menu bar app that shows the Vietnamese lunar calendar (`Âm lịch`) in real time.
+Ứng dụng macOS hiển thị **lịch âm Việt Nam** trực tiếp trên thanh menu, cập nhật theo thời gian thực.
 
-## Highlights
+## Tính năng
 
-- Real-time lunar date updates directly in the menu bar.
-- Vietnamese calendar metadata:
-  - Can Chi (day, month, year)
-  - Solar term (`Tiết khí`)
-  - Zodiac
-  - Can Chi hour
-- Monthly grid with solar/lunar day mapping.
-- Native macOS visual style using `MenuBarExtra`, `NSVisualEffectView`, and semantic colors/materials.
-- Automatic refresh on:
-  - minute boundaries
-  - system clock changes
-  - timezone changes
-  - day changes
-  - wake from sleep
+- Hiển thị ngày âm lịch trên thanh menu, tự động cập nhật theo thời gian thực.
+- Thông tin lịch Việt Nam đầy đủ:
+  - Can Chi (ngày, tháng, năm)
+  - Tiết khí
+  - Con giáp
+  - Giờ hoàng đạo (Can Chi theo giờ)
+- Lưới tháng hiển thị song song ngày dương / ngày âm.
+- Widget cho Desktop và Notification Center.
+- Giao diện macOS thuần với `MenuBarExtra`, `NSVisualEffectView` và semantic colors.
+- Tự động làm mới khi:
+  - Sang phút mới
+  - Thay đổi đồng hồ hệ thống
+  - Thay đổi múi giờ
+  - Sang ngày mới
+  - Máy thức dậy từ chế độ ngủ
 
-## Tech Stack
+## Yêu cầu hệ thống
 
-- Swift 5
-- SwiftUI (macOS)
-- Xcode project (`.xcodeproj`)
+- macOS 26.0 trở lên
+- Chip Apple Silicon hoặc Intel
 
-## Project Structure
+## Cài đặt
+
+### Tải về
+
+Tải file `.dmg` mới nhất từ trang [Releases](../../releases/latest), mở DMG và kéo **LunarV** vào thư mục **Applications**.
+
+### Build từ mã nguồn
+
+1. Mở `LunarV.xcodeproj` bằng Xcode.
+2. Chọn scheme `LunarV`.
+3. Nhấn Run (⌘R).
+
+Hoặc build bằng dòng lệnh:
+
+```bash
+xcodebuild -project LunarV.xcodeproj -scheme LunarV -configuration Release -sdk macosx build
+```
+
+## Công nghệ
+
+| Thành phần | Chi tiết |
+|---|---|
+| Ngôn ngữ | Swift 5 |
+| UI | SwiftUI (macOS) |
+| Widget | WidgetKit |
+| Kiến trúc | MVVM |
+| Build | Xcode (`.xcodeproj`) |
+
+## Cấu trúc dự án
 
 ```text
 LunarV/
-  App/
-    LunarVApp.swift
-  Core/
-    LunarCalendar/
-      JulianDay.swift
-      LunarDate.swift
-      VietnameseLunarCalendarConverter.swift
-      VietnameseCalendarMetadata.swift
-  Features/
-    MenuBar/
-      LunarMenuBarModels.swift
-      LunarMenuBarViewModel.swift
-      LunarMenuBarView.swift
+├── App/                    Điểm khởi chạy ứng dụng
+├── Core/
+│   ├── LunarCalendar/
+│   │   ├── Algorithms/     Thuật toán chuyển đổi âm lịch
+│   │   ├── Models/          Các model dữ liệu
+│   │   └── Services/        Dịch vụ cung cấp ngày âm lịch
+│   ├── MenuBar/             Định dạng tiêu đề thanh menu
+│   ├── Settings/            Cài đặt ứng dụng
+│   └── System/              Khởi động cùng hệ thống
+├── Features/
+│   ├── MenuBar/             Giao diện & logic thanh menu
+│   └── Settings/            Giao diện cài đặt
+LunarVWidget/                Widget Extension
 ```
 
-## Getting Started
+## Độ chính xác
 
-1. Open `LunarV.xcodeproj` in Xcode.
-2. Select scheme `LunarV`.
-3. Run on macOS.
+Phép chuyển đổi âm lịch được tính theo múi giờ Việt Nam (`Asia/Ho_Chi_Minh`, UTC+7) để đảm bảo kết quả nhất quán với lịch âm thực tế.
 
-Or build from CLI:
+## Đóng góp
 
-```bash
-xcodebuild -project LunarV.xcodeproj -scheme LunarV -configuration Debug -sdk macosx build
-```
+Vui lòng đọc [Hướng dẫn đóng góp](CONTRIBUTING.md) trước khi tạo Pull Request.
 
-## Release DMG (GitHub Actions)
+## Nhật ký thay đổi
 
-- Workflow: `.github/workflows/release-dmg.yml`
-- Auto trigger when pushing tag `v*.*.*` (for example `v1.0.0`)
-- Manual trigger from **Actions > Release DMG > Run workflow** (optional `version`)
-- Output: release `.dmg` with:
-  - `LunarV.app`
-  - `Applications` shortcut (drag-and-drop install style)
-- Upload thêm:
-  - DMG artifact
-  - build log artifact
+Xem [CHANGELOG.md](CHANGELOG.md) để theo dõi lịch sử phát triển.
 
-## Accuracy Notes
+## Giấy phép
 
-- Lunar conversion is calculated using Vietnam timezone (`Asia/Ho_Chi_Minh`, UTC+7).
-- Display and conversion are intentionally aligned to Vietnam time for consistent results.
-
-## Contributing
-
-Please read:
-
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-
-## Changelog
-
-Project history is tracked in `CHANGELOG.md`.
-
-## License
-
-Licensed under **GNU Affero General Public License v3.0 (AGPL-3.0-only)**.
-See `LICENSE` for full text.
+Phân phối theo giấy phép **GNU Affero General Public License v3.0 (AGPL-3.0-only)**.
+Xem file [LICENSE](LICENSE) để biết chi tiết.

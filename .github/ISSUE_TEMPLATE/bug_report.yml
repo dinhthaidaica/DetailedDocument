@@ -1,22 +1,22 @@
-name: Bug report
-description: Report a reproducible bug
+name: Báo lỗi
+description: Báo cáo lỗi có thể tái hiện
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        Please provide enough details to reproduce the issue.
+        Vui lòng cung cấp đủ thông tin để có thể tái hiện lỗi.
   - type: input
     id: summary
     attributes:
-      label: Summary
-      placeholder: Short bug summary
+      label: Tóm tắt
+      placeholder: Mô tả ngắn gọn lỗi gặp phải
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Steps to reproduce
+      label: Các bước tái hiện
       placeholder: |
         1. ...
         2. ...
@@ -26,17 +26,17 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: Hành vi mong đợi
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Actual behavior
+      label: Hành vi thực tế
     validations:
       required: true
   - type: input
     id: environment
     attributes:
-      label: Environment
-      placeholder: macOS version, Xcode version
+      label: Môi trường
+      placeholder: Phiên bản macOS, phiên bản Xcode
