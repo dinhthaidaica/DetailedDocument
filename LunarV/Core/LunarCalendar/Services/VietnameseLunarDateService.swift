@@ -60,6 +60,43 @@ struct VietnameseLunarDateService {
         return lunarDate(day: solar.day, month: solar.month, year: solar.year)
     }
 
+    func solarDate(from targetLunarDate: LunarDate, searchGregorianYears: ClosedRange<Int>? = nil) -> SolarDateComponents? {
+        let searchRange = searchGregorianYears ?? (targetLunarDate.year - 1)...(targetLunarDate.year + 1)
+
+        for year in searchRange {
+            guard
+                let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
+                let months = calendar.range(of: .month, in: .year, for: startOfYear)
+            else {
+                continue
+            }
+
+            for month in months {
+                guard
+                    let monthStart = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+                    let days = calendar.range(of: .day, in: .month, for: monthStart)
+                else {
+                    continue
+                }
+
+                for day in days {
+                    let resolvedLunarDate = lunarDate(day: day, month: month, year: year)
+                    guard resolvedLunarDate == targetLunarDate else {
+                        continue
+                    }
+
+                    guard let candidateDate = calendar.date(from: DateComponents(year: year, month: month, day: day)) else {
+                        continue
+                    }
+
+                    return solarComponents(from: candidateDate)
+                }
+            }
+        }
+
+        return nil
+    }
+
     func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
         guard let solar = solarComponents(from: date) else {
             return nil

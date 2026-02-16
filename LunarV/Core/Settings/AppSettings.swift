@@ -19,12 +19,19 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showHolidaySection") var showHolidaySection: Bool = true
     @AppStorage("settings.panel.showMonthCalendar") var showMonthCalendar: Bool = true
     @AppStorage("settings.panel.showDetailSection") var showDetailSection: Bool = true
+    @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
 
     // MARK: - Appearance
     @AppStorage("settings.appearance.customAccentColor") var customAccentColor: Color = .blue
 
     // MARK: - Window Behavior
     @AppStorage("settings.window.keepSettingsOnTop") var keepSettingsOnTop: Bool = true
+
+    // MARK: - Notifications
+    @AppStorage("settings.notifications.enableHolidayNotifications") var enableHolidayNotifications: Bool = false
+    @AppStorage("settings.notifications.holidayReminderLeadDays") var holidayReminderLeadDays: Int = 1
+    @AppStorage("settings.notifications.holidayReminderHour") var holidayReminderHour: Int = 8
+    @AppStorage("settings.notifications.windowDays") var notificationWindowDays: Int = 60
 
     private init() {}
 
@@ -40,7 +47,12 @@ final class AppSettings: ObservableObject {
         showHolidaySection = true
         showMonthCalendar = true
         showDetailSection = true
+        showDateConverter = true
         customAccentColor = .blue
+        enableHolidayNotifications = false
+        holidayReminderLeadDays = 1
+        holidayReminderHour = 8
+        notificationWindowDays = 60
     }
 }
 

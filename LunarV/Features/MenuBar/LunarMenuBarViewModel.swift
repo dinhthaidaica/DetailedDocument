@@ -86,6 +86,14 @@ final class LunarMenuBarViewModel: ObservableObject {
         updateInfo(now: viewingDate, viewingDate: viewingDate)
     }
 
+    func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
+        lunarService.snapshot(for: date)
+    }
+
+    func solarDate(from lunarDate: LunarDate) -> SolarDateComponents? {
+        lunarService.solarDate(from: lunarDate)
+    }
+
     private func updateMenuBarTitle(now: Date) {
         guard let snapshot = lunarService.snapshot(for: now) else { return }
 

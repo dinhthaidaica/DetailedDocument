@@ -10,6 +10,14 @@ struct LunarMenuBarView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHeroHovered = false
     @State private var hasAppeared = false
+    @State private var converterMode: DateConverterMode = .solarToLunar
+    @State private var solarConversionDate = Date()
+    @State private var solarToLunarSnapshot: VietnameseLunarSnapshot?
+    @State private var lunarInputDay = 1
+    @State private var lunarInputMonth = 1
+    @State private var lunarInputYear = Calendar(identifier: .gregorian).component(.year, from: Date())
+    @State private var lunarInputIsLeapMonth = false
+    @State private var lunarToSolarResult: SolarDateComponents?
     @ObservedObject var viewModel: LunarMenuBarViewModel
 
     private let calendarColumns = Array(
@@ -62,6 +70,10 @@ struct LunarMenuBarView: View {
                         if viewModel.settings.showMonthCalendar {
                             monthCalendarCard
                         }
+
+                        if viewModel.settings.showDateConverter {
+                            converterCard
+                        }
                         
                         if viewModel.settings.showDetailSection {
                             detailCard
@@ -84,6 +96,30 @@ struct LunarMenuBarView: View {
                         hasAppeared = true
                     }
                 }
+            }
+            refreshSolarToLunarSnapshot()
+            refreshLunarToSolarResult()
+        }
+        .onChange(of: solarConversionDate) { _, _ in
+            refreshSolarToLunarSnapshot()
+        }
+        .onChange(of: lunarInputDay) { _, _ in
+            refreshLunarToSolarResult()
+        }
+        .onChange(of: lunarInputMonth) { _, _ in
+            refreshLunarToSolarResult()
+        }
+        .onChange(of: lunarInputYear) { _, _ in
+            refreshLunarToSolarResult()
+        }
+        .onChange(of: lunarInputIsLeapMonth) { _, _ in
+            refreshLunarToSolarResult()
+        }
+        .onChange(of: converterMode) { _, mode in
+            if mode == .lunarToSolar {
+                refreshLunarToSolarResult()
+            } else {
+                refreshSolarToLunarSnapshot()
             }
         }
     }
@@ -252,6 +288,89 @@ struct LunarMenuBarView: View {
         }
     }
 
+    private var converterCard: some View {
+        SectionCard(title: "Chuyển đổi nhanh") {
+            VStack(alignment: .leading, spacing: 12) {
+                Picker("Kiểu chuyển đổi", selection: $converterMode) {
+                    ForEach(DateConverterMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if converterMode == .solarToLunar {
+                    solarToLunarConverter
+                } else {
+                    lunarToSolarConverter
+                }
+            }
+        }
+    }
+
+    private var solarToLunarConverter: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DatePicker("Ngày dương", selection: $solarConversionDate, displayedComponents: .date)
+
+            if let snapshot = solarToLunarSnapshot {
+                let leapText = snapshot.lunar.isLeapMonth ? " nhuận" : ""
+                let copiedText = "Dương lịch \(snapshot.solar.formattedDate) -> Âm lịch \(snapshot.lunar.day)/\(snapshot.lunar.month)\(leapText), năm \(snapshot.canChiYear)"
+
+                Text("Âm lịch: \(snapshot.lunar.day)/\(snapshot.lunar.month)\(leapText), năm \(snapshot.canChiYear)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Can chi ngày: \(snapshot.canChiDay)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+
+                Button("Sao chép kết quả") {
+                    copyToPasteboard(copiedText)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+            } else {
+                Text("Không thể chuyển đổi ngày đã chọn.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var lunarToSolarConverter: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Stepper("Ngày \(lunarInputDay)", value: $lunarInputDay, in: 1 ... 30)
+                Stepper("Tháng \(lunarInputMonth)", value: $lunarInputMonth, in: 1 ... 12)
+            }
+
+            Stepper("Năm âm \(lunarInputYear)", value: $lunarInputYear, in: 1900 ... 2199)
+            Toggle("Tháng nhuận", isOn: $lunarInputIsLeapMonth)
+
+            if let solar = lunarToSolarResult {
+                let lunarText = "\(lunarInputDay)/\(lunarInputMonth)\(lunarInputIsLeapMonth ? " nhuận" : "")/\(lunarInputYear)"
+                let copiedText = "Âm lịch \(lunarText) -> Dương lịch \(solar.formattedDate)"
+
+                Text("Dương lịch: \(solar.formattedDate)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Can chi ngày: \(VietnameseCalendarMetadata.canChiDay(day: solar.day, month: solar.month, year: solar.year))")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+
+                Button("Sao chép kết quả") {
+                    copyToPasteboard(copiedText)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+            } else {
+                Text("Không tìm thấy ngày dương tương ứng với dữ liệu âm lịch này.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     @ViewBuilder
@@ -289,8 +408,26 @@ struct LunarMenuBarView: View {
     private func copyCurrentDate() {
         let info = viewModel.info
         let text = "\(info.weekdayText), \(info.solarDateText) (Âm lịch: \(info.lunarDateText) năm \(info.canChiYearText))"
+        copyToPasteboard(text)
+    }
+
+    private func copyToPasteboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    private func refreshSolarToLunarSnapshot() {
+        solarToLunarSnapshot = viewModel.snapshot(for: solarConversionDate)
+    }
+
+    private func refreshLunarToSolarResult() {
+        let targetLunarDate = LunarDate(
+            day: lunarInputDay,
+            month: lunarInputMonth,
+            year: lunarInputYear,
+            isLeapMonth: lunarInputIsLeapMonth
+        )
+        lunarToSolarResult = viewModel.solarDate(from: targetLunarDate)
     }
 }
 
@@ -456,4 +593,20 @@ private enum MenuBarMetrics {
     static let verticalStackSpacing: CGFloat = 12
     static let calendarGridSpacing: CGFloat = 6
     static let calendarMinimumCellWidth: CGFloat = 32
+}
+
+private enum DateConverterMode: String, CaseIterable, Identifiable {
+    case solarToLunar
+    case lunarToSolar
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .solarToLunar:
+            return "Dương -> Âm"
+        case .lunarToSolar:
+            return "Âm -> Dương"
+        }
+    }
 }

@@ -7,6 +7,7 @@ import SwiftUI
 
 struct AppSettingsView: View {
     @EnvironmentObject var settings: AppSettings
+    @EnvironmentObject var notificationManager: HolidayNotificationManager
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var isShowingResetDialog = false
 
@@ -124,6 +125,7 @@ struct AppSettingsView: View {
                 Toggle("Danh sách sự kiện sắp tới", isOn: $settings.showHolidaySection)
                 Toggle("Lịch tháng", isOn: $settings.showMonthCalendar)
                 Toggle("Thông tin vạn niên khác", isOn: $settings.showDetailSection)
+                Toggle("Bộ chuyển đổi Âm - Dương", isOn: $settings.showDateConverter)
             }
         }
         .formStyle(.grouped)
@@ -141,6 +143,36 @@ struct AppSettingsView: View {
 
             Section("Tự động hóa") {
                 Toggle("Mở LunarV khi đăng nhập máy tính", isOn: launchAtLoginBinding)
+            }
+
+            Section("Nhắc ngày lễ") {
+                Toggle("Bật thông báo ngày lễ", isOn: holidayNotificationBinding)
+
+                Picker("Nhắc trước", selection: $settings.holidayReminderLeadDays) {
+                    Text("Đúng ngày").tag(0)
+                    Text("Trước 1 ngày").tag(1)
+                    Text("Trước 3 ngày").tag(3)
+                }
+                .disabled(!settings.enableHolidayNotifications)
+
+                Picker("Giờ thông báo", selection: $settings.holidayReminderHour) {
+                    ForEach([6, 7, 8, 9, 18, 20, 21], id: \.self) { hour in
+                        Text(hourDisplay(hour)).tag(hour)
+                    }
+                }
+                .disabled(!settings.enableHolidayNotifications)
+
+                Picker("Phạm vi lập lịch", selection: $settings.notificationWindowDays) {
+                    Text("30 ngày tới").tag(30)
+                    Text("60 ngày tới").tag(60)
+                    Text("90 ngày tới").tag(90)
+                    Text("180 ngày tới").tag(180)
+                }
+                .disabled(!settings.enableHolidayNotifications)
+
+                Text(notificationManager.authorizationDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Dữ liệu & Thời gian") {
@@ -205,6 +237,31 @@ struct AppSettingsView: View {
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(get: { launchAtLoginManager.isEnabled }, set: { launchAtLoginManager.setEnabled($0) })
+    }
+
+    private var holidayNotificationBinding: Binding<Bool> {
+        Binding(
+            get: { settings.enableHolidayNotifications },
+            set: { isEnabled in
+                guard isEnabled else {
+                    settings.enableHolidayNotifications = false
+                    Task { @MainActor in
+                        await notificationManager.clearPendingHolidayNotifications()
+                    }
+                    return
+                }
+
+                Task { @MainActor in
+                    let granted = await notificationManager.requestAuthorizationIfNeeded()
+                    settings.enableHolidayNotifications = granted
+                    await notificationManager.synchronizeSchedules()
+                }
+            }
+        )
+    }
+
+    private func hourDisplay(_ hour: Int) -> String {
+        String(format: "%02d:00", hour)
     }
 
     private var appVersionText: String {

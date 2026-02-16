@@ -8,6 +8,7 @@ import SwiftUI
 struct LunarVApp: App {
     @StateObject private var settings = AppSettings.shared
     @StateObject private var viewModel = LunarMenuBarViewModel(settings: AppSettings.shared)
+    @StateObject private var notificationManager = HolidayNotificationManager(settings: AppSettings.shared)
 
     var body: some Scene {
         MenuBarExtra {
@@ -22,6 +23,7 @@ struct LunarVApp: App {
         Settings {
             AppSettingsView()
                 .environmentObject(settings)
+                .environmentObject(notificationManager)
         }
     }
 }
