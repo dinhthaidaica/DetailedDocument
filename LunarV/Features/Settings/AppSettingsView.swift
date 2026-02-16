@@ -120,14 +120,32 @@ struct AppSettingsView: View {
     private var panelTab: some View {
         Form {
             Section("Các thành phần hiển thị") {
-                Toggle("Thẻ ngày hôm nay (Hero Card)", isOn: $settings.showHeroCard)
-                Toggle("Thông tin Can chi & Con giáp", isOn: $settings.showCanChiSection)
-                Toggle("Danh sách sự kiện sắp tới", isOn: $settings.showHolidaySection)
-                Toggle("Lịch tháng", isOn: $settings.showMonthCalendar)
-                Toggle("Giờ hoàng đạo trong ngày", isOn: $settings.showAuspiciousHoursSection)
-                Toggle("Gợi ý nên làm / hạn chế", isOn: $settings.showDayGuidanceSection)
-                Toggle("Thông tin vạn niên khác", isOn: $settings.showDetailSection)
-                Toggle("Bộ chuyển đổi Âm - Dương", isOn: $settings.showDateConverter)
+                Text("Kéo thả để thay đổi thứ tự card hiển thị trên bảng Menu Bar. Gạt công tắc để ẩn/hiện từng card.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                List {
+                    ForEach(settings.panelCardOrder) { card in
+                        PanelCardOrderRow(
+                            card: card,
+                            isVisible: panelCardVisibilityBinding(for: card)
+                        )
+                    }
+                    .onMove(perform: settings.movePanelCard)
+                }
+                .frame(height: 280)
+                .listStyle(.inset)
+
+                HStack {
+                    Text("Kéo-thả trực tiếp các hàng để đổi vị trí.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    Button("Khôi phục thứ tự mặc định") {
+                        settings.resetPanelCardOrder()
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
         .formStyle(.grouped)
@@ -237,6 +255,15 @@ struct AppSettingsView: View {
         }
     }
 
+    private func panelCardVisibilityBinding(for card: PanelCardKind) -> Binding<Bool> {
+        Binding(
+            get: { settings.isPanelCardVisible(card) },
+            set: { isVisible in
+                settings.setPanelCardVisible(isVisible, for: card)
+            }
+        )
+    }
+
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(get: { launchAtLoginManager.isEnabled }, set: { launchAtLoginManager.setEnabled($0) })
     }
@@ -293,6 +320,37 @@ struct AppSettingsView: View {
 }
 
 // MARK: - Token Components
+
+private struct PanelCardOrderRow: View {
+    let card: PanelCardKind
+    @Binding var isVisible: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: card.icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 24, height: 24)
+                .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 7))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(card.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text(card.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $isVisible)
+                .labelsHidden()
+                .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
+        }
+        .padding(.vertical, 2)
+    }
+}
 
 private struct DisplayToken: Identifiable {
     let id = UUID()

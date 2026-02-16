@@ -5,6 +5,119 @@
 import SwiftUI
 import Combine
 
+enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
+    case hero
+    case canChi
+    case auspiciousHours
+    case dayGuidance
+    case holidays
+    case monthCalendar
+    case dateConverter
+    case detail
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .hero:
+            return "Thẻ ngày hôm nay"
+        case .canChi:
+            return "Can chi & Con giáp"
+        case .auspiciousHours:
+            return "Giờ hoàng đạo"
+        case .dayGuidance:
+            return "Gợi ý trong ngày"
+        case .holidays:
+            return "Sự kiện sắp tới"
+        case .monthCalendar:
+            return "Lịch tháng"
+        case .dateConverter:
+            return "Chuyển đổi nhanh"
+        case .detail:
+            return "Thông tin khác"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .hero:
+            return "Ngày âm lịch chính và tiết khí"
+        case .canChi:
+            return "Can chi ngày/tháng/năm"
+        case .auspiciousHours:
+            return "Khung giờ đẹp và hắc đạo"
+        case .dayGuidance:
+            return "Điểm ngày và gợi ý hoạt động"
+        case .holidays:
+            return "Các ngày lễ sắp tới"
+        case .monthCalendar:
+            return "Lưới tháng dương - âm"
+        case .dateConverter:
+            return "Đổi ngày âm / dương"
+        case .detail:
+            return "Thông tin bổ sung theo ngày"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .hero:
+            return "sparkles"
+        case .canChi:
+            return "text.badge.checkmark"
+        case .auspiciousHours:
+            return "clock.badge.checkmark"
+        case .dayGuidance:
+            return "list.star"
+        case .holidays:
+            return "calendar.badge.clock"
+        case .monthCalendar:
+            return "calendar"
+        case .dateConverter:
+            return "arrow.left.arrow.right.circle"
+        case .detail:
+            return "info.bubble"
+        }
+    }
+
+    static let defaultOrder: [PanelCardKind] = [
+        .hero,
+        .canChi,
+        .auspiciousHours,
+        .dayGuidance,
+        .holidays,
+        .monthCalendar,
+        .dateConverter,
+        .detail,
+    ]
+
+    static func serialized(_ order: [PanelCardKind]) -> String {
+        order.map(\.rawValue).joined(separator: ",")
+    }
+
+    static func normalizedOrder(from rawValue: String) -> [PanelCardKind] {
+        var uniqueOrder: [PanelCardKind] = []
+        var seen = Set<PanelCardKind>()
+
+        for component in rawValue.split(separator: ",") {
+            guard
+                let card = PanelCardKind(rawValue: String(component)),
+                !seen.contains(card)
+            else {
+                continue
+            }
+            uniqueOrder.append(card)
+            seen.insert(card)
+        }
+
+        for card in defaultOrder where !seen.contains(card) {
+            uniqueOrder.append(card)
+        }
+
+        return uniqueOrder
+    }
+}
+
 @MainActor
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
@@ -22,6 +135,7 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showDayGuidanceSection") var showDayGuidanceSection: Bool = true
     @AppStorage("settings.panel.showDetailSection") var showDetailSection: Bool = true
     @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
+    @AppStorage("settings.panel.cardOrder") private var panelCardOrderRaw: String = PanelCardKind.serialized(PanelCardKind.defaultOrder)
 
     // MARK: - Appearance
     @AppStorage("settings.appearance.customAccentColor") var customAccentColor: Color = .blue
@@ -35,7 +149,65 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.notifications.holidayReminderHour") var holidayReminderHour: Int = 8
     @AppStorage("settings.notifications.windowDays") var notificationWindowDays: Int = 60
 
-    private init() {}
+    private init() {
+        normalizePanelCardOrderIfNeeded()
+    }
+
+    var panelCardOrder: [PanelCardKind] {
+        PanelCardKind.normalizedOrder(from: panelCardOrderRaw)
+    }
+
+    func movePanelCard(fromOffsets: IndexSet, toOffset: Int) {
+        var nextOrder = panelCardOrder
+        nextOrder.move(fromOffsets: fromOffsets, toOffset: toOffset)
+        panelCardOrderRaw = PanelCardKind.serialized(nextOrder)
+    }
+
+    func resetPanelCardOrder() {
+        panelCardOrderRaw = PanelCardKind.serialized(PanelCardKind.defaultOrder)
+    }
+
+    func isPanelCardVisible(_ card: PanelCardKind) -> Bool {
+        switch card {
+        case .hero:
+            return showHeroCard
+        case .canChi:
+            return showCanChiSection
+        case .auspiciousHours:
+            return showAuspiciousHoursSection
+        case .dayGuidance:
+            return showDayGuidanceSection
+        case .holidays:
+            return showHolidaySection
+        case .monthCalendar:
+            return showMonthCalendar
+        case .dateConverter:
+            return showDateConverter
+        case .detail:
+            return showDetailSection
+        }
+    }
+
+    func setPanelCardVisible(_ isVisible: Bool, for card: PanelCardKind) {
+        switch card {
+        case .hero:
+            showHeroCard = isVisible
+        case .canChi:
+            showCanChiSection = isVisible
+        case .auspiciousHours:
+            showAuspiciousHoursSection = isVisible
+        case .dayGuidance:
+            showDayGuidanceSection = isVisible
+        case .holidays:
+            showHolidaySection = isVisible
+        case .monthCalendar:
+            showMonthCalendar = isVisible
+        case .dateConverter:
+            showDateConverter = isVisible
+        case .detail:
+            showDetailSection = isVisible
+        }
+    }
 
     func resetMenuBarDisplaySettings() {
         menuBarDisplayPreset = .compact
@@ -52,11 +224,20 @@ final class AppSettings: ObservableObject {
         showDayGuidanceSection = true
         showDetailSection = true
         showDateConverter = true
+        resetPanelCardOrder()
         customAccentColor = .blue
         enableHolidayNotifications = false
         holidayReminderLeadDays = 1
         holidayReminderHour = 8
         notificationWindowDays = 60
+    }
+
+    private func normalizePanelCardOrderIfNeeded() {
+        let normalized = PanelCardKind.serialized(panelCardOrder)
+        guard normalized != panelCardOrderRaw else {
+            return
+        }
+        panelCardOrderRaw = normalized
     }
 }
 

@@ -12,6 +12,9 @@ struct LunarMenuBarView: View {
     @State private var hasAppeared = false
     @State private var converterMode: DateConverterMode = .solarToLunar
     @State private var solarConversionDate = Date()
+    @State private var solarInputDay = Calendar(identifier: .gregorian).component(.day, from: Date())
+    @State private var solarInputMonth = Calendar(identifier: .gregorian).component(.month, from: Date())
+    @State private var solarInputYear = Calendar(identifier: .gregorian).component(.year, from: Date())
     @State private var solarToLunarSnapshot: VietnameseLunarSnapshot?
     @State private var lunarInputDay = 1
     @State private var lunarInputMonth = 1
@@ -29,6 +32,9 @@ struct LunarMenuBarView: View {
         count: 2
     )
     private let weekdayHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+    private var solarInputDayRange: ClosedRange<Int> {
+        1 ... solarDaysInMonth(month: solarInputMonth, year: solarInputYear)
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -59,36 +65,8 @@ struct LunarMenuBarView: View {
 
                 ScrollView {
                     VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
-                        if viewModel.settings.showHeroCard {
-                            heroCard
-                        }
-                        
-                        if viewModel.settings.showCanChiSection {
-                            canChiCard
-                        }
-
-                        if viewModel.settings.showAuspiciousHoursSection {
-                            auspiciousHoursCard
-                        }
-
-                        if viewModel.settings.showDayGuidanceSection {
-                            guidanceCard
-                        }
-
-                        if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
-                            holidaysCard
-                        }
-
-                        if viewModel.settings.showMonthCalendar {
-                            monthCalendarCard
-                        }
-
-                        if viewModel.settings.showDateConverter {
-                            converterCard
-                        }
-                        
-                        if viewModel.settings.showDetailSection {
-                            detailCard
+                        ForEach(viewModel.settings.panelCardOrder) { card in
+                            panelCard(for: card)
                         }
                     }
                     .padding(MenuBarMetrics.panelPadding)
@@ -111,9 +89,20 @@ struct LunarMenuBarView: View {
             }
             refreshSolarToLunarSnapshot()
             refreshLunarToSolarResult()
+            syncSolarInput(from: solarConversionDate)
         }
         .onChange(of: solarConversionDate) { _, _ in
             refreshSolarToLunarSnapshot()
+            syncSolarInput(from: solarConversionDate)
+        }
+        .onChange(of: solarInputDay) { _, _ in
+            refreshSolarConversionDateFromInputs()
+        }
+        .onChange(of: solarInputMonth) { _, _ in
+            refreshSolarConversionDateFromInputs()
+        }
+        .onChange(of: solarInputYear) { _, _ in
+            refreshSolarConversionDateFromInputs()
         }
         .onChange(of: lunarInputDay) { _, _ in
             refreshLunarToSolarResult()
@@ -224,6 +213,44 @@ struct LunarMenuBarView: View {
 
     // MARK: - Sections
 
+    @ViewBuilder
+    private func panelCard(for card: PanelCardKind) -> some View {
+        switch card {
+        case .hero:
+            if viewModel.settings.showHeroCard {
+                heroCard
+            }
+        case .canChi:
+            if viewModel.settings.showCanChiSection {
+                canChiCard
+            }
+        case .auspiciousHours:
+            if viewModel.settings.showAuspiciousHoursSection {
+                auspiciousHoursCard
+            }
+        case .dayGuidance:
+            if viewModel.settings.showDayGuidanceSection {
+                guidanceCard
+            }
+        case .holidays:
+            if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
+                holidaysCard
+            }
+        case .monthCalendar:
+            if viewModel.settings.showMonthCalendar {
+                monthCalendarCard
+            }
+        case .dateConverter:
+            if viewModel.settings.showDateConverter {
+                converterCard
+            }
+        case .detail:
+            if viewModel.settings.showDetailSection {
+                detailCard
+            }
+        }
+    }
+
     private var canChiCard: some View {
         SectionCard(title: "Can chi & Con giáp") {
             HStack(spacing: 10) {
@@ -244,10 +271,12 @@ struct LunarMenuBarView: View {
                     Text("Khung giờ đẹp kế tiếp")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.primary.opacity(0.7))
-                    Text(viewModel.info.nextAuspiciousHourText)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(justifiedAttributedText(
+                        viewModel.info.nextAuspiciousHourText,
+                        size: 11,
+                        weight: .semibold
+                    ))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(10)
                 .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
@@ -259,10 +288,13 @@ struct LunarMenuBarView: View {
                 }
 
                 if !viewModel.info.inauspiciousHours.isEmpty {
-                    Text("Giờ hắc đạo: \(formattedHourSummary(viewModel.info.inauspiciousHours))")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(justifiedAttributedText(
+                        "Giờ hắc đạo: \(formattedHourSummary(viewModel.info.inauspiciousHours))",
+                        size: 10,
+                        weight: .medium,
+                        color: .secondaryLabelColor
+                    ))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
@@ -284,10 +316,13 @@ struct LunarMenuBarView: View {
                     GuidanceScoreView(score: viewModel.info.dayGuidance.score)
                 }
 
-                Text(viewModel.info.dayGuidance.summary)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(justifiedAttributedText(
+                    viewModel.info.dayGuidance.summary,
+                    size: 11,
+                    weight: .medium,
+                    color: .secondaryLabelColor
+                ))
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 DayOfficerPanel(officer: viewModel.info.dayOfficer)
 
@@ -402,12 +437,7 @@ struct LunarMenuBarView: View {
     private var converterCard: some View {
         SectionCard(title: "Chuyển đổi nhanh") {
             VStack(alignment: .leading, spacing: 12) {
-                Picker("Kiểu chuyển đổi", selection: $converterMode) {
-                    ForEach(DateConverterMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
+                ConverterModeSelector(mode: $converterMode)
 
                 if converterMode == .solarToLunar {
                     solarToLunarConverter
@@ -419,65 +449,79 @@ struct LunarMenuBarView: View {
     }
 
     private var solarToLunarConverter: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            DatePicker("Ngày dương", selection: $solarConversionDate, displayedComponents: .date)
+        ConverterPanel(
+            title: "Dương lịch -> Âm lịch",
+            subtitle: "Nhập ngày dương lịch theo cùng kiểu chọn như chiều ngược lại.",
+            icon: "sun.max.fill"
+        ) {
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ConverterStepperField(title: "Ngày", value: $solarInputDay, range: solarInputDayRange)
+                    ConverterStepperField(title: "Tháng", value: $solarInputMonth, range: 1 ... 12)
+                }
 
+                HStack(spacing: 8) {
+                    ConverterStepperField(title: "Năm dương", value: $solarInputYear, range: 1900 ... 2199)
+                    ConverterActionField(
+                        title: "ĐỒNG BỘ",
+                        buttonTitle: "Đặt ngày hiện tại",
+                        systemImage: "calendar.badge.clock"
+                    ) {
+                        setSolarInputToToday()
+                    }
+                }
+            }
+        } resultContent: {
             if let snapshot = solarToLunarSnapshot {
                 let leapText = snapshot.lunar.isLeapMonth ? " nhuận" : ""
                 let copiedText = "Dương lịch \(snapshot.solar.formattedDate) -> Âm lịch \(snapshot.lunar.day)/\(snapshot.lunar.month)\(leapText), năm \(snapshot.canChiYear)"
 
-                Text("Âm lịch: \(snapshot.lunar.day)/\(snapshot.lunar.month)\(leapText), năm \(snapshot.canChiYear)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
-                Text("Can chi ngày: \(snapshot.canChiDay)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-
-                Button("Sao chép kết quả") {
+                ConverterResultCard(
+                    title: "Âm lịch",
+                    value: "\(snapshot.lunar.day)/\(snapshot.lunar.month)\(leapText), năm \(snapshot.canChiYear)",
+                    detail: "Dương đã chọn: \(snapshot.solar.formattedDate) • Can chi ngày: \(snapshot.canChiDay)",
+                    copyTitle: "Sao chép kết quả"
+                ) {
                     copyToPasteboard(copiedText)
                 }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(Color.accentColor)
             } else {
-                Text("Không thể chuyển đổi ngày đã chọn.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                ConverterErrorCard(message: "Không thể chuyển đổi ngày đã chọn.")
             }
         }
     }
 
     private var lunarToSolarConverter: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Stepper("Ngày \(lunarInputDay)", value: $lunarInputDay, in: 1 ... 30)
-                Stepper("Tháng \(lunarInputMonth)", value: $lunarInputMonth, in: 1 ... 12)
+        ConverterPanel(
+            title: "Âm lịch -> Dương lịch",
+            subtitle: "Nhập ngày âm lịch, bật tháng nhuận khi cần.",
+            icon: "moon.stars.fill"
+        ) {
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ConverterStepperField(title: "Ngày", value: $lunarInputDay, range: 1 ... 30)
+                    ConverterStepperField(title: "Tháng", value: $lunarInputMonth, range: 1 ... 12)
+                }
+
+                HStack(spacing: 8) {
+                    ConverterStepperField(title: "Năm âm", value: $lunarInputYear, range: 1900 ... 2199)
+                    ConverterLeapMonthField(isOn: $lunarInputIsLeapMonth)
+                }
             }
-
-            Stepper("Năm âm \(lunarInputYear)", value: $lunarInputYear, in: 1900 ... 2199)
-            Toggle("Tháng nhuận", isOn: $lunarInputIsLeapMonth)
-
+        } resultContent: {
             if let solar = lunarToSolarResult {
                 let lunarText = "\(lunarInputDay)/\(lunarInputMonth)\(lunarInputIsLeapMonth ? " nhuận" : "")/\(lunarInputYear)"
                 let copiedText = "Âm lịch \(lunarText) -> Dương lịch \(solar.formattedDate)"
 
-                Text("Dương lịch: \(solar.formattedDate)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
-                Text("Can chi ngày: \(VietnameseCalendarMetadata.canChiDay(day: solar.day, month: solar.month, year: solar.year))")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-
-                Button("Sao chép kết quả") {
+                ConverterResultCard(
+                    title: "Dương lịch",
+                    value: solar.formattedDate,
+                    detail: "Can chi ngày: \(VietnameseCalendarMetadata.canChiDay(day: solar.day, month: solar.month, year: solar.year))",
+                    copyTitle: "Sao chép kết quả"
+                ) {
                     copyToPasteboard(copiedText)
                 }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(Color.accentColor)
             } else {
-                Text("Không tìm thấy ngày dương tương ứng với dữ liệu âm lịch này.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                ConverterErrorCard(message: "Không tìm thấy ngày dương tương ứng với dữ liệu âm lịch này.")
             }
         }
     }
@@ -533,6 +577,65 @@ struct LunarMenuBarView: View {
             .joined(separator: ", ")
     }
 
+    private func setSolarInputToToday() {
+        syncSolarInput(from: Date())
+    }
+
+    private func refreshSolarConversionDateFromInputs() {
+        let month = min(max(solarInputMonth, 1), 12)
+        let maxDay = solarDaysInMonth(month: month, year: solarInputYear)
+        let day = min(max(solarInputDay, 1), maxDay)
+
+        if month != solarInputMonth {
+            solarInputMonth = month
+            return
+        }
+
+        if day != solarInputDay {
+            solarInputDay = day
+            return
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+
+        guard let resolvedDate = calendar.date(from: DateComponents(year: solarInputYear, month: month, day: day, hour: 12)) else {
+            return
+        }
+
+        if !calendar.isDate(resolvedDate, inSameDayAs: solarConversionDate) {
+            solarConversionDate = resolvedDate
+        }
+    }
+
+    private func syncSolarInput(from date: Date) {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+        let components = calendar.dateComponents([.day, .month, .year], from: date)
+
+        let resolvedDay = components.day ?? solarInputDay
+        let resolvedMonth = components.month ?? solarInputMonth
+        let resolvedYear = components.year ?? solarInputYear
+
+        if solarInputDay != resolvedDay { solarInputDay = resolvedDay }
+        if solarInputMonth != resolvedMonth { solarInputMonth = resolvedMonth }
+        if solarInputYear != resolvedYear { solarInputYear = resolvedYear }
+    }
+
+    private func solarDaysInMonth(month: Int, year: Int) -> Int {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+
+        guard
+            let monthDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+            let dayRange = calendar.range(of: .day, in: .month, for: monthDate)
+        else {
+            return 31
+        }
+
+        return dayRange.count
+    }
+
     private func refreshSolarToLunarSnapshot() {
         solarToLunarSnapshot = viewModel.snapshot(for: solarConversionDate)
     }
@@ -573,6 +676,280 @@ private struct SectionCard<Content: View, Trailing: View>: View {
         }
         .padding(16)
         .glassEffect(Material.regular, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+private struct ConverterModeSelector: View {
+    @Binding var mode: DateConverterMode
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(DateConverterMode.allCases) { modeItem in
+                let isActive = modeItem == mode
+
+                Button {
+                    withAnimation(.snappy(duration: 0.2)) {
+                        mode = modeItem
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: modeItem.icon)
+                            .font(.system(size: 10, weight: .bold))
+                        Text(modeItem.title)
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(isActive ? Color.accentColor : .primary.opacity(0.75))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(isActive ? Color.accentColor.opacity(0.16) : Color.primary.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isActive ? Color.accentColor.opacity(0.35) : Color.primary.opacity(0.08),
+                                lineWidth: 1
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+private struct ConverterPanel<InputContent: View, ResultContent: View>: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    private let inputContent: InputContent
+    private let resultContent: ResultContent
+
+    init(
+        title: String,
+        subtitle: String,
+        icon: String,
+        @ViewBuilder inputContent: () -> InputContent,
+        @ViewBuilder resultContent: () -> ResultContent
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.inputContent = inputContent()
+        self.resultContent = resultContent()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 24, height: 24)
+                    .background(Color.accentColor.opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            inputContent
+            resultContent
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+    }
+}
+
+private struct ConverterResultCard: View {
+    let title: String
+    let value: String
+    let detail: String
+    let copyTitle: String
+    let onCopy: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(Color.accentColor.opacity(0.9))
+                .tracking(0.6)
+
+            Text(value)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(justifiedAttributedText(
+                detail,
+                size: 10,
+                weight: .medium,
+                color: .secondaryLabelColor
+            ))
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(copyTitle, action: onCopy)
+                .buttonStyle(.plain)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+                .padding(.top, 2)
+        }
+        .padding(10)
+        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.accentColor.opacity(0.24), lineWidth: 1)
+        )
+    }
+}
+
+private struct ConverterErrorCard: View {
+    let message: String
+
+    var body: some View {
+        Text(justifiedAttributedText(
+            message,
+            size: 10,
+            weight: .medium,
+            color: .secondaryLabelColor
+        ))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.orange.opacity(0.24), lineWidth: 1)
+        )
+    }
+}
+
+private struct ConverterStepperField: View {
+    let title: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.primary.opacity(0.55))
+                .tracking(0.6)
+
+            HStack(spacing: 8) {
+                stepButton(
+                    icon: "minus",
+                    isDisabled: value <= range.lowerBound
+                ) {
+                    value = max(value - 1, range.lowerBound)
+                }
+
+                Text("\(value)")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity)
+
+                stepButton(
+                    icon: "plus",
+                    isDisabled: value >= range.upperBound
+                ) {
+                    value = min(value + 1, range.upperBound)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private func stepButton(
+        icon: String,
+        isDisabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .bold))
+                .frame(width: 22, height: 22)
+                .background(Color.primary.opacity(0.08), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.45 : 1)
+    }
+}
+
+private struct ConverterActionField: View {
+    let title: String
+    let buttonTitle: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.primary.opacity(0.55))
+                .tracking(0.6)
+
+            Button(action: action) {
+                HStack(spacing: 6) {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 10, weight: .bold))
+                    Text(buttonTitle)
+                        .font(.system(size: 10, weight: .semibold))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(Color.accentColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.accentColor.opacity(0.28), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct ConverterLeapMonthField: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("THÁNG NHUẬN")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.primary.opacity(0.55))
+                .tracking(0.6)
+
+            HStack(spacing: 8) {
+                Text(isOn ? "Đang bật" : "Đang tắt")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(isOn ? Color.accentColor : .secondary)
+                Spacer(minLength: 0)
+                Toggle("", isOn: $isOn)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -691,14 +1068,20 @@ private struct DayOfficerPanel: View {
                     .background(levelColor.opacity(0.14), in: Capsule())
             }
 
-            Text(officer.calculationNote)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.secondary)
+            Text(justifiedAttributedText(
+                officer.calculationNote,
+                size: 9,
+                weight: .semibold,
+                color: .secondaryLabelColor
+            ))
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(officer.summary)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.primary.opacity(0.85))
-                .fixedSize(horizontal: false, vertical: true)
+            Text(justifiedAttributedText(
+                officer.summary,
+                size: 10,
+                weight: .medium
+            ))
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(10)
         .background(levelColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
@@ -733,6 +1116,7 @@ private struct DayOfficerPanel: View {
 
 private struct ActivityInsightRow: View {
     let insight: LunarActivityInsightInfo
+    private let categoryColumnWidth: CGFloat = 92
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -742,14 +1126,18 @@ private struct ActivityInsightRow: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(levelColor.opacity(0.12), in: Capsule())
+                .frame(width: categoryColumnWidth, alignment: .leading)
 
-            Text(insight.reason)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.primary.opacity(0.85))
-                .fixedSize(horizontal: false, vertical: true)
+            Text(justifiedAttributedText(
+                insight.reason,
+                size: 10,
+                weight: .medium
+            ))
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var levelColor: Color {
@@ -781,9 +1169,8 @@ private struct GuidanceBlock: View {
                             .fill(tint.opacity(0.8))
                             .frame(width: 5, height: 5)
                             .padding(.top, 5)
-                        Text(item)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.primary)
+                        Text(justifiedAttributedText(item, size: 11, weight: .medium))
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }
@@ -861,6 +1248,28 @@ extension View {
     }
 }
 
+private func justifiedAttributedText(
+    _ text: String,
+    size: CGFloat,
+    weight: NSFont.Weight = .regular,
+    color: NSColor = .labelColor
+) -> AttributedString {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.alignment = .justified
+    paragraphStyle.hyphenationFactor = 0.8
+    paragraphStyle.lineBreakMode = .byWordWrapping
+
+    let attributed = NSAttributedString(
+        string: text,
+        attributes: [
+            .font: NSFont.systemFont(ofSize: size, weight: weight),
+            .foregroundColor: color,
+            .paragraphStyle: paragraphStyle,
+        ]
+    )
+    return AttributedString(attributed)
+}
+
 private struct EntranceAnimationModifier: ViewModifier {
     let hasAppeared: Bool
     let reduceMotion: Bool
@@ -891,6 +1300,15 @@ private enum DateConverterMode: String, CaseIterable, Identifiable {
     case lunarToSolar
 
     var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .solarToLunar:
+            return "sun.max.fill"
+        case .lunarToSolar:
+            return "moon.stars.fill"
+        }
+    }
 
     var title: String {
         switch self {
