@@ -3,8 +3,9 @@ import SwiftUI
 
 struct LunarMenuBarView: View {
     @Environment(\.controlActiveState) private var controlActiveState
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHeroHovered = false
+    @State private var hasAppeared = false
     @ObservedObject var viewModel: LunarMenuBarViewModel
 
     private let calendarColumns = Array(
@@ -15,10 +16,9 @@ struct LunarMenuBarView: View {
 
     var body: some View {
         ZStack {
-            NativePanelBackground()
             LinearGradient(
                 colors: [
-                    Color.accentColor.opacity(controlActiveState == .active ? 0.06 : 0.02),
+                    Color.accentColor.opacity(controlActiveState == .active ? 0.03 : 0.01),
                     Color.clear,
                 ],
                 startPoint: .topLeading,
@@ -33,20 +33,45 @@ struct LunarMenuBarView: View {
                     .padding(.bottom, 8)
 
                 ScrollView {
-                    VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
-                        heroCard
-                        canChiCard
-                        detailCard
-                        monthCalendarCard
+                    GlassEffectContainer(spacing: 16) {
+                        VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
+                            heroCard
+                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0)
+
+                            canChiCard
+                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.05)
+
+                            detailCard
+                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.10)
+
+                            monthCalendarCard
+                                .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: 0.15)
+                        }
+                        .padding(.horizontal, MenuBarMetrics.panelPadding)
+                        .padding(.bottom, MenuBarMetrics.panelPadding)
                     }
-                    .padding(.horizontal, MenuBarMetrics.panelPadding)
-                    .padding(.bottom, MenuBarMetrics.panelPadding)
                 }
             }
         }
         .scrollIndicators(.hidden)
         .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height)
+        .task {
+            guard !hasAppeared else { return }
+            if reduceMotion {
+                hasAppeared = true
+            } else {
+                try? await Task.sleep(for: .milliseconds(50))
+                withAnimation {
+                    hasAppeared = true
+                }
+            }
+        }
+        .onDisappear {
+            hasAppeared = false
+        }
     }
+
+    // MARK: - Top Toolbar
 
     private var topToolbar: some View {
         HStack(spacing: 10) {
@@ -62,11 +87,11 @@ struct LunarMenuBarView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("LunarV")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 Text("Lịch âm tự động cập nhật")
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
             }
 
             Spacer(minLength: 0)
@@ -81,37 +106,33 @@ struct LunarMenuBarView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(
-                    reduceTransparency
-                        ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor))
-                        : AnyShapeStyle(.ultraThinMaterial)
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
+
+    // MARK: - Hero Card
 
     private var heroCard: some View {
         let info = viewModel.info
+        let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.35 : 0.25
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: MenuBarMetrics.heroColumnSpacing) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Hôm nay")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text("HÔM NAY")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .tracking(1.2)
                     Text(info.weekdayText)
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
                     Text(info.solarDateText)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                     Text("Âm lịch: \(info.lunarDateText)")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
                     if let leapMonthText = info.leapMonthText {
                         Text(leapMonthText.uppercased())
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -125,16 +146,20 @@ struct LunarMenuBarView: View {
                 Spacer(minLength: 0)
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("Ngày âm")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                    Text("NGÀY ÂM")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                        .tracking(1.0)
                     Text(info.lunarDayText)
-                        .font(.system(size: 46, weight: .heavy, design: .rounded))
+                        .font(.system(size: 52, weight: .heavy, design: .rounded))
                         .foregroundStyle(.primary)
+                        .contentTransition(.numericText(countsDown: false))
+                        .animation(.spring(duration: 0.4, bounce: 0.1), value: info.lunarDayText)
                     Text(info.lunarMonthYearText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)
+                        .contentTransition(.numericText())
                 }
             }
 
@@ -144,42 +169,19 @@ struct LunarMenuBarView: View {
             }
         }
         .padding(MenuBarMetrics.heroPadding)
-        .background(
-            RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous)
-                .fill(
-                    reduceTransparency
-                        ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor))
-                        : AnyShapeStyle(.thinMaterial)
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: heroTintColors,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
-        )
-        .shadow(
-            color: heroShadowColor,
-            radius: isHeroHovered && controlActiveState == .active ? 12 : 0,
-            x: 0,
-            y: isHeroHovered && controlActiveState == .active ? 4 : 0
+        .glassEffect(
+            .regular.tint(Color.accentColor.opacity(tintOpacity)),
+            in: RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous)
         )
         .contentShape(RoundedRectangle(cornerRadius: MenuBarMetrics.heroCornerRadius, style: .continuous))
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.16)) {
+            withAnimation(.spring(duration: 0.25, bounce: 0.15)) {
                 isHeroHovered = hovering
             }
         }
     }
+
+    // MARK: - Section Cards
 
     private var canChiCard: some View {
         let info = viewModel.info
@@ -215,7 +217,7 @@ struct LunarMenuBarView: View {
             VStack(spacing: MenuBarMetrics.calendarGridSpacing) {
                 Text("Số lớn: dương lịch • Số nhỏ: âm lịch • Chấm vàng: mùng 1 âm")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.quaternary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 HStack(spacing: MenuBarMetrics.calendarGridSpacing) {
@@ -227,6 +229,9 @@ struct LunarMenuBarView: View {
                     }
                 }
 
+                Divider()
+                    .opacity(0.4)
+
                 LazyVGrid(columns: calendarColumns, spacing: MenuBarMetrics.calendarGridSpacing) {
                     ForEach(Array(info.monthCells.enumerated()), id: \.element.id) { index, cell in
                         MonthDayCellView(cell: cell, weekdayIndex: index % 7)
@@ -236,46 +241,14 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var heroTintColors: [Color] {
-        let hoverBoost = isHeroHovered && controlActiveState == .active ? 1.25 : 1.0
-
-        if controlActiveState == .active {
-            return [
-                Color.accentColor.opacity(0.20 * hoverBoost),
-                Color.accentColor.opacity(0.10 * hoverBoost),
-            ]
-        }
-
-        return [
-            Color(nsColor: .tertiaryLabelColor).opacity(0.10),
-            Color(nsColor: .quaternaryLabelColor).opacity(0.08),
-        ]
-    }
-
-    private var heroShadowColor: Color {
-        if controlActiveState == .active {
-            return Color.accentColor.opacity(0.16)
-        }
-        return .clear
-    }
+    // MARK: - Helpers
 
     @ViewBuilder
     private func toolbarIcon(systemName: String) -> some View {
         Image(systemName: systemName)
             .font(.system(size: 12, weight: .semibold))
             .frame(width: 28, height: 24)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(
-                        reduceTransparency
-                            ? AnyShapeStyle(Color(nsColor: .windowBackgroundColor))
-                            : AnyShapeStyle(.regularMaterial)
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
-            )
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func confirmExit() {
@@ -293,6 +266,32 @@ struct LunarMenuBarView: View {
         }
     }
 }
+
+// MARK: - Entrance Animation Modifier
+
+private struct EntranceAnimationModifier: ViewModifier {
+    let hasAppeared: Bool
+    let reduceMotion: Bool
+    let delay: Double
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(hasAppeared ? 1 : 0)
+            .offset(y: hasAppeared ? 0 : 8)
+            .animation(
+                reduceMotion ? .none : .spring(duration: 0.4, bounce: 0.1).delay(delay),
+                value: hasAppeared
+            )
+    }
+}
+
+private extension View {
+    func entranceAnimation(hasAppeared: Bool, reduceMotion: Bool, delay: Double) -> some View {
+        modifier(EntranceAnimationModifier(hasAppeared: hasAppeared, reduceMotion: reduceMotion, delay: delay))
+    }
+}
+
+// MARK: - SectionCard
 
 private struct SectionCard<Content: View>: View {
     @Environment(\.controlActiveState) private var controlActiveState
@@ -313,49 +312,29 @@ private struct SectionCard<Content: View>: View {
                     Text(trailingText)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                 }
             }
 
             content
         }
         .padding(MenuBarMetrics.sectionPadding)
-        .background(
-            RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous)
-                .fill(.regularMaterial)
+        .glassEffect(
+            isHovered && controlActiveState == .active
+                ? .regular.tint(Color.accentColor.opacity(0.12))
+                : .regular,
+            in: RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous)
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous)
-                .stroke(sectionBorderColor, lineWidth: 1)
-        )
-        .shadow(
-            color: sectionShadowColor,
-            radius: isHovered && controlActiveState == .active ? 10 : 0,
-            x: 0,
-            y: isHovered && controlActiveState == .active ? 3 : 0
-        )
-        .scaleEffect(isHovered && controlActiveState == .active ? 1.003 : 1.0)
         .contentShape(RoundedRectangle(cornerRadius: MenuBarMetrics.sectionCornerRadius, style: .continuous))
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.14)) {
+            withAnimation(.snappy(duration: 0.2)) {
                 isHovered = hovering
             }
         }
     }
-
-    private var sectionBorderColor: Color {
-        if isHovered && controlActiveState == .active {
-            return Color.accentColor.opacity(0.35)
-        }
-        return Color(nsColor: .separatorColor).opacity(0.45)
-    }
-
-    private var sectionShadowColor: Color {
-        if controlActiveState == .active {
-            return Color.black.opacity(0.14)
-        }
-        return .clear
-    }
 }
+
+// MARK: - CanChiPill
 
 private struct CanChiPill: View {
     let title: String
@@ -365,26 +344,22 @@ private struct CanChiPill: View {
         VStack(spacing: 4) {
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
             Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
                 .foregroundStyle(.primary)
+                .contentTransition(.numericText())
         }
         .frame(maxWidth: .infinity, minHeight: 56)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(.thinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.25), lineWidth: 1)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
+
+// MARK: - InfoRow
 
 private struct InfoRow: View {
     let icon: String
@@ -396,10 +371,10 @@ private struct InfoRow: View {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tint)
-                .frame(width: 22, height: 22)
+                .frame(width: 24, height: 24)
                 .background(
                     Circle()
-                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .fill(Color.accentColor.opacity(0.08))
                 )
             Text(label)
                 .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -408,9 +383,12 @@ private struct InfoRow: View {
             Text(value)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
+                .contentTransition(.numericText())
         }
     }
 }
+
+// MARK: - StatTile
 
 private struct StatTile: View {
     let title: String
@@ -420,29 +398,26 @@ private struct StatTile: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
             Text(value)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .contentTransition(.numericText())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(.thinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.2), lineWidth: 1)
-        )
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
+// MARK: - MonthDayCellView
+
 private struct MonthDayCellView: View {
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @State private var isHovered = false
     let cell: LunarMonthDayCell
     let weekdayIndex: Int
 
@@ -465,14 +440,20 @@ private struct MonthDayCellView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(borderColor, lineWidth: cell.isToday ? 1.5 : 1)
+                        .stroke(borderColor, lineWidth: cell.isToday ? 1.5 : isHovered ? 1 : 0.5)
                 )
                 .overlay(alignment: .topTrailing) {
                     if cell.isFirstLunarDay {
                         Circle()
-                            .fill(Color(red: 0.88, green: 0.55, blue: 0.22))
+                            .fill(Color.orange)
                             .frame(width: 5, height: 5)
                             .padding(4)
+                    }
+                }
+                .scaleEffect(isHovered && !cell.isToday ? 1.05 : 1.0)
+                .onHover { hovering in
+                    withAnimation(.snappy(duration: 0.15)) {
+                        isHovered = hovering
                     }
                 }
             } else {
@@ -484,19 +465,22 @@ private struct MonthDayCellView: View {
 
     private var backgroundColor: Color {
         if cell.isToday {
-            return Color.accentColor.opacity(colorScheme == .dark ? 0.34 : 0.22)
+            return Color.accentColor.opacity(colorScheme == .dark ? 0.30 : 0.20)
         }
-        if reduceTransparency {
-            return Color(nsColor: .windowBackgroundColor)
+        if isHovered {
+            return Color.primary.opacity(colorScheme == .dark ? 0.14 : 0.08)
         }
-        return Color.primary.opacity(colorScheme == .dark ? 0.10 : 0.05)
+        return Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.03)
     }
 
     private var borderColor: Color {
         if cell.isToday {
             return Color.accentColor.opacity(0.8)
         }
-        return Color(nsColor: .separatorColor).opacity(0.45)
+        if isHovered {
+            return Color.accentColor.opacity(0.4)
+        }
+        return Color(nsColor: .separatorColor).opacity(0.3)
     }
 
     private var solarTextColor: Color {
@@ -524,24 +508,7 @@ private struct MonthDayCellView: View {
     }
 }
 
-#Preview {
-    LunarMenuBarView(viewModel: LunarMenuBarViewModel())
-}
-
-private struct NativePanelBackground: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.state = .followsWindowActiveState
-        view.material = .menu
-        view.blendingMode = .withinWindow
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.state = .followsWindowActiveState
-        nsView.material = .menu
-    }
-}
+// MARK: - HeroChip
 
 private struct HeroChip: View {
     let icon: String
@@ -551,48 +518,50 @@ private struct HeroChip: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.tertiary)
                 Text(value)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(.thinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.25), lineWidth: 1)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
+
+// MARK: - Preview
+
+#Preview {
+    LunarMenuBarView(viewModel: LunarMenuBarViewModel())
+}
+
+// MARK: - Metrics
 
 private enum MenuBarMetrics {
     static let panelSize = CGSize(width: 392, height: 576)
 
-    static let panelPadding: CGFloat = 14
-    static let verticalStackSpacing: CGFloat = 12
+    static let panelPadding: CGFloat = 16
+    static let verticalStackSpacing: CGFloat = 10
     static let elementSpacing: CGFloat = 8
-    static let calendarGridSpacing: CGFloat = 6
+    static let calendarGridSpacing: CGFloat = 5
     static let calendarMinimumCellWidth: CGFloat = 30
 
-    static let heroCornerRadius: CGFloat = 18
-    static let heroPadding: CGFloat = 14
+    static let heroCornerRadius: CGFloat = 20
+    static let heroPadding: CGFloat = 16
     static let heroColumnSpacing: CGFloat = 12
 
-    static let sectionCornerRadius: CGFloat = 14
-    static let sectionPadding: CGFloat = 12
+    static let sectionCornerRadius: CGFloat = 16
+    static let sectionPadding: CGFloat = 14
     static let sectionContentSpacing: CGFloat = 10
 }

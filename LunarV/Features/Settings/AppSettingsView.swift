@@ -4,33 +4,28 @@ import SwiftUI
 struct AppSettingsView: View {
     @EnvironmentObject private var settings: AppSettings
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
-    @State private var selectedTab: SettingsTab = .appearance
     @State private var isShowingResetDialog = false
 
     private let previewConverter = VietnameseLunarCalendarConverter(timeZone: 7.0)
     private let templateTokens = MenuBarTemplateToken.allCases
 
     var body: some View {
-        VStack(spacing: 14) {
-            headerCard
+        TabView {
+            appearanceContent
+                .tabItem {
+                    Label("Hiển thị", systemImage: "menubar.rectangle")
+                }
 
-            TabView(selection: $selectedTab) {
-                appearanceTab
-                    .tabItem {
-                        Label("Hiển thị", systemImage: "menubar.rectangle")
-                    }
-                    .tag(SettingsTab.appearance)
+            systemContent
+                .tabItem {
+                    Label("Hệ thống", systemImage: "gearshape.2")
+                }
 
-                systemTab
-                    .tabItem {
-                        Label("Hệ thống", systemImage: "powerplug")
-                    }
-                    .tag(SettingsTab.system)
-            }
+            aboutContent
+                .tabItem {
+                    Label("Thông tin", systemImage: "info.circle")
+                }
         }
-        .padding(20)
-        .frame(width: 640, height: 560)
-        .background(SettingsWindowBehavior())
         .onAppear {
             launchAtLoginManager.refreshStatus()
         }
@@ -48,70 +43,14 @@ struct AppSettingsView: View {
         }
     }
 
-    private var headerCard: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 20, weight: .semibold))
-                .frame(width: 42, height: 42)
-                .background(
-                    Circle()
-                        .fill(.thinMaterial)
-                )
+    // MARK: - Appearance Content
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Cài đặt LunarV")
-                    .font(.title3.weight(.semibold))
-                Text("Cá nhân hoá cách hiển thị lịch âm trên menu bar")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("Xem trước menu bar")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    Text(previewMenuBarTitle)
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .lineLimit(1)
-
-                    Button {
-                        copyPreviewToPasteboard()
-                    } label: {
-                        Image(systemName: "document.on.document")
-                    }
-                    .buttonStyle(.plain)
-                    .help("Sao chép nội dung xem trước")
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.thinMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color(nsColor: .separatorColor).opacity(0.25), lineWidth: 1)
-                )
-            }
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.regularMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
-        )
-    }
-
-    private var appearanceTab: some View {
+    private var appearanceContent: some View {
         Form {
+            Section {
+                previewCard
+            }
+
             Section("Kiểu hiển thị menu bar") {
                 Picker("Preset", selection: $settings.menuBarDisplayPreset) {
                     ForEach(MenuBarDisplayPreset.allCases) { preset in
@@ -191,7 +130,33 @@ struct AppSettingsView: View {
         .formStyle(.grouped)
     }
 
-    private var systemTab: some View {
+    // MARK: - Preview Card
+
+    private var previewCard: some View {
+        LabeledContent {
+            HStack(spacing: 8) {
+                Text(previewMenuBarTitle)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .contentTransition(.numericText())
+
+                Button {
+                    copyPreviewToPasteboard()
+                } label: {
+                    Image(systemName: "document.on.document")
+                }
+                .buttonStyle(.borderless)
+                .help("Sao chép nội dung xem trước")
+            }
+        } label: {
+            Label("Xem trước menu bar", systemImage: "menubar.rectangle")
+        }
+    }
+
+    // MARK: - System Content
+
+    private var systemContent: some View {
         Form {
             Section("Khởi động cùng hệ thống") {
                 Toggle("Mở LunarV khi đăng nhập", isOn: launchAtLoginBinding)
@@ -227,18 +192,36 @@ struct AppSettingsView: View {
                 }
                 .buttonStyle(.link)
             }
+        }
+        .formStyle(.grouped)
+    }
 
-            Section("Thông tin") {
+    // MARK: - About Content
+
+    private var aboutContent: some View {
+        Form {
+            Section("Ứng dụng") {
                 LabeledContent("Phiên bản") {
                     Text(appVersionText)
                 }
                 LabeledContent("Múi giờ lịch âm") {
                     Text("Asia/Ho_Chi_Minh (GMT+7)")
                 }
+                LabeledContent("Hệ điều hành") {
+                    Text("macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
+                }
+            }
+
+            Section("Giới thiệu") {
+                Text("LunarV hiển thị lịch âm Việt Nam trực tiếp trên menu bar. Ứng dụng tự động cập nhật theo thời gian thực, hỗ trợ Can Chi, tiết khí, con giáp và nhiều tính năng khác.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
     }
+
+    // MARK: - Helpers
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
@@ -329,15 +312,7 @@ struct AppSettingsView: View {
     }
 }
 
-#Preview {
-    AppSettingsView()
-        .environmentObject(AppSettings())
-}
-
-private enum SettingsTab: Hashable {
-    case appearance
-    case system
-}
+// MARK: - Supporting Types
 
 private struct TemplateSample: Identifiable {
     let title: String
@@ -384,67 +359,44 @@ private enum MenuBarTemplateToken: String, CaseIterable, Identifiable {
 
     var shortLabel: String {
         switch self {
-        case .d:
-            return "Ngày âm"
-        case .dd:
-            return "Ngày âm 2 số"
-        case .m:
-            return "Tháng âm"
-        case .mm:
-            return "Tháng âm 2 số"
-        case .yyyy:
-            return "Năm âm số"
-        case .sy:
-            return "Năm dương số"
-        case .sd:
-            return "Ngày dương"
-        case .sdd:
-            return "Ngày dương 2 số"
-        case .sm:
-            return "Tháng dương"
-        case .smm:
-            return "Tháng dương 2 số"
-        case .cy:
-            return "Can chi năm"
-        case .z:
-            return "Con giáp"
-        case .al:
-            return "ÂL"
-        case .leap:
-            return "Tháng nhuận"
+        case .d: return "Ngày âm"
+        case .dd: return "Ngày âm 2 số"
+        case .m: return "Tháng âm"
+        case .mm: return "Tháng âm 2 số"
+        case .yyyy: return "Năm âm số"
+        case .sy: return "Năm dương số"
+        case .sd: return "Ngày dương"
+        case .sdd: return "Ngày dương 2 số"
+        case .sm: return "Tháng dương"
+        case .smm: return "Tháng dương 2 số"
+        case .cy: return "Can chi năm"
+        case .z: return "Con giáp"
+        case .al: return "ÂL"
+        case .leap: return "Tháng nhuận"
         }
     }
 
     var helpText: String {
         switch self {
-        case .d:
-            return "Ngày âm (1 chữ số nếu < 10)"
-        case .dd:
-            return "Ngày âm (2 chữ số)"
-        case .m:
-            return "Tháng âm (1 chữ số nếu < 10)"
-        case .mm:
-            return "Tháng âm (2 chữ số)"
-        case .yyyy:
-            return "Năm âm dạng số"
-        case .sy:
-            return "Năm dương dạng số"
-        case .sd:
-            return "Ngày dương (1 chữ số nếu < 10)"
-        case .sdd:
-            return "Ngày dương (2 chữ số)"
-        case .sm:
-            return "Tháng dương (1 chữ số nếu < 10)"
-        case .smm:
-            return "Tháng dương (2 chữ số)"
-        case .cy:
-            return "Năm can chi"
-        case .z:
-            return "Con giáp"
-        case .al:
-            return "Chữ viết tắt ÂL"
-        case .leap:
-            return "N nếu là tháng nhuận"
+        case .d: return "Ngày âm (1 chữ số nếu < 10)"
+        case .dd: return "Ngày âm (2 chữ số)"
+        case .m: return "Tháng âm (1 chữ số nếu < 10)"
+        case .mm: return "Tháng âm (2 chữ số)"
+        case .yyyy: return "Năm âm dạng số"
+        case .sy: return "Năm dương dạng số"
+        case .sd: return "Ngày dương (1 chữ số nếu < 10)"
+        case .sdd: return "Ngày dương (2 chữ số)"
+        case .sm: return "Tháng dương (1 chữ số nếu < 10)"
+        case .smm: return "Tháng dương (2 chữ số)"
+        case .cy: return "Năm can chi"
+        case .z: return "Con giáp"
+        case .al: return "Chữ viết tắt ÂL"
+        case .leap: return "N nếu là tháng nhuận"
         }
     }
+}
+
+#Preview {
+    AppSettingsView()
+        .environmentObject(AppSettings())
 }
