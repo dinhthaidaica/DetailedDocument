@@ -89,7 +89,7 @@ struct LunarWidgetEntryView: View {
                 infoRow(symbol: "calendar", title: "Dương lịch", value: entry.info.solarDate)
                 infoRow(symbol: "leaf.fill", title: "Can chi ngày", value: entry.info.canChiDay)
                 infoRow(symbol: "sun.max.fill", title: "Tiết khí", value: entry.info.solarTerm)
-                infoRow(symbol: "sparkles", title: "Năm", value: "\(entry.info.canChiYear) • \(entry.info.zodiac)")
+                infoRow(symbol: "sparkles", title: "Năm", value: entry.info.canChiYear)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.trailing, 14)
