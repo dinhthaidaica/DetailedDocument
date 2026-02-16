@@ -13,6 +13,7 @@ struct AppSettingsView: View {
     @State private var isShowingResetDialog = false
 
     private let previewLunarService = VietnameseLunarDateService()
+    private let trailingControlColumnWidth: CGFloat = 170
 
     var body: some View {
         NavigationSplitView {
@@ -24,6 +25,8 @@ struct AppSettingsView: View {
         .navigationSplitViewStyle(.balanced)
         .frame(width: 820, height: 600)
         .containerBackground(.thinMaterial, for: .window)
+        .tint(settings.customAccentColor)
+        .accentColor(settings.customAccentColor)
         .toolbar(removing: .title)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .overlay(alignment: .top) {
@@ -224,8 +227,10 @@ struct AppSettingsView: View {
 
     private var menuBarLeadingIconControl: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("Hiển thị icon bên trái ngày trên Menu Bar", isOn: menuBarLeadingIconVisibilityBinding)
-                .lunarSettingsSwitchToggle()
+            settingsToggleRow(
+                title: "Hiển thị icon bên trái ngày trên Menu Bar",
+                isOn: menuBarLeadingIconVisibilityBinding
+            )
 
             if settings.showMenuBarLeadingIconValue {
                 HStack {
@@ -272,22 +277,21 @@ struct AppSettingsView: View {
                     subtitle: "Kéo thả để đổi thứ tự card",
                     icon: "rectangle.grid.1x2.fill"
                 ) {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Kéo thả để thay đổi thứ tự card hiển thị trên bảng Menu Bar. Gạt công tắc để ẩn/hiện từng card.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
-                        List {
-                            ForEach(settings.panelCardOrder) { card in
-                                PanelCardOrderRow(
-                                    card: card,
-                                    isVisible: panelCardVisibilityBinding(for: card)
-                                )
-                            }
-                            .onMove(perform: settings.movePanelCard)
+                        HStack(spacing: 8) {
+                            PanelCardHintChip(icon: "line.3.horizontal", text: "Kéo để đổi vị trí")
+                            PanelCardHintChip(icon: "eye.fill", text: "Bật/tắt để ẩn hiện")
+                            Spacer(minLength: 0)
+                            Text("\(settings.panelCardOrder.count) mục")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
                         }
-                        .frame(height: 300)
-                        .listStyle(.inset)
+
+                        panelOrderList
 
                         HStack {
                             Text("Kéo-thả trực tiếp các hàng để đổi vị trí.")
@@ -310,6 +314,40 @@ struct AppSettingsView: View {
 
     private var visiblePanelCardCount: Int {
         settings.panelCardOrder.filter { settings.isPanelCardVisible($0) }.count
+    }
+
+    private var panelOrderList: some View {
+        List {
+            ForEach(settings.panelCardOrder) { card in
+                PanelCardOrderRow(
+                    card: card,
+                    isVisible: panelCardVisibilityBinding(for: card),
+                    accentColor: settings.customAccentColor
+                )
+                .listRowInsets(EdgeInsets(top: 5, leading: 8, bottom: 5, trailing: 8))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
+            .onMove(perform: settings.movePanelCard)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .frame(height: panelOrderListHeight)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.primary.opacity(0.035))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private var panelOrderListHeight: CGFloat {
+        let rowHeight: CGFloat = 66
+        let visibleRows = min(max(settings.panelCardOrder.count, 4), 8)
+        return CGFloat(visibleRows) * rowHeight
     }
 
     // MARK: - System Pane
@@ -340,8 +378,10 @@ struct AppSettingsView: View {
                     icon: "rectangle.inset.filled.and.person.filled"
                 ) {
                     VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Luôn ở trên cùng (Floating)", isOn: $settings.keepSettingsOnTop)
-                            .lunarSettingsSwitchToggle()
+                        settingsToggleRow(
+                            title: "Luôn ở trên cùng (Floating)",
+                            isOn: $settings.keepSettingsOnTop
+                        )
                         Text("Khi bật, cửa sổ Cài đặt sẽ luôn nằm trên các cửa sổ khác để bạn dễ dàng tuỳ chỉnh và quan sát Menu Bar.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -353,8 +393,10 @@ struct AppSettingsView: View {
                     subtitle: "Khởi chạy ứng dụng cùng hệ thống",
                     icon: "power.circle.fill"
                 ) {
-                    Toggle("Mở LunarV khi đăng nhập máy tính", isOn: launchAtLoginBinding)
-                        .lunarSettingsSwitchToggle()
+                    settingsToggleRow(
+                        title: "Mở LunarV khi đăng nhập máy tính",
+                        isOn: launchAtLoginBinding
+                    )
                 }
 
                 LunarSettingsCard(
@@ -363,52 +405,45 @@ struct AppSettingsView: View {
                     icon: "bell.badge.fill"
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Toggle("Bật thông báo ngày lễ", isOn: holidayNotificationBinding)
-                            .lunarSettingsSwitchToggle()
+                        settingsToggleRow(
+                            title: "Bật thông báo ngày lễ",
+                            isOn: holidayNotificationBinding
+                        )
 
                         Divider()
 
-                        HStack {
-                            Text("Nhắc trước")
-                                .font(.system(size: 13, weight: .medium))
-                            Spacer(minLength: 0)
+                        settingsPickerRow(
+                            title: "Nhắc trước",
+                            isEnabled: settings.enableHolidayNotifications
+                        ) {
                             Picker("", selection: $settings.holidayReminderLeadDays) {
                                 Text("Đúng ngày").tag(0)
                                 Text("Trước 1 ngày").tag(1)
                                 Text("Trước 3 ngày").tag(3)
                             }
-                            .labelsHidden()
-                            .frame(width: 150)
-                            .disabled(!settings.enableHolidayNotifications)
                         }
 
-                        HStack {
-                            Text("Giờ thông báo")
-                                .font(.system(size: 13, weight: .medium))
-                            Spacer(minLength: 0)
+                        settingsPickerRow(
+                            title: "Giờ thông báo",
+                            isEnabled: settings.enableHolidayNotifications
+                        ) {
                             Picker("", selection: $settings.holidayReminderHour) {
                                 ForEach([6, 7, 8, 9, 18, 20, 21], id: \.self) { hour in
                                     Text(hourDisplay(hour)).tag(hour)
                                 }
                             }
-                            .labelsHidden()
-                            .frame(width: 150)
-                            .disabled(!settings.enableHolidayNotifications)
                         }
 
-                        HStack {
-                            Text("Phạm vi lập lịch")
-                                .font(.system(size: 13, weight: .medium))
-                            Spacer(minLength: 0)
+                        settingsPickerRow(
+                            title: "Phạm vi lập lịch",
+                            isEnabled: settings.enableHolidayNotifications
+                        ) {
                             Picker("", selection: $settings.notificationWindowDays) {
                                 Text("30 ngày tới").tag(30)
                                 Text("60 ngày tới").tag(60)
                                 Text("90 ngày tới").tag(90)
                                 Text("180 ngày tới").tag(180)
                             }
-                            .labelsHidden()
-                            .frame(width: 150)
-                            .disabled(!settings.enableHolidayNotifications)
                         }
 
                         Text(notificationManager.authorizationDescription)
@@ -587,6 +622,42 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         )
+    }
+
+    @ViewBuilder
+    private func settingsToggleRow(title: String, isOn: Binding<Bool>) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.primary)
+
+            Spacer(minLength: 0)
+
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .lunarSettingsSwitchToggle()
+                .frame(width: trailingControlColumnWidth, alignment: .trailing)
+        }
+    }
+
+    @ViewBuilder
+    private func settingsPickerRow<Control: View>(
+        title: String,
+        isEnabled: Bool,
+        @ViewBuilder control: () -> Control
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.primary)
+
+            Spacer(minLength: 0)
+
+            control()
+                .labelsHidden()
+                .frame(width: trailingControlColumnWidth, alignment: .trailing)
+                .disabled(!isEnabled)
+        }
     }
 
     private var menuBarTitleFontSizeBinding: Binding<Double> {
@@ -978,8 +1049,7 @@ private extension View {
 
     func lunarSettingsSwitchToggle() -> some View {
         toggleStyle(.switch)
-            .controlSize(.small)
-            .tint(Color.accentColor)
+            .tint(Color(nsColor: .controlAccentColor))
     }
 }
 
@@ -988,32 +1058,83 @@ private extension View {
 private struct PanelCardOrderRow: View {
     let card: PanelCardKind
     @Binding var isVisible: Bool
+    let accentColor: Color
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: card.icon)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
-                .frame(width: 24, height: 24)
-                .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 7))
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(accentColor.opacity(0.12))
+                    .frame(width: 26, height: 26)
 
-            VStack(alignment: .leading, spacing: 2) {
+                Image(systemName: card.icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(accentColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
                 Text(card.title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
+
                 Text(card.subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Text(isVisible ? "Đang hiển thị" : "Đang ẩn")
+                    .font(.system(size: 10, weight: .semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill((isVisible ? Color.green : Color.secondary).opacity(0.16))
+                    )
+                    .foregroundStyle(isVisible ? Color.green : .secondary)
             }
 
             Spacer()
 
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.tertiary)
+                .frame(width: 14)
+                .help("Kéo để đổi thứ tự")
+
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
                 .lunarSettingsSwitchToggle()
+                .frame(width: 46, alignment: .trailing)
                 .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.72 : 0.96))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08), lineWidth: 1)
+        )
+    }
+}
+
+private struct PanelCardHintChip: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .font(.caption2.weight(.medium))
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.primary.opacity(0.06), in: Capsule())
     }
 }
 

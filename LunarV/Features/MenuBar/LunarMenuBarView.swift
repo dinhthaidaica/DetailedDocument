@@ -948,6 +948,7 @@ private struct ConverterLeapMonthField: View {
                 Toggle("", isOn: $isOn)
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .tint(Color(nsColor: .controlAccentColor))
             }
         }
         .padding(10)

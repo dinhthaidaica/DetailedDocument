@@ -103,6 +103,7 @@ struct LunarVApp: App {
                 .environmentObject(notificationManager)
         }
         .defaultSize(width: 820, height: 600)
+        .windowResizability(.contentSize)
         .windowStyle(.hiddenTitleBar)
         .restorationBehavior(.disabled)
     }

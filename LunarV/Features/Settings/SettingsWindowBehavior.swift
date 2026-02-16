@@ -16,6 +16,7 @@ final class SettingsWindowObserverView: NSView {
 
 struct SettingsWindowBehavior: NSViewRepresentable {
     let keepOnTop: Bool
+    private static let fixedWindowSize = NSSize(width: 820, height: 600)
 
     final class Coordinator {
         weak var trackedWindow: NSWindow?
@@ -43,15 +44,19 @@ struct SettingsWindowBehavior: NSViewRepresentable {
     private static func configure(_ window: NSWindow?, keepOnTop: Bool, coordinator: Coordinator) {
         guard let window else { return }
 
+        window.minSize = fixedWindowSize
+        window.maxSize = fixedWindowSize
+        window.styleMask.remove(.resizable)
+        window.collectionBehavior.remove(.fullScreenPrimary)
+        window.collectionBehavior.remove(.fullScreenAuxiliary)
+        window.standardWindowButton(.zoomButton)?.isEnabled = false
         window.level = keepOnTop ? .floating : .normal
 
         if coordinator.trackedWindow !== window {
             coordinator.trackedWindow = window
             window.identifier = NSUserInterfaceItemIdentifier("settings.lunarv")
-            window.minSize = NSSize(width: 720, height: 500)
             window.isMovableByWindowBackground = true
             window.collectionBehavior.insert(.moveToActiveSpace)
-            window.collectionBehavior.insert(.fullScreenAuxiliary)
 
             NSApp.activate(ignoringOtherApps: true)
             window.orderFrontRegardless()
