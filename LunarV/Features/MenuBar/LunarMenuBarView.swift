@@ -132,7 +132,7 @@ struct LunarMenuBarView: View {
                 Text("LunarV")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
-                Text("Lịch âm chuyên nghiệp")
+                Text("Lịch âm Việt Nam")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
