@@ -143,11 +143,11 @@ struct LunarMenuBarView: View {
                     
                     Text(info.lunarMonthYearText)
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.85))
                     
                     Text(info.solarDateText)
                         .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -160,7 +160,7 @@ struct LunarMenuBarView: View {
                     
                     Text(info.lunarPhaseName)
                         .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.primary.opacity(0.7))
                 }
             }
 
@@ -193,7 +193,7 @@ struct LunarMenuBarView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(holiday.name).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
-                            Text(holiday.dateText).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+                            Text(holiday.dateText).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
                         }
                         Spacer()
                         Text(holiday.daysUntil == 0 ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
@@ -227,7 +227,7 @@ struct LunarMenuBarView: View {
                 HStack(spacing: 0) {
                     ForEach(weekdayHeaders, id: \.self) { day in
                         Text(day).font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(day == "T7" || day == "CN" ? .red.opacity(0.7) : .secondary)
+                            .foregroundStyle(day == "T7" || day == "CN" ? .red.opacity(0.8) : .primary.opacity(0.6))
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -311,7 +311,7 @@ private struct SectionCard<Content: View, Trailing: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(title.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(.tertiary).tracking(1)
+                Text(title.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(.primary.opacity(0.6)).tracking(1)
                 Spacer()
                 trailingView?()
             }
@@ -327,8 +327,8 @@ private struct CanChiPill: View {
     let value: String
     var body: some View {
         VStack(spacing: 4) {
-            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
-            Text(value).font(.system(size: 12, weight: .semibold))
+            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.5))
+            Text(value).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 10)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
@@ -343,9 +343,9 @@ private struct InfoRow: View {
         HStack(spacing: 8) {
             Image(systemName: icon).font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
                 .frame(width: 24, height: 24).background(Color.accentColor.opacity(0.1), in: Circle())
-            Text(label).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+            Text(label).font(.system(size: 12, weight: .medium)).foregroundStyle(.primary.opacity(0.8))
             Spacer()
-            Text(value).font(.system(size: 12, weight: .semibold))
+            Text(value).font(.system(size: 12, weight: .semibold)).foregroundStyle(.primary)
         }
     }
 }
@@ -355,8 +355,8 @@ private struct StatTile: View {
     let value: String
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
-            Text(value).font(.system(size: 12, weight: .semibold))
+            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.5))
+            Text(value).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading).padding(10)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
@@ -372,9 +372,9 @@ private struct MonthDayCellView: View {
         VStack(spacing: 0) {
             if let solar = cell.solarDay, let lunar = cell.lunarDay {
                 Text("\(solar)").font(.system(size: 13, weight: cell.isToday ? .bold : .semibold))
-                    .foregroundStyle(cell.isToday ? Color.accentColor : (cell.holiday != nil || weekdayIndex >= 5 ? .red.opacity(0.8) : .primary))
+                    .foregroundStyle(cell.isToday ? Color.accentColor : (cell.holiday != nil || weekdayIndex >= 5 ? .red.opacity(0.9) : .primary))
                 Text("\(lunar)").font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(cell.isToday ? Color.accentColor.opacity(0.8) : .secondary)
+                    .foregroundStyle(cell.isToday ? Color.accentColor.opacity(0.8) : .primary.opacity(0.5))
             }
         }
         .frame(maxWidth: .infinity, minHeight: 38)
@@ -396,8 +396,8 @@ private struct HeroChip: View {
         HStack(spacing: 8) {
             Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.tertiary)
-                Text(value).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+                Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.6))
+                Text(value).font(.system(size: 11, weight: .bold)).foregroundStyle(.primary).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
