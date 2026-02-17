@@ -13,7 +13,8 @@ struct LunarVWidget: Widget {
             LunarWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Lịch Âm LunarV")
-        .description("Xem nhanh ngày âm lịch, can chi và tiết khí.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("Xem nhanh ngày âm lịch, can chi, tiết khí và thông tin dương lịch theo phong cách LunarV.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
     }
 }

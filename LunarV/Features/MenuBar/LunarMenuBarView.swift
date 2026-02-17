@@ -326,14 +326,16 @@ struct LunarMenuBarView: View {
                     color: .secondaryLabelColor
                 ))
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
 
                 DayOfficerPanel(officer: viewModel.info.dayOfficer)
 
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(viewModel.info.dayGuidance.activityInsights) { insight in
                         ActivityInsightRow(insight: insight)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 if !viewModel.info.dayOfficer.recommendedActivities.isEmpty {
                     GuidanceBlock(
@@ -367,6 +369,7 @@ struct LunarMenuBarView: View {
                     )
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
@@ -374,10 +377,22 @@ struct LunarMenuBarView: View {
         SectionCard(title: "Sự kiện sắp tới") {
             VStack(spacing: 8) {
                 ForEach(viewModel.info.upcomingHolidays.prefix(3)) { holiday in
-                    HStack {
+                    HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(holiday.name).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
-                            Text(holiday.dateText).font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+                            Text(justifiedAttributedText(
+                                holiday.name,
+                                size: 12,
+                                weight: .bold
+                            ))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Text(justifiedAttributedText(
+                                holiday.dateText,
+                                size: 10,
+                                weight: .medium,
+                                color: .secondaryLabelColor
+                            ))
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Spacer()
                         Text(holiday.daysUntil == 0 ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
@@ -756,9 +771,13 @@ private struct ConverterPanel<InputContent: View, ResultContent: View>: View {
                     Text(title)
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
+                    Text(justifiedAttributedText(
+                        subtitle,
+                        size: 10,
+                        weight: .medium,
+                        color: .secondaryLabelColor
+                    ))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 
@@ -789,7 +808,7 @@ private struct ConverterResultCard: View {
                 .tracking(0.6)
 
             Text(value)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -975,12 +994,21 @@ private struct InfoRow: View {
     let label: String
     let value: String
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: icon).font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
                 .frame(width: 24, height: 24).background(Color.accentColor.opacity(0.1), in: Circle())
-            Text(label).font(.system(size: 12, weight: .medium)).foregroundStyle(.primary.opacity(0.8))
-            Spacer()
-            Text(value).font(.system(size: 12, weight: .semibold)).foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.primary.opacity(0.65))
+                    .tracking(0.3)
+                Text(justifiedAttributedText(
+                    value,
+                    size: 12,
+                    weight: .semibold
+                ))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 }
@@ -1079,6 +1107,7 @@ private struct DayOfficerPanel: View {
                 color: .secondaryLabelColor
             ))
             .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
 
             Text(justifiedAttributedText(
                 officer.summary,
@@ -1086,7 +1115,9 @@ private struct DayOfficerPanel: View {
                 weight: .medium
             ))
             .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
         .background(levelColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -1138,8 +1169,7 @@ private struct ActivityInsightRow: View {
                 weight: .medium
             ))
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            Spacer(minLength: 0)
+            .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -1175,10 +1205,14 @@ private struct GuidanceBlock: View {
                             .padding(.top, 5)
                         Text(justifiedAttributedText(item, size: 11, weight: .medium))
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
