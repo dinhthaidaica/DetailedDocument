@@ -86,7 +86,7 @@ struct AppSettingsView: View {
 
     private var appearancePane: some View {
         ScrollView {
-            LazyVStack(spacing: 18) {
+            LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Giao diện",
                     subtitle: "Tùy chỉnh cách hiển thị LunarV trên thanh Menu Bar.",
@@ -106,7 +106,7 @@ struct AppSettingsView: View {
                     subtitle: "Preset nhanh hoặc mẫu tuỳ chỉnh",
                     icon: "menubar.rectangle"
                 ) {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
                         previewCard
 
                         settingsPickerRow(title: "Chế độ", isEnabled: true) {
@@ -136,7 +136,7 @@ struct AppSettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(20)
+            .padding(14)
         }
         .lunarSettingsBackground()
     }
@@ -184,7 +184,7 @@ struct AppSettingsView: View {
     }
 
     private var menuBarTitleFontControl: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Kích cỡ chữ trên Menu Bar")
                     .font(.system(size: 13, weight: .medium))
@@ -194,22 +194,10 @@ struct AppSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Slider(
+            continuousMacSlider(
                 value: menuBarTitleFontSizeBinding,
-                in: AppSettings.menuBarTitleFontSizeRange
-            ) {
-                Text("Kích cỡ chữ")
-            } minimumValueLabel: {
-                Text("\(Int(AppSettings.menuBarTitleFontSizeRange.lowerBound))")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            } maximumValueLabel: {
-                Text("\(Int(AppSettings.menuBarTitleFontSizeRange.upperBound))")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .controlSize(.small)
-            .tint(.accentColor)
+                range: AppSettings.menuBarTitleFontSizeRange
+            )
 
             HStack {
                 Text("Cỡ chữ này áp dụng cho phần ngày hiển thị trên thanh Menu Bar.")
@@ -227,7 +215,7 @@ struct AppSettingsView: View {
     }
 
     private var menuBarLeadingIconControl: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             settingsToggleRow(
                 title: "Hiển thị icon bên trái ngày trên Menu Bar",
                 isOn: menuBarLeadingIconVisibilityBinding
@@ -243,22 +231,10 @@ struct AppSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Slider(
+                continuousMacSlider(
                     value: menuBarLeadingIconSizeBinding,
-                    in: AppSettings.menuBarLeadingIconSizeRange
-                ) {
-                    Text("Kích cỡ icon")
-                } minimumValueLabel: {
-                    Text("\(Int(AppSettings.menuBarLeadingIconSizeRange.lowerBound))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } maximumValueLabel: {
-                    Text("\(Int(AppSettings.menuBarLeadingIconSizeRange.upperBound))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .controlSize(.small)
-                .tint(.accentColor)
+                    range: AppSettings.menuBarLeadingIconSizeRange
+                )
 
                 Text("Apple khuyến nghị icon menu bar nên gọn để cân bằng với chữ và độ dày thanh menu.")
                     .font(.caption)
@@ -271,7 +247,7 @@ struct AppSettingsView: View {
 
     private var panelPane: some View {
         ScrollView {
-            LazyVStack(spacing: 18) {
+            LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Bảng điều khiển",
                     subtitle: "Sắp xếp thứ tự và quản lý hiển thị các card trong menu.",
@@ -287,8 +263,8 @@ struct AppSettingsView: View {
                     subtitle: "Kéo thả để đổi thứ tự card",
                     icon: "rectangle.grid.1x2.fill"
                 ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Kéo thả để thay đổi thứ tự card hiển thị trên bảng Menu Bar. Gạt công tắc để ẩn/hiện từng card.")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Kéo để đổi thứ tự card, gạt công tắc để ẩn/hiện.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -304,7 +280,7 @@ struct AppSettingsView: View {
                         panelOrderList
 
                         HStack {
-                            Text("Kéo-thả trực tiếp các hàng để đổi vị trí.")
+                            Text("Kéo-thả trực tiếp trên từng hàng.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Spacer(minLength: 0)
@@ -317,7 +293,7 @@ struct AppSettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(20)
+            .padding(14)
         }
         .lunarSettingsBackground()
     }
@@ -333,7 +309,7 @@ struct AppSettingsView: View {
                     card: card,
                     isVisible: panelCardVisibilityBinding(for: card)
                 )
-                .listRowInsets(EdgeInsets(top: 5, leading: 8, bottom: 5, trailing: 8))
+                .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
@@ -354,7 +330,7 @@ struct AppSettingsView: View {
     }
 
     private var panelOrderListHeight: CGFloat {
-        let rowHeight: CGFloat = 66
+        let rowHeight: CGFloat = 54
         let visibleRows = min(max(settings.panelCardOrder.count, 4), 8)
         return CGFloat(visibleRows) * rowHeight
     }
@@ -363,7 +339,7 @@ struct AppSettingsView: View {
 
     private var systemPane: some View {
         ScrollView {
-            LazyVStack(spacing: 18) {
+            LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Hệ thống",
                     subtitle: "Quản lý hành vi cửa sổ, tự động hóa và nhắc ngày lễ.",
@@ -474,7 +450,7 @@ struct AppSettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(20)
+            .padding(14)
         }
         .lunarSettingsBackground()
     }
@@ -496,7 +472,7 @@ struct AppSettingsView: View {
 
     private var aboutPane: some View {
         ScrollView {
-            LazyVStack(spacing: 18) {
+            LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Thông tin",
                     subtitle: "Thông tin dự án và hỗ trợ phát triển LunarV.",
@@ -555,7 +531,7 @@ struct AppSettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(20)
+            .padding(14)
         }
         .lunarSettingsBackground()
     }
@@ -612,7 +588,7 @@ struct AppSettingsView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, 10)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 16))
     }
 
@@ -697,6 +673,24 @@ struct AppSettingsView: View {
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(get: { launchAtLoginManager.isEnabled }, set: { launchAtLoginManager.setEnabled($0) })
+    }
+
+    @ViewBuilder
+    private func continuousMacSlider(value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+        HStack(spacing: 8) {
+            Text("\(Int(range.lowerBound))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 16, alignment: .trailing)
+
+            Slider(value: value, in: range)
+                .controlSize(.small)
+
+            Text("\(Int(range.upperBound))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 16, alignment: .leading)
+        }
     }
 
     private var holidayNotificationBinding: Binding<Bool> {
@@ -885,20 +879,20 @@ private struct LunarSettingsHeader<Trailing: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color(NSColor.controlBackgroundColor))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .stroke(Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08), lineWidth: 1)
                     )
 
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(accent)
             }
-            .frame(width: 42, height: 42)
+            .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -916,7 +910,7 @@ private struct LunarSettingsHeader<Trailing: View>: View {
 
             trailing
         }
-        .padding(16)
+        .padding(12)
         .frame(maxWidth: 760)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -939,7 +933,7 @@ private struct LunarSettingsHeader<Trailing: View>: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(Color.primary.opacity(colorScheme == .dark ? 0.22 : 0.12), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 10, x: 0, y: 5)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -968,14 +962,14 @@ private struct LunarSettingsCard<Content: View, Trailing: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ZStack {
                     Circle()
                         .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 28, height: 28)
+                        .frame(width: 24, height: 24)
 
                     Image(systemName: icon)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
 
@@ -996,15 +990,15 @@ private struct LunarSettingsCard<Content: View, Trailing: View>: View {
 
                 trailing
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
             .background(Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.03))
 
             Divider()
                 .opacity(0.5)
 
             content
-                .padding(16)
+                .padding(12)
         }
         .frame(maxWidth: 760)
         .background(
@@ -1070,35 +1064,25 @@ private struct PanelCardOrderRow: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
                     .fill(Color.accentColor.opacity(0.12))
-                    .frame(width: 26, height: 26)
+                    .frame(width: 22, height: 22)
 
                 Image(systemName: card.icon)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(card.title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
 
                 Text(card.subtitle)
-                    .font(.caption)
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-
-                Text(isVisible ? "Đang hiển thị" : "Đang ẩn")
-                    .font(.system(size: 10, weight: .semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule()
-                            .fill((isVisible ? Color.green : Color.secondary).opacity(0.16))
-                    )
-                    .foregroundStyle(isVisible ? Color.green : .secondary)
             }
 
             Spacer()
@@ -1112,11 +1096,11 @@ private struct PanelCardOrderRow: View {
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
                 .lunarSettingsSwitchToggle()
-                .frame(width: 46, alignment: .trailing)
+                .frame(width: 40, alignment: .trailing)
                 .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.72 : 0.96))
