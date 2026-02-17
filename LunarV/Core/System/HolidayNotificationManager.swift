@@ -134,12 +134,11 @@ final class HolidayNotificationManager: ObservableObject {
         for offset in 0 ... windowDays {
             guard
                 let eventDate = calendar.date(byAdding: .day, value: offset, to: dayStart),
-                let solar = lunarService.solarComponents(from: eventDate)
+                let solar = lunarService.solarComponents(from: eventDate),
+                let lunar = lunarService.lunarDate(from: eventDate)
             else {
                 continue
             }
-
-            let lunar = lunarService.lunarDate(day: solar.day, month: solar.month, year: solar.year)
 
             let resolvedHoliday: (name: String, isLunar: Bool)?
             if let name = HolidayProvider.solarHoliday(day: solar.day, month: solar.month) {

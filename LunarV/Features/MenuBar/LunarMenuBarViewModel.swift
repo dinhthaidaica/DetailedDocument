@@ -96,6 +96,7 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private func updateMenuBarTitle(now: Date) {
         guard let snapshot = lunarService.snapshot(for: now) else { return }
+        let timeComponents = solarCalendar.dateComponents([.hour, .minute, .second], from: now)
 
         let titleContext = MenuBarTitleContext(
             lunarDay: snapshot.lunar.day,
@@ -106,7 +107,12 @@ final class LunarMenuBarViewModel: ObservableObject {
             zodiac: snapshot.zodiac,
             solarDay: snapshot.solar.day,
             solarMonth: snapshot.solar.month,
-            solarYear: snapshot.solar.year
+            solarYear: snapshot.solar.year,
+            solarWeekdayName: lunarService.weekdayName(from: snapshot.solar.weekday),
+            solarWeekdayShortName: lunarService.weekdayShortName(from: snapshot.solar.weekday),
+            hour: timeComponents.hour ?? 0,
+            minute: timeComponents.minute ?? 0,
+            second: timeComponents.second ?? 0
         )
 
         menuBarTitle = MenuBarTitleFormatter.render(
@@ -290,9 +296,8 @@ final class LunarMenuBarViewModel: ObservableObject {
         // Check next 30 days
         for i in 0..<31 {
             if let date = solarCalendar.date(byAdding: .day, value: i, to: now),
-               let comp = lunarService.solarComponents(from: date) {
-
-                let lunar = lunarService.lunarDate(day: comp.day, month: comp.month, year: comp.year)
+               let comp = lunarService.solarComponents(from: date),
+               let lunar = lunarService.lunarDate(from: date) {
                 
                 if let solarHoliday = HolidayProvider.solarHoliday(day: comp.day, month: comp.month) {
                     holidays.append(LunarHoliday(name: solarHoliday, dateText: "\(comp.day)/\(comp.month)", isLunar: false, daysUntil: i))

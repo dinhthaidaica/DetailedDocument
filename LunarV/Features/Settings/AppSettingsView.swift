@@ -12,9 +12,18 @@ struct AppSettingsView: View {
     @State private var selectedPane: SettingsPane = .appearance
     @State private var isShowingResetDialog = false
     @State private var searchText = ""
+    @State private var isShowingFontPicker = false
+    @State private var fontSearchText = ""
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
+    private let recommendedFontFamilies = [
+        "SF Pro Text",
+        "Avenir Next",
+        "Helvetica Neue",
+        "Menlo",
+        "Be Vietnam Pro",
+    ]
 
     var body: some View {
         NavigationSplitView {
@@ -109,6 +118,10 @@ struct AppSettingsView: View {
                     VStack(alignment: .trailing, spacing: 6) {
                         LunarSettingsStatusPill(text: settings.menuBarDisplayPreset.title, color: .accentColor)
                         LunarSettingsStatusPill(
+                            text: "Font: \(menuBarFontStatusText)",
+                            color: settings.menuBarTitleFontFamilyValue.isEmpty ? .secondary : .accentColor
+                        )
+                        LunarSettingsStatusPill(
                             text: settings.showMenuBarLeadingIconValue ? "Icon: Bật" : "Icon: Tắt",
                             color: settings.showMenuBarLeadingIconValue ? .green : .secondary
                         )
@@ -145,6 +158,7 @@ struct AppSettingsView: View {
                         Divider()
 
                         menuBarTitleFontControl
+                        menuBarTitleTypographyControl
                         menuBarLeadingIconControl
                     }
                 }
@@ -161,7 +175,7 @@ struct AppSettingsView: View {
                 Text("Mẫu tuỳ chỉnh")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
-                TextField("Ví dụ: {dd}/{mm} ÂL", text: $settings.customMenuBarTemplate)
+                TextField("Ví dụ: {dd}/{mm} {al} • {wds} • {hh}:{min}:{ss}", text: $settings.customMenuBarTemplate)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(.body, design: .monospaced))
             }
@@ -182,6 +196,13 @@ struct AppSettingsView: View {
                     .font(.system(size: 9, weight: .heavy))
                     .foregroundStyle(.blue.opacity(0.8))
                 TokenFlowLayout(tokens: DisplayToken.solarTokens) { token in
+                    insertToken(token.code)
+                }
+
+                Text("THỜI GIAN")
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(.mint.opacity(0.8))
+                TokenFlowLayout(tokens: DisplayToken.timeTokens) { token in
                     insertToken(token.code)
                 }
 
@@ -222,6 +243,60 @@ struct AppSettingsView: View {
 
                 Button("Mặc định 12pt") {
                     settings.setMenuBarTitleFontSize(AppSettings.defaultMenuBarTitleFontSize)
+                }
+                .buttonStyle(.link)
+            }
+        }
+    }
+
+    private var menuBarTitleTypographyControl: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            settingsPickerRow(title: "Phông chữ", isEnabled: true) {
+                menuBarFontPickerButton
+            }
+
+            if !settings.menuBarTitleFontFamilyValue.isEmpty && !isValidFontFamily(settings.menuBarTitleFontFamilyValue) {
+                Text("Font này chưa khả dụng trên máy, LunarV sẽ tự dùng font mặc định để đảm bảo dễ đọc.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Định dạng chữ")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    MenuBarTextStyleButton(
+                        title: "Đậm",
+                        symbol: "bold",
+                        isEnabled: menuBarTitleBoldBinding
+                    )
+                    MenuBarTextStyleButton(
+                        title: "Nghiêng",
+                        symbol: "italic",
+                        isEnabled: menuBarTitleItalicBinding
+                    )
+                    MenuBarTextStyleButton(
+                        title: "Gạch chân",
+                        symbol: "underline",
+                        isEnabled: menuBarTitleUnderlineBinding
+                    )
+                }
+            }
+
+            HStack {
+                Text("Ưu tiên font đậm vừa phải để menu bar rõ nhưng không quá nặng.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 0)
+
+                Button("Mặc định kiểu chữ") {
+                    settings.setMenuBarTitleFontFamily(AppSettings.defaultMenuBarTitleFontFamily)
+                    settings.setMenuBarTitleBold(AppSettings.defaultMenuBarTitleBold)
+                    settings.setMenuBarTitleItalic(AppSettings.defaultMenuBarTitleItalic)
+                    settings.setMenuBarTitleUnderline(AppSettings.defaultMenuBarTitleUnderline)
                 }
                 .buttonStyle(.link)
             }
@@ -592,8 +667,11 @@ struct AppSettingsView: View {
                             )
                     }
 
-                    Text(previewMenuBarTitle)
-                        .font(Font(NSFont.menuBarFont(ofSize: settings.menuBarTitleFontSizeCGFloat)))
+                    TimelineView(.periodic(from: .now, by: 1)) { timeline in
+                        Text(previewMenuBarTitle(at: timeline.date))
+                            .font(Font(previewMenuBarFont))
+                            .underline(settings.menuBarTitleUnderlineValue)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -607,11 +685,28 @@ struct AppSettingsView: View {
     }
 
     private func insertToken(_ code: String) {
-        if settings.customMenuBarTemplate.isEmpty {
+        var template = settings.customMenuBarTemplate
+        let compactSeparators: Set<String> = [":", "/", "-"]
+
+        guard !template.isEmpty else {
             settings.customMenuBarTemplate = code
-        } else {
-            settings.customMenuBarTemplate += " " + code
+            return
         }
+
+        if compactSeparators.contains(code), template.hasSuffix(" ") {
+            template.removeLast()
+        }
+
+        let trailingSeparator = template.last.map { compactSeparators.contains(String($0)) } ?? false
+        if compactSeparators.contains(code) || trailingSeparator {
+            template += code
+        } else if template.hasSuffix(" ") {
+            template += code
+        } else {
+            template += " " + code
+        }
+
+        settings.customMenuBarTemplate = template
     }
 
     private func panelCardVisibilityBinding(for card: PanelCardKind) -> Binding<Bool> {
@@ -666,6 +761,165 @@ struct AppSettingsView: View {
         )
     }
 
+    private var menuBarTitleBoldBinding: Binding<Bool> {
+        Binding(
+            get: { settings.menuBarTitleBoldValue },
+            set: { settings.setMenuBarTitleBold($0) }
+        )
+    }
+
+    private var menuBarTitleItalicBinding: Binding<Bool> {
+        Binding(
+            get: { settings.menuBarTitleItalicValue },
+            set: { settings.setMenuBarTitleItalic($0) }
+        )
+    }
+
+    private var menuBarTitleUnderlineBinding: Binding<Bool> {
+        Binding(
+            get: { settings.menuBarTitleUnderlineValue },
+            set: { settings.setMenuBarTitleUnderline($0) }
+        )
+    }
+
+    private var installedFontFamilies: [String] {
+        NSFontManager.shared.availableFontFamilies.sorted()
+    }
+
+    private var recommendedFontPickerOptions: [String] {
+        let installed = Set(installedFontFamilies)
+        return recommendedFontFamilies.filter { installed.contains($0) }
+    }
+
+    private var filteredFontPickerOptions: [String] {
+        let query = fontSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return installedFontFamilies
+        }
+        return installedFontFamilies.filter { $0.localizedCaseInsensitiveContains(query) }
+    }
+
+    private var filteredRecommendedFontPickerOptions: [String] {
+        let filtered = Set(filteredFontPickerOptions)
+        return recommendedFontPickerOptions.filter { filtered.contains($0) }
+    }
+
+    private var filteredOtherFontPickerOptions: [String] {
+        let recommended = Set(recommendedFontPickerOptions)
+        return filteredFontPickerOptions.filter { !recommended.contains($0) }
+    }
+
+    private var menuBarFontPickerButton: some View {
+        Button {
+            fontSearchText = ""
+            isShowingFontPicker = true
+        } label: {
+            HStack(spacing: 8) {
+                Text(menuBarFontStatusText)
+                    .font(.system(size: 12, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(width: trailingControlColumnWidth, alignment: .trailing)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $isShowingFontPicker, arrowEdge: .top) {
+            menuBarFontPickerPopover
+        }
+    }
+
+    private var menuBarFontPickerPopover: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Chọn phông chữ Menu Bar")
+                .font(.system(size: 12, weight: .semibold))
+
+            TextField("Tìm phông chữ...", text: $fontSearchText)
+                .textFieldStyle(.roundedBorder)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    MenuBarFontPickerRow(
+                        title: "Mặc định hệ thống",
+                        subtitle: "Tối ưu cho macOS Menu Bar",
+                        previewFontName: nil,
+                        isSelected: settings.menuBarTitleFontFamilyValue.isEmpty
+                    ) {
+                        settings.setMenuBarTitleFontFamily(AppSettings.defaultMenuBarTitleFontFamily)
+                        isShowingFontPicker = false
+                    }
+
+                    if !filteredRecommendedFontPickerOptions.isEmpty {
+                        Text("Gợi ý")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+
+                        ForEach(filteredRecommendedFontPickerOptions, id: \.self) { family in
+                            MenuBarFontPickerRow(
+                                title: family,
+                                subtitle: "Khuyến nghị hiển thị rõ trên menu",
+                                previewFontName: family,
+                                isSelected: settings.menuBarTitleFontFamilyValue == family
+                            ) {
+                                settings.setMenuBarTitleFontFamily(family)
+                                isShowingFontPicker = false
+                            }
+                        }
+                    }
+
+                    if !filteredOtherFontPickerOptions.isEmpty {
+                        Text("Tất cả phông chữ")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+
+                        ForEach(filteredOtherFontPickerOptions, id: \.self) { family in
+                            MenuBarFontPickerRow(
+                                title: family,
+                                subtitle: family,
+                                previewFontName: family,
+                                isSelected: settings.menuBarTitleFontFamilyValue == family
+                            ) {
+                                settings.setMenuBarTitleFontFamily(family)
+                                isShowingFontPicker = false
+                            }
+                        }
+                    }
+
+                    if filteredFontPickerOptions.isEmpty {
+                        Text("Không tìm thấy phông chữ phù hợp.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 10)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 330)
+        }
+        .padding(12)
+        .frame(width: 340)
+    }
+
+    private var menuBarFontStatusText: String {
+        settings.menuBarTitleFontFamilyValue.isEmpty ? "Hệ thống" : settings.menuBarTitleFontFamilyValue
+    }
+
+    private var previewMenuBarFont: NSFont {
+        resolvedMenuBarFont(size: settings.menuBarTitleFontSizeCGFloat)
+    }
+
     private var menuBarLeadingIconSizeBinding: Binding<Double> {
         Binding(
             get: { settings.menuBarLeadingIconSizeValue },
@@ -699,7 +953,7 @@ struct AppSettingsView: View {
 
             Slider(value: value, in: range)
                 .controlSize(.small)
-                .accentColor(.accentColor)
+                .tint(Color(nsColor: .controlAccentColor))
 
             Text("\(Int(range.upperBound))")
                 .font(.caption2)
@@ -739,11 +993,57 @@ struct AppSettingsView: View {
         return "\(v) (\(b))"
     }
 
-    private var previewMenuBarTitle: String {
-        let now = Date()
+    private func isValidFontFamily(_ family: String) -> Bool {
+        guard !family.isEmpty else {
+            return true
+        }
+        return NSFontManager.shared.availableFontFamilies.contains(family)
+    }
+
+    private func resolvedMenuBarFont(size: CGFloat) -> NSFont {
+        let desiredFamily = settings.menuBarTitleFontFamilyValue
+        let traits = settings.menuBarTitleItalicValue ? NSFontTraitMask.italicFontMask : []
+        let weight = settings.menuBarTitleBoldValue ? 9 : 5
+
+        if !desiredFamily.isEmpty,
+           let custom = NSFontManager.shared.font(
+               withFamily: desiredFamily,
+               traits: traits,
+               weight: weight,
+               size: size
+           ) {
+            return custom
+        }
+
+        let base = NSFont.menuBarFont(ofSize: size)
+        let descriptorTraits = resolvedSymbolicTraits(for: base.fontDescriptor.symbolicTraits)
+        let descriptor = base.fontDescriptor.withSymbolicTraits(descriptorTraits)
+        if let resolved = NSFont(descriptor: descriptor, size: size) {
+            return resolved
+        }
+        return base
+    }
+
+    private func resolvedSymbolicTraits(for current: NSFontDescriptor.SymbolicTraits) -> NSFontDescriptor.SymbolicTraits {
+        var traits = current
+        if settings.menuBarTitleBoldValue {
+            traits.insert(.bold)
+        } else {
+            traits.remove(.bold)
+        }
+        if settings.menuBarTitleItalicValue {
+            traits.insert(.italic)
+        } else {
+            traits.remove(.italic)
+        }
+        return traits
+    }
+
+    private func previewMenuBarTitle(at now: Date) -> String {
         guard let snapshot = previewLunarService.snapshot(for: now) else {
             return "--"
         }
+        let timeComponents = previewLunarService.calendar.dateComponents([.hour, .minute, .second], from: now)
         let context = MenuBarTitleContext(
             lunarDay: snapshot.lunar.day,
             lunarMonth: snapshot.lunar.month,
@@ -753,7 +1053,12 @@ struct AppSettingsView: View {
             zodiac: snapshot.zodiac,
             solarDay: snapshot.solar.day,
             solarMonth: snapshot.solar.month,
-            solarYear: snapshot.solar.year
+            solarYear: snapshot.solar.year,
+            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday),
+            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday),
+            hour: timeComponents.hour ?? 0,
+            minute: timeComponents.minute ?? 0,
+            second: timeComponents.second ?? 0
         )
         return MenuBarTitleFormatter.render(
             preset: settings.menuBarDisplayPreset,
@@ -816,7 +1121,7 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
     var searchKeywords: [String] {
         switch self {
         case .appearance:
-            return ["menu bar", "chế độ", "mẫu tuỳ chỉnh", "template", "cỡ chữ", "font", "icon", "biểu tượng", "xem trước", "paintbrush"]
+            return ["menu bar", "chế độ", "mẫu tuỳ chỉnh", "template", "cỡ chữ", "font", "icon", "biểu tượng", "xem trước", "paintbrush", "thứ", "giờ", "phút", "giây", "time", "weekday", "đậm", "nghiêng", "gạch chân", "bold", "italic", "underline", "phông chữ"]
         case .panel:
             return ["card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả"]
         case .system:
@@ -1116,12 +1421,6 @@ private struct PanelCardOrderRow: View {
 
             Spacer()
 
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.tertiary)
-                .frame(width: 14)
-                .help("Kéo để đổi thứ tự")
-
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
                 .lunarSettingsSwitchToggle()
@@ -1159,6 +1458,107 @@ private struct PanelCardHintChip: View {
     }
 }
 
+private struct MenuBarFontPickerRow: View {
+    let title: String
+    let subtitle: String
+    let previewFontName: String?
+    let isSelected: Bool
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(previewFont)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(
+                        isSelected
+                            ? Color.accentColor.opacity(colorScheme == .dark ? 0.2 : 0.1)
+                            : Color.primary.opacity(colorScheme == .dark ? 0.1 : 0.04)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(
+                        isSelected
+                            ? Color.accentColor.opacity(colorScheme == .dark ? 0.45 : 0.28)
+                            : Color.primary.opacity(colorScheme == .dark ? 0.16 : 0.08),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var previewFont: Font {
+        guard let previewFontName else {
+            return .system(size: 12, weight: .semibold)
+        }
+        return .custom(previewFontName, size: 12)
+    }
+}
+
+private struct MenuBarTextStyleButton: View {
+    let title: String
+    let symbol: String
+    @Binding var isEnabled: Bool
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button {
+            isEnabled.toggle()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: symbol)
+                    .font(.system(size: 10, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(isEnabled ? Color.accentColor : .secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(
+                        isEnabled
+                            ? Color.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.12)
+                            : Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.05)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(
+                        isEnabled
+                            ? Color.accentColor.opacity(colorScheme == .dark ? 0.5 : 0.32)
+                            : Color.primary.opacity(colorScheme == .dark ? 0.18 : 0.1),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct DisplayToken: Identifiable {
     let id = UUID()
     let code: String
@@ -1183,9 +1583,19 @@ private struct DisplayToken: Identifiable {
         DisplayToken(code: "{sy}", label: "Năm DL", color: .blue),
     ]
 
+    static let timeTokens = [
+        DisplayToken(code: "{wd}", label: "Thứ đầy đủ", color: .mint),
+        DisplayToken(code: "{wds}", label: "Thứ ngắn", color: .mint),
+        DisplayToken(code: "{hh}", label: "Giờ (00-23)", color: .mint),
+        DisplayToken(code: "{min}", label: "Phút (00)", color: .mint),
+        DisplayToken(code: "{ss}", label: "Giây (00)", color: .mint),
+        DisplayToken(code: "{time}", label: "Giờ đầy đủ", color: .mint),
+    ]
+
     static let otherTokens = [
         DisplayToken(code: "{al}", label: "Chữ 'ÂL'", color: .secondary),
         DisplayToken(code: "•", label: "Dấu chấm", color: .secondary),
+        DisplayToken(code: ":", label: "Dấu hai chấm", color: .secondary),
         DisplayToken(code: "/", label: "Gạch chéo", color: .secondary),
         DisplayToken(code: "-", label: "Gạch ngang", color: .secondary),
     ]

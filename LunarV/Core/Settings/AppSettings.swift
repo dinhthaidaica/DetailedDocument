@@ -123,6 +123,10 @@ final class AppSettings: ObservableObject {
     static let shared = AppSettings()
     static let defaultMenuBarTitleFontSize: Double = 12
     static let menuBarTitleFontSizeRange: ClosedRange<Double> = 11 ... 16
+    static let defaultMenuBarTitleFontFamily: String = ""
+    static let defaultMenuBarTitleBold: Bool = false
+    static let defaultMenuBarTitleItalic: Bool = false
+    static let defaultMenuBarTitleUnderline: Bool = false
     static let defaultMenuBarLeadingIconSize: Double = 14
     static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
     static let menuBarIconTitleSpacing: CGFloat = 4
@@ -131,6 +135,10 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
     @AppStorage("settings.menuBar.customTemplate") var customMenuBarTemplate: String = ""
     @AppStorage("settings.menuBar.titleFontSize") private var menuBarTitleFontSizeStorage: Double = AppSettings.defaultMenuBarTitleFontSize
+    @AppStorage("settings.menuBar.titleFontFamily") private var menuBarTitleFontFamilyStorage: String = AppSettings.defaultMenuBarTitleFontFamily
+    @AppStorage("settings.menuBar.titleBold") private var menuBarTitleBoldStorage: Bool = AppSettings.defaultMenuBarTitleBold
+    @AppStorage("settings.menuBar.titleItalic") private var menuBarTitleItalicStorage: Bool = AppSettings.defaultMenuBarTitleItalic
+    @AppStorage("settings.menuBar.titleUnderline") private var menuBarTitleUnderlineStorage: Bool = AppSettings.defaultMenuBarTitleUnderline
     @AppStorage("settings.menuBar.showLeadingIcon") private var showMenuBarLeadingIconStorage: Bool = true
     @AppStorage("settings.menuBar.leadingIconSize") private var menuBarLeadingIconSizeStorage: Double = AppSettings.defaultMenuBarLeadingIconSize
 
@@ -156,6 +164,7 @@ final class AppSettings: ObservableObject {
 
     private init() {
         normalizeMenuBarTitleFontSizeIfNeeded()
+        normalizeMenuBarTitleFontFamilyIfNeeded()
         normalizeMenuBarLeadingIconSizeIfNeeded()
         normalizePanelCardOrderIfNeeded()
     }
@@ -175,6 +184,55 @@ final class AppSettings: ObservableObject {
         }
         objectWillChange.send()
         menuBarTitleFontSizeStorage = clamped
+    }
+
+    var menuBarTitleFontFamilyValue: String {
+        menuBarTitleFontFamilyStorage.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func setMenuBarTitleFontFamily(_ family: String) {
+        let normalized = family.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard normalized != menuBarTitleFontFamilyStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarTitleFontFamilyStorage = normalized
+    }
+
+    var menuBarTitleBoldValue: Bool {
+        menuBarTitleBoldStorage
+    }
+
+    func setMenuBarTitleBold(_ isEnabled: Bool) {
+        guard isEnabled != menuBarTitleBoldStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarTitleBoldStorage = isEnabled
+    }
+
+    var menuBarTitleItalicValue: Bool {
+        menuBarTitleItalicStorage
+    }
+
+    func setMenuBarTitleItalic(_ isEnabled: Bool) {
+        guard isEnabled != menuBarTitleItalicStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarTitleItalicStorage = isEnabled
+    }
+
+    var menuBarTitleUnderlineValue: Bool {
+        menuBarTitleUnderlineStorage
+    }
+
+    func setMenuBarTitleUnderline(_ isEnabled: Bool) {
+        guard isEnabled != menuBarTitleUnderlineStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarTitleUnderlineStorage = isEnabled
     }
 
     var showMenuBarLeadingIconValue: Bool {
@@ -266,6 +324,10 @@ final class AppSettings: ObservableObject {
         menuBarDisplayPreset = .compact
         customMenuBarTemplate = ""
         setMenuBarTitleFontSize(Self.defaultMenuBarTitleFontSize)
+        setMenuBarTitleFontFamily(Self.defaultMenuBarTitleFontFamily)
+        setMenuBarTitleBold(Self.defaultMenuBarTitleBold)
+        setMenuBarTitleItalic(Self.defaultMenuBarTitleItalic)
+        setMenuBarTitleUnderline(Self.defaultMenuBarTitleUnderline)
         setShowMenuBarLeadingIcon(true)
         setMenuBarLeadingIconSize(Self.defaultMenuBarLeadingIconSize)
     }
@@ -301,6 +363,14 @@ final class AppSettings: ObservableObject {
             return
         }
         menuBarTitleFontSizeStorage = normalized
+    }
+
+    private func normalizeMenuBarTitleFontFamilyIfNeeded() {
+        let normalized = menuBarTitleFontFamilyStorage.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard normalized != menuBarTitleFontFamilyStorage else {
+            return
+        }
+        menuBarTitleFontFamilyStorage = normalized
     }
 
     private func normalizeMenuBarLeadingIconSizeIfNeeded() {

@@ -15,8 +15,8 @@ struct LunarVApp: App {
         settings.menuBarTitleFontSizeCGFloat
     }
 
-    private var menuBarSystemFont: NSFont {
-        NSFont.menuBarFont(ofSize: menuBarTitleFontSizeCGFloat)
+    private var menuBarTitleFont: NSFont {
+        resolvedMenuBarFont(size: menuBarTitleFontSizeCGFloat)
     }
 
     private var menuBarLeadingIconRenderSize: CGFloat {
@@ -27,9 +27,13 @@ struct LunarVApp: App {
     private var menuBarLabelIdentity: String {
         let title = viewModel.menuBarTitle
         let titleSize = settings.menuBarTitleFontSizeValue
+        let titleFamily = settings.menuBarTitleFontFamilyValue
+        let titleBold = settings.menuBarTitleBoldValue ? 1 : 0
+        let titleItalic = settings.menuBarTitleItalicValue ? 1 : 0
+        let titleUnderline = settings.menuBarTitleUnderlineValue ? 1 : 0
         let iconVisibility = settings.showMenuBarLeadingIconValue ? 1 : 0
         let iconSize = settings.menuBarLeadingIconSizeValue
-        return "\(title)|\(titleSize)|\(iconVisibility)|\(iconSize)"
+        return "\(title)|\(titleSize)|\(titleFamily)|\(titleBold)|\(titleItalic)|\(titleUnderline)|\(iconVisibility)|\(iconSize)"
     }
 
     private var menuBarLabelImage: NSImage? {
@@ -38,11 +42,14 @@ struct LunarVApp: App {
             return nil
         }
 
-        let font = menuBarSystemFont
-        let attributes: [NSAttributedString.Key: Any] = [
+        let font = menuBarTitleFont
+        var attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: NSColor.black,
         ]
+        if settings.menuBarTitleUnderlineValue {
+            attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
+        }
         let attributedText = NSAttributedString(string: text, attributes: attributes)
         let textSize = attributedText.size()
 
@@ -87,7 +94,8 @@ struct LunarVApp: App {
                     Image(nsImage: menuBarLabelImage)
                 } else {
                     Text(viewModel.menuBarTitle)
-                        .font(Font(menuBarSystemFont))
+                        .font(Font(menuBarTitleFont))
+                        .underline(settings.menuBarTitleUnderlineValue)
                 }
             }
             .id(menuBarLabelIdentity)
@@ -106,6 +114,47 @@ struct LunarVApp: App {
         .windowResizability(.contentSize)
         .windowStyle(.hiddenTitleBar)
         .restorationBehavior(.disabled)
+    }
+}
+
+private extension LunarVApp {
+    func resolvedMenuBarFont(size: CGFloat) -> NSFont {
+        let desiredFamily = settings.menuBarTitleFontFamilyValue
+        let traits = settings.menuBarTitleItalicValue ? NSFontTraitMask.italicFontMask : []
+        let weight = settings.menuBarTitleBoldValue ? 9 : 5
+
+        if !desiredFamily.isEmpty,
+           let custom = NSFontManager.shared.font(
+               withFamily: desiredFamily,
+               traits: traits,
+               weight: weight,
+               size: size
+           ) {
+            return custom
+        }
+
+        let base = NSFont.menuBarFont(ofSize: size)
+        let descriptorTraits = resolvedSymbolicTraits(for: base.fontDescriptor.symbolicTraits)
+        let descriptor = base.fontDescriptor.withSymbolicTraits(descriptorTraits)
+        if let resolved = NSFont(descriptor: descriptor, size: size) {
+            return resolved
+        }
+        return base
+    }
+
+    func resolvedSymbolicTraits(for current: NSFontDescriptor.SymbolicTraits) -> NSFontDescriptor.SymbolicTraits {
+        var traits = current
+        if settings.menuBarTitleBoldValue {
+            traits.insert(.bold)
+        } else {
+            traits.remove(.bold)
+        }
+        if settings.menuBarTitleItalicValue {
+            traits.insert(.italic)
+        } else {
+            traits.remove(.italic)
+        }
+        return traits
     }
 }
 
