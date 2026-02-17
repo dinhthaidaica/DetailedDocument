@@ -699,6 +699,7 @@ struct AppSettingsView: View {
 
             Slider(value: value, in: range)
                 .controlSize(.small)
+                .accentColor(.accentColor)
 
             Text("\(Int(range.upperBound))")
                 .font(.caption2)
