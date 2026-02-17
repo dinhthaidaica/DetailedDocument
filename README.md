@@ -69,13 +69,10 @@ LunarV là ứng dụng macOS giúp bạn xem **lịch âm Việt Nam** nhanh ng
 
 ## Ảnh giao diện
 
-### Giao diện 1
-
-![LunarV UI review 1](Resources/UI_review1.png)
-
-### Giao diện 2
-
-![LunarV UI review 2](Resources/UI_review2.png)
+<p align="center">
+  <img src="Resources/UI_review1.png" alt="LunarV UI review 1" width="49%" />
+  <img src="Resources/UI_review2.png" alt="LunarV UI review 2" width="49%" />
+</p>
 
 ## Yêu cầu hệ thống
 
