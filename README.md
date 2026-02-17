@@ -14,7 +14,6 @@
 
 - [Tổng quan](#tổng-quan)
 - [Tính năng](#tính-năng)
-- [Ảnh minh hoạ](#ảnh-minh-hoạ)
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt](#cài-đặt)
 - [Build từ mã nguồn](#build-từ-mã-nguồn)
@@ -67,13 +66,9 @@ LunarV là ứng dụng macOS giúp bạn xem **lịch âm Việt Nam** nhanh ng
 - Sang ngày mới.
 - Máy thức dậy từ chế độ ngủ.
 
-## Ảnh minh hoạ
-
-![LunarV menubar preview](Resources/LunarV_menubar.png)
-
 ## Yêu cầu hệ thống
 
-- macOS 26.0 trở lên.
+- macOS 15.0 trở lên.
 - Chip Apple Silicon hoặc Intel.
 
 ## Cài đặt
