@@ -22,6 +22,7 @@ struct LunarMenuBarView: View {
     @State private var lunarInputYear = Calendar(identifier: .gregorian).component(.year, from: Date())
     @State private var lunarInputIsLeapMonth = false
     @State private var lunarToSolarResult: SolarDateComponents?
+    @State private var hoveredCalendarHolidayText: String?
     @ObservedObject var viewModel: LunarMenuBarViewModel
 
     private let calendarColumns = Array(
@@ -123,6 +124,9 @@ struct LunarMenuBarView: View {
             } else {
                 refreshSolarToLunarSnapshot()
             }
+        }
+        .onChange(of: viewModel.info.monthTitleText) { _, _ in
+            hoveredCalendarHolidayText = nil
         }
     }
 
@@ -432,9 +436,28 @@ struct LunarMenuBarView: View {
                 }
                 LazyVGrid(columns: calendarColumns, spacing: 6) {
                     ForEach(Array(viewModel.info.monthCells.enumerated()), id: \.element.id) { index, cell in
-                        MonthDayCellView(cell: cell, weekdayIndex: index % 7)
+                        MonthDayCellView(
+                            cell: cell,
+                            weekdayIndex: index % 7
+                        ) { hoverText in
+                            hoveredCalendarHolidayText = hoverText
+                        }
                     }
                 }
+
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.accentColor)
+
+                    Text(hoveredCalendarHolidayText ?? "Rê chuột vào ô có chấm đỏ để xem tên ngày lễ.")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(hoveredCalendarHolidayText == nil ? .secondary : .primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 10))
             }
         }
     }
@@ -1219,6 +1242,7 @@ private struct GuidanceBlock: View {
 private struct MonthDayCellView: View {
     let cell: LunarMonthDayCell
     let weekdayIndex: Int
+    let onHolidayHover: (String?) -> Void
     @State private var isHovered = false
 
     var body: some View {
@@ -1237,7 +1261,29 @@ private struct MonthDayCellView: View {
             if cell.holiday != nil { Circle().fill(.red).frame(width: 4).padding(4) }
             else if cell.isFirstLunarDay { Circle().fill(.orange).frame(width: 4).padding(4) }
         }
-        .onHover { h in withAnimation(.snappy(duration: 0.1)) { isHovered = h } }
+        .onHover { h in
+            withAnimation(.snappy(duration: 0.1)) { isHovered = h }
+
+            guard let holiday = cell.holiday, h else {
+                onHolidayHover(nil)
+                return
+            }
+
+            let detail: String
+            if let solarDay = cell.solarDay, let lunarDay = cell.lunarDay {
+                detail = "\(holiday) • DL \(solarDay) • AL \(lunarDay)"
+            } else {
+                detail = holiday
+            }
+
+            onHolidayHover(detail)
+        }
+        .onDisappear {
+            if cell.holiday != nil {
+                onHolidayHover(nil)
+            }
+        }
+        .help(cell.holiday ?? "")
     }
 }
 

@@ -11,6 +11,7 @@ struct AppSettingsView: View {
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var selectedPane: SettingsPane = .appearance
     @State private var isShowingResetDialog = false
+    @State private var searchText = ""
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
@@ -56,7 +57,7 @@ struct AppSettingsView: View {
 
     private var sidebar: some View {
         List(selection: $selectedPane) {
-            ForEach(SettingsPane.allCases) { pane in
+            ForEach(filteredPanes) { pane in
                 LunarSettingsSidebarRow(pane: pane)
                     .tag(pane)
                     .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
@@ -64,6 +65,19 @@ struct AppSettingsView: View {
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 240)
+        .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm cài đặt...")
+    }
+
+    private var filteredPanes: [SettingsPane] {
+        if searchText.isEmpty {
+            return SettingsPane.allCases
+        } else {
+            return SettingsPane.allCases.filter { pane in
+                pane.title.localizedCaseInsensitiveContains(searchText) ||
+                pane.subtitle.localizedCaseInsensitiveContains(searchText) ||
+                pane.searchKeywords.contains { $0.localizedCaseInsensitiveContains(searchText) }
+            }
+        }
     }
 
     // MARK: - Detail Pane Router
@@ -794,6 +808,20 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
             return "gearshape.2.fill"
         case .about:
             return "info.circle.fill"
+        }
+    }
+
+    /// Các từ khoá tìm kiếm mở rộng cho từng tab
+    var searchKeywords: [String] {
+        switch self {
+        case .appearance:
+            return ["menu bar", "chế độ", "mẫu tuỳ chỉnh", "template", "cỡ chữ", "font", "icon", "biểu tượng", "xem trước", "paintbrush"]
+        case .panel:
+            return ["card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả"]
+        case .system:
+            return ["khởi động", "đăng nhập", "login", "tự động", "thông báo", "ngày lễ", "nhắc nhở", "holiday", "múi giờ", "timezone", "thuật toán", "algorithm", "gear"]
+        case .about:
+            return ["phiên bản", "version", "tác giả", "ủng hộ", "donate", "qr", "khôi phục", "reset", "đặt lại", "info"]
         }
     }
 }
