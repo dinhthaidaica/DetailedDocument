@@ -14,6 +14,7 @@
 
 - [Tổng quan](#tổng-quan)
 - [Tính năng](#tính-năng)
+- [Ảnh giao diện](#ảnh-giao-diện)
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt](#cài-đặt)
 - [Build từ mã nguồn](#build-từ-mã-nguồn)
@@ -65,6 +66,16 @@ LunarV là ứng dụng macOS giúp bạn xem **lịch âm Việt Nam** nhanh ng
 - Thay đổi múi giờ.
 - Sang ngày mới.
 - Máy thức dậy từ chế độ ngủ.
+
+## Ảnh giao diện
+
+### Giao diện 1
+
+![LunarV UI review 1](Resources/UI_review1.png)
+
+### Giao diện 2
+
+![LunarV UI review 2](Resources/UI_review2.png)
 
 ## Yêu cầu hệ thống
 
