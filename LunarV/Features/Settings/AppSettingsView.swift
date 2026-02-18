@@ -18,6 +18,7 @@ struct AppSettingsView: View {
     @State private var isShowingFontPicker = false
     @State private var fontSearchText = ""
     @State private var automaticallyChecksForUpdates: Bool
+    @State private var updateCheckFrequency: UpdateCheckFrequency
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
@@ -32,6 +33,7 @@ struct AppSettingsView: View {
     init(updater: SPUUpdater) {
         self.updater = updater
         _automaticallyChecksForUpdates = State(initialValue: updater.automaticallyChecksForUpdates)
+        _updateCheckFrequency = State(initialValue: UpdateCheckFrequency.nearest(for: updater.updateCheckInterval))
     }
 
     var body: some View {
@@ -59,9 +61,13 @@ struct AppSettingsView: View {
         .onAppear {
             launchAtLoginManager.refreshStatus()
             automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
+            updateCheckFrequency = UpdateCheckFrequency.nearest(for: updater.updateCheckInterval)
         }
-        .onChange(of: automaticallyChecksForUpdates) { _, newValue in
+        .onChange(of: automaticallyChecksForUpdates) { newValue in
             updater.automaticallyChecksForUpdates = newValue
+        }
+        .onChange(of: updateCheckFrequency) { newValue in
+            updater.updateCheckInterval = newValue.rawValue
         }
         .confirmationDialog(
             "Khôi phục cài đặt mặc định?",
@@ -444,7 +450,7 @@ struct AppSettingsView: View {
             LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Hệ thống",
-                    subtitle: "Quản lý hành vi cửa sổ, tự động hóa và nhắc ngày lễ.",
+                    subtitle: "Quản lý hành vi cửa sổ, tự động hóa, cập nhật và khôi phục cài đặt.",
                     icon: "gearshape.2.fill"
                 ) {
                     VStack(alignment: .trailing, spacing: 6) {
@@ -455,6 +461,10 @@ struct AppSettingsView: View {
                         LunarSettingsStatusPill(
                             text: settings.enableHolidayNotifications ? "Nhắc lễ: Bật" : "Nhắc lễ: Tắt",
                             color: settings.enableHolidayNotifications ? .green : .secondary
+                        )
+                        LunarSettingsStatusPill(
+                            text: automaticallyChecksForUpdates ? "Tự kiểm tra cập nhật: Bật" : "Tự kiểm tra cập nhật: Tắt",
+                            color: automaticallyChecksForUpdates ? .green : .secondary
                         )
                     }
                 }
@@ -550,6 +560,68 @@ struct AppSettingsView: View {
                         settingsInfoRow(title: "Thuật toán", value: "Vietnamese Lunar Calendar 2.0")
                     }
                 }
+
+                LunarSettingsCard(
+                    title: "Cập nhật ứng dụng",
+                    subtitle: "Kiểm tra phiên bản mới từ GitHub Releases",
+                    icon: "arrow.down.circle.fill"
+                ) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        settingsToggleRow(
+                            title: "Tự động kiểm tra cập nhật",
+                            isOn: $automaticallyChecksForUpdates
+                        )
+
+                        settingsPickerRow(
+                            title: "Tần suất kiểm tra",
+                            isEnabled: automaticallyChecksForUpdates
+                        ) {
+                            Picker("", selection: $updateCheckFrequency) {
+                                ForEach(UpdateCheckFrequency.allCases) { frequency in
+                                    Text(frequency.title).tag(frequency)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .controlSize(.regular)
+                        }
+
+                        Text(
+                            automaticallyChecksForUpdates
+                                ? "Khi bật, LunarV sẽ tự kiểm tra theo tần suất bạn chọn."
+                                : "Khi tắt, LunarV chỉ kiểm tra khi bạn bấm nút bên dưới."
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                        Text("Việc cập nhật phiên bản mới sẽ giữ nguyên toàn bộ cài đặt hiện tại của bạn.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        HStack {
+                            CheckForUpdatesView(updater: updater)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+
+                LunarSettingsCard(
+                    title: "Khôi phục cài đặt",
+                    subtitle: "Đưa toàn bộ tuỳ chỉnh về mặc định",
+                    icon: "arrow.counterclockwise"
+                ) {
+                    HStack {
+                        Text("Bạn có thể đặt lại nhanh tất cả cấu hình giao diện, hiển thị và thông báo.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                        Button(role: .destructive) {
+                            isShowingResetDialog = true
+                        } label: {
+                            Label("Khôi phục", systemImage: "arrow.counterclockwise")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(14)
@@ -613,46 +685,6 @@ struct AppSettingsView: View {
                     .frame(maxWidth: .infinity)
                 }
 
-                LunarSettingsCard(
-                    title: "Cập nhật ứng dụng",
-                    subtitle: "Kiểm tra phiên bản mới từ GitHub Releases",
-                    icon: "arrow.down.circle.fill"
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        settingsToggleRow(
-                            title: "Tự động kiểm tra cập nhật",
-                            isOn: $automaticallyChecksForUpdates
-                        )
-
-                        Text("Khi bật, LunarV sẽ tự kiểm tra bản mới theo lịch của Sparkle.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        HStack {
-                            CheckForUpdatesView(updater: updater)
-                            Spacer(minLength: 0)
-                        }
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Khôi phục cài đặt",
-                    subtitle: "Đưa toàn bộ tuỳ chỉnh về mặc định",
-                    icon: "arrow.counterclockwise"
-                ) {
-                    HStack {
-                        Text("Bạn có thể đặt lại nhanh tất cả cấu hình giao diện, hiển thị và thông báo.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer(minLength: 0)
-                        Button(role: .destructive) {
-                            isShowingResetDialog = true
-                        } label: {
-                            Label("Khôi phục", systemImage: "arrow.counterclockwise")
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
             }
             .frame(maxWidth: .infinity)
             .padding(14)
@@ -1040,6 +1072,38 @@ struct AppSettingsView: View {
         return NSFontManager.shared.availableFontFamilies.contains(family)
     }
 
+    private enum UpdateCheckFrequency: TimeInterval, CaseIterable, Identifiable {
+        case hourly = 3600
+        case everySixHours = 21600
+        case everyTwelveHours = 43200
+        case daily = 86400
+        case everyThreeDays = 259200
+        case weekly = 604800
+
+        var id: TimeInterval { rawValue }
+
+        var title: String {
+            switch self {
+            case .hourly:
+                return "Mỗi 1 giờ"
+            case .everySixHours:
+                return "Mỗi 6 giờ"
+            case .everyTwelveHours:
+                return "Mỗi 12 giờ"
+            case .daily:
+                return "Mỗi ngày"
+            case .everyThreeDays:
+                return "Mỗi 3 ngày"
+            case .weekly:
+                return "Mỗi tuần"
+            }
+        }
+
+        static func nearest(for interval: TimeInterval) -> UpdateCheckFrequency {
+            allCases.min(by: { abs($0.rawValue - interval) < abs($1.rawValue - interval) }) ?? .daily
+        }
+    }
+
 
     private func previewMenuBarTitle(at now: Date) -> String {
         guard let snapshot = previewLunarService.snapshot(for: now) else {
@@ -1069,4 +1133,3 @@ struct AppSettingsView: View {
         )
     }
 }
-

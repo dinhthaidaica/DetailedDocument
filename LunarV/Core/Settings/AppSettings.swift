@@ -4,6 +4,7 @@
 //
 import SwiftUI
 import Combine
+import os
 
 enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
     case hero
@@ -130,6 +131,8 @@ final class AppSettings: ObservableObject {
     static let defaultMenuBarLeadingIconSize: Double = 14
     static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
     static let menuBarIconTitleSpacing: CGFloat = 4
+    private static let settingsBackupDirectoryName = "LunarV"
+    private static let settingsBackupFileName = "settings-backup.plist"
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
@@ -163,10 +166,12 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.notifications.windowDays") var notificationWindowDays: Int = 60
 
     private init() {
+        restoreSettingsFromBackupIfNeeded()
         normalizeMenuBarTitleFontSizeIfNeeded()
         normalizeMenuBarTitleFontFamilyIfNeeded()
         normalizeMenuBarLeadingIconSizeIfNeeded()
         normalizePanelCardOrderIfNeeded()
+        persistForUpdateSafety()
     }
 
     var menuBarTitleFontSizeValue: Double {
@@ -347,6 +352,32 @@ final class AppSettings: ObservableObject {
         holidayReminderLeadDays = 1
         holidayReminderHour = 8
         notificationWindowDays = 60
+        persistForUpdateSafety()
+    }
+
+    func persistForUpdateSafety() {
+        let defaults = UserDefaults.standard
+        let snapshot = Self.settingsSnapshot(from: defaults.dictionaryRepresentation())
+        guard !snapshot.isEmpty else {
+            return
+        }
+
+        do {
+            let backupURL = try Self.settingsBackupURL()
+            try FileManager.default.createDirectory(
+                at: backupURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            let data = try PropertyListSerialization.data(
+                fromPropertyList: snapshot,
+                format: .xml,
+                options: 0
+            )
+            try data.write(to: backupURL, options: .atomic)
+            _ = CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication)
+        } catch {
+            AppLogger.system.error("Failed to backup settings before update: \(error.localizedDescription)")
+        }
     }
 
     private func normalizePanelCardOrderIfNeeded() {
@@ -387,5 +418,50 @@ final class AppSettings: ObservableObject {
 
     private static func clampedMenuBarLeadingIconSize(_ value: Double) -> Double {
         min(max(value, menuBarLeadingIconSizeRange.lowerBound), menuBarLeadingIconSizeRange.upperBound)
+    }
+
+    private func restoreSettingsFromBackupIfNeeded() {
+        let defaults = UserDefaults.standard
+        let currentSnapshot = Self.settingsSnapshot(from: defaults.dictionaryRepresentation())
+        guard currentSnapshot.isEmpty else {
+            return
+        }
+
+        guard
+            let backupURL = try? Self.settingsBackupURL(),
+            let data = try? Data(contentsOf: backupURL),
+            let propertyList = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
+            let backupSnapshot = propertyList as? [String: Any],
+            !backupSnapshot.isEmpty
+        else {
+            return
+        }
+
+        for (key, value) in backupSnapshot where Self.shouldPersistSetting(key: key) {
+            defaults.set(value, forKey: key)
+        }
+        _ = CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication)
+        AppLogger.system.info("Restored settings from upgrade backup")
+    }
+
+    private static func settingsSnapshot(from dictionary: [String: Any]) -> [String: Any] {
+        dictionary.filter { shouldPersistSetting(key: $0.key) }
+    }
+
+    private static func shouldPersistSetting(key: String) -> Bool {
+        key.hasPrefix("settings.") || key.hasPrefix("SU")
+    }
+
+    private static func settingsBackupURL() throws -> URL {
+        let appSupportURL = try FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+
+        return appSupportURL
+            .appendingPathComponent(settingsBackupDirectoryName, isDirectory: true)
+            .appendingPathComponent(settingsBackupFileName)
     }
 }

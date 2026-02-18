@@ -8,13 +8,15 @@ import Sparkle
 
 @main
 struct LunarVApp: App {
+    private static let sparkleUserDriverDelegate = SparkleUserDriverDelegate()
+    private static let sparkleUpdaterDelegate = SparkleUpdaterDelegate(settings: AppSettings.shared)
     @StateObject private var settings = AppSettings.shared
     @StateObject private var viewModel = LunarMenuBarViewModel(settings: AppSettings.shared)
     @StateObject private var notificationManager = HolidayNotificationManager(settings: AppSettings.shared)
     private let updaterController = SPUStandardUpdaterController(
         startingUpdater: true,
-        updaterDelegate: nil,
-        userDriverDelegate: nil
+        updaterDelegate: LunarVApp.sparkleUpdaterDelegate,
+        userDriverDelegate: LunarVApp.sparkleUserDriverDelegate
     )
 
     private var menuBarTitleFontSizeCGFloat: CGFloat {

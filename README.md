@@ -110,7 +110,6 @@ xcodebuild \
 ## Tự cập nhật (Sparkle)
 
 - Từ phiên bản tích hợp Sparkle trở đi, app có thể tự kiểm tra/cập nhật qua `appcast.xml`.
-- Người dùng đang ở bản cũ chưa có Sparkle (ví dụ `v1.0.0`) cần cập nhật thủ công 1 lần từ trang Releases.
 
 ### Secrets bắt buộc cho workflow `release.yml`
 

@@ -28,5 +28,9 @@
 	<string>https://raw.githubusercontent.com/PhamHungTien/LunarV/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>ZSAb0ZZl9lwitCsIn79DY9BvW4mlbk1Ir0HTQG8tWxs=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

@@ -32,7 +32,9 @@ struct CheckForUpdatesView: View {
 
     var body: some View {
         Button("Kiểm tra cập nhật...") {
-            viewModel.updater.checkForUpdates()
+            DispatchQueue.main.async {
+                viewModel.updater.checkForUpdates()
+            }
         }
         .disabled(!viewModel.canCheckForUpdates)
     }

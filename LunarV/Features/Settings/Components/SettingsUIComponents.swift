@@ -34,7 +34,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .panel:
             return "Sắp xếp card"
         case .system:
-            return "Tự động hoá & thông báo"
+            return "Tự động hoá, cập nhật & thông báo"
         case .about:
             return "Phiên bản và hỗ trợ"
         }
@@ -61,9 +61,9 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .panel:
             return ["card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả"]
         case .system:
-            return ["khởi động", "đăng nhập", "login", "tự động", "thông báo", "ngày lễ", "nhắc nhở", "holiday", "múi giờ", "timezone", "thuật toán", "algorithm", "gear"]
+            return ["khởi động", "đăng nhập", "login", "tự động", "thông báo", "ngày lễ", "nhắc nhở", "holiday", "múi giờ", "timezone", "thuật toán", "algorithm", "gear", "cập nhật", "update", "khôi phục", "reset"]
         case .about:
-            return ["phiên bản", "version", "tác giả", "ủng hộ", "donate", "qr", "khôi phục", "reset", "đặt lại", "info"]
+            return ["phiên bản", "version", "tác giả", "ủng hộ", "donate", "qr", "info"]
         }
     }
 }
