@@ -64,7 +64,7 @@ struct LunarWidgetEntryView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(entry.info.lunarMonthText)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(secondaryTextColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
 
@@ -125,7 +125,7 @@ struct LunarWidgetEntryView: View {
             HStack(spacing: 6) {
                 Text("HÔM NAY")
                     .font(.system(size: 9, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
@@ -141,7 +141,7 @@ struct LunarWidgetEntryView: View {
 
             Text(entry.info.lunarMonthText)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(secondaryTextColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
@@ -177,7 +177,7 @@ struct LunarWidgetEntryView: View {
 
                 Text(entry.info.lunarMonthYear)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
 
@@ -217,7 +217,7 @@ struct LunarWidgetEntryView: View {
 
                 Text(title)
                     .font(.system(size: 9, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondaryTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -253,7 +253,7 @@ struct LunarWidgetEntryView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(secondaryTextColor)
     }
 
     private func capsuleTag(text: String, symbol: String? = nil) -> some View {
@@ -270,7 +270,7 @@ struct LunarWidgetEntryView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(secondaryTextColor)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
@@ -305,18 +305,14 @@ struct LunarWidgetEntryView: View {
         } else {
             ZStack {
                 LinearGradient(
-                    colors: [
-                        Color.cyan.opacity(colorScheme == .dark ? 0.22 : 0.18),
-                        Color.blue.opacity(colorScheme == .dark ? 0.15 : 0.11),
-                        Color.teal.opacity(colorScheme == .dark ? 0.12 : 0.08),
-                    ],
+                    colors: backgroundGradientColors,
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
 
                 RadialGradient(
                     colors: [
-                        Color.white.opacity(colorScheme == .dark ? 0.05 : 0.2),
+                        Color.white.opacity(colorScheme == .dark ? 0.08 : 0.32),
                         Color.clear,
                     ],
                     center: .topLeading,
@@ -325,10 +321,16 @@ struct LunarWidgetEntryView: View {
                 )
 
                 Circle()
-                    .fill(Color.cyan.opacity(colorScheme == .dark ? 0.14 : 0.12))
-                    .frame(width: 120, height: 120)
+                    .fill(backgroundOrbPrimary)
+                    .frame(width: 132, height: 132)
                     .blur(radius: 2)
-                    .offset(x: -58, y: 56)
+                    .offset(x: -62, y: 58)
+
+                Circle()
+                    .fill(backgroundOrbSecondary)
+                    .frame(width: 90, height: 90)
+                    .blur(radius: 3)
+                    .offset(x: 62, y: -54)
             }
         }
     }
@@ -337,12 +339,21 @@ struct LunarWidgetEntryView: View {
         if usesTintedStyle {
             return AnyShapeStyle(Color.primary)
         }
+        let colors: [Color]
+        if colorScheme == .dark {
+            colors = [
+                Color(red: 0.98, green: 0.84, blue: 0.52),
+                Color(red: 0.98, green: 0.66, blue: 0.34),
+            ]
+        } else {
+            colors = [
+                Color(red: 0.20, green: 0.25, blue: 0.33),
+                Color(red: 0.45, green: 0.28, blue: 0.14),
+            ]
+        }
         return AnyShapeStyle(
             LinearGradient(
-                colors: [
-                    Color(red: 0.08, green: 0.39, blue: 0.93),
-                    Color(red: 0.2, green: 0.3, blue: 0.92),
-                ],
+                colors: colors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -350,27 +361,70 @@ struct LunarWidgetEntryView: View {
     }
 
     private var accentColor: Color {
-        usesTintedStyle ? .primary : Color(red: 0.16, green: 0.42, blue: 0.93)
+        if usesTintedStyle {
+            return .primary
+        }
+        return colorScheme == .dark
+            ? Color(red: 0.97, green: 0.73, blue: 0.37)
+            : Color(red: 0.70, green: 0.43, blue: 0.16)
     }
 
     private var accentBadgeFill: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.16)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.5)
+        return Color.white.opacity(colorScheme == .dark ? 0.12 : 0.74)
     }
 
     private var surfaceFill: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.1)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.58)
+        return Color.white.opacity(colorScheme == .dark ? 0.12 : 0.82)
     }
 
     private var surfaceStroke: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.18)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.14 : 0.52)
+        return colorScheme == .dark
+            ? Color.white.opacity(0.18)
+            : Color.black.opacity(0.08)
+    }
+
+    private var secondaryTextColor: Color {
+        if usesTintedStyle {
+            return .secondary
+        }
+        return colorScheme == .dark
+            ? Color.white.opacity(0.82)
+            : Color.black.opacity(0.66)
+    }
+
+    private var backgroundGradientColors: [Color] {
+        if colorScheme == .dark {
+            return [
+                Color(red: 0.10, green: 0.12, blue: 0.16),
+                Color(red: 0.14, green: 0.17, blue: 0.22),
+                Color(red: 0.18, green: 0.15, blue: 0.12),
+            ]
+        }
+        return [
+            Color(red: 0.98, green: 0.97, blue: 0.94),
+            Color(red: 0.95, green: 0.96, blue: 0.99),
+            Color(red: 0.99, green: 0.94, blue: 0.88),
+        ]
+    }
+
+    private var backgroundOrbPrimary: Color {
+        colorScheme == .dark
+            ? Color(red: 0.95, green: 0.66, blue: 0.33).opacity(0.24)
+            : Color(red: 0.99, green: 0.78, blue: 0.52).opacity(0.26)
+    }
+
+    private var backgroundOrbSecondary: Color {
+        colorScheme == .dark
+            ? Color(red: 0.69, green: 0.74, blue: 0.91).opacity(0.18)
+            : Color(red: 0.82, green: 0.86, blue: 0.97).opacity(0.22)
     }
 }
