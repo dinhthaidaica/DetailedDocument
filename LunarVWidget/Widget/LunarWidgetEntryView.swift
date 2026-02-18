@@ -83,15 +83,15 @@ struct LunarWidgetEntryView: View {
         HStack(spacing: 10) {
             mediumHeroCard
 
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)],
-                alignment: .leading,
-                spacing: 8
-            ) {
-                metricCard(symbol: "calendar", title: "Dương lịch", value: entry.info.solarDate)
-                metricCard(symbol: "leaf.fill", title: "Can chi ngày", value: entry.info.canChiDay)
-                metricCard(symbol: "sun.max.fill", title: "Tiết khí", value: entry.info.solarTerm)
-                metricCard(symbol: "pawprint.fill", title: "Con giáp", value: entry.info.zodiac)
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                GridRow {
+                    metricCard(symbol: "calendar", title: "Dương lịch", value: entry.info.solarDate)
+                    metricCard(symbol: "leaf.fill", title: "Can chi ngày", value: entry.info.canChiDay)
+                }
+                GridRow {
+                    metricCard(symbol: "sun.max.fill", title: "Tiết khí", value: entry.info.solarTerm)
+                    metricCard(symbol: "pawprint.fill", title: "Con giáp", value: entry.info.zodiac)
+                }
             }
         }
         .padding(14)
@@ -101,24 +101,26 @@ struct LunarWidgetEntryView: View {
         VStack(alignment: .leading, spacing: 10) {
             largeHeroCard
 
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)],
-                alignment: .leading,
-                spacing: 8
-            ) {
-                metricCard(symbol: "calendar", title: "Dương lịch", value: entry.info.solarDate)
-                metricCard(symbol: "leaf.fill", title: "Can chi ngày", value: entry.info.canChiDay)
-                metricCard(symbol: "sun.max.fill", title: "Tiết khí", value: entry.info.solarTerm)
-                metricCard(symbol: "sparkles", title: "Năm can chi", value: entry.info.canChiYear)
-                metricCard(symbol: "moon.stars.fill", title: "Tháng âm", value: entry.info.lunarMonthText)
-                metricCard(symbol: "pawprint.fill", title: "Con giáp", value: entry.info.zodiac)
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                GridRow {
+                    metricCard(symbol: "calendar", title: "Dương lịch", value: entry.info.solarDate)
+                    metricCard(symbol: "leaf.fill", title: "Can chi ngày", value: entry.info.canChiDay)
+                }
+                GridRow {
+                    metricCard(symbol: "sun.max.fill", title: "Tiết khí", value: entry.info.solarTerm)
+                    metricCard(symbol: "sparkles", title: "Năm can chi", value: entry.info.canChiYear)
+                }
+                GridRow {
+                    metricCard(symbol: "moon.stars.fill", title: "Tháng âm", value: entry.info.lunarMonthText)
+                    metricCard(symbol: "pawprint.fill", title: "Con giáp", value: entry.info.zodiac)
+                }
             }
         }
         .padding(16)
     }
 
     private var mediumHeroCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Text("ÂM LỊCH")
                     .font(.system(size: 9, weight: .heavy, design: .rounded))
@@ -129,26 +131,29 @@ struct LunarWidgetEntryView: View {
                 phaseBadge
             }
 
+            Spacer(minLength: 0)
+
             Text(entry.info.lunarDay)
-                .font(.system(size: 38, weight: .black, design: .rounded))
+                .font(.system(size: 40, weight: .black, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.65)
 
             Text(entry.info.lunarMonthText)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Text(entry.info.weekday.uppercased())
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
                 .lineLimit(1)
         }
         .padding(10)
-        .frame(width: 110, alignment: .leading)
-        .frame(maxHeight: .infinity, alignment: .topLeading)
+        .frame(width: 116, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(surfaceFill)
@@ -167,16 +172,16 @@ struct LunarWidgetEntryView: View {
                     .monospacedDigit()
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.65)
 
                 Text(entry.info.lunarMonthYear)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.75)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 4)
 
             VStack(alignment: .trailing, spacing: 7) {
                 capsuleTag(text: entry.info.weekday.uppercased(), symbol: "calendar")
@@ -186,6 +191,7 @@ struct LunarWidgetEntryView: View {
                     capsuleTag(text: entry.info.canChiYear, symbol: "sparkles")
                 }
             }
+            .layoutPriority(1)
         }
         .padding(12)
         .background(
@@ -199,21 +205,23 @@ struct LunarWidgetEntryView: View {
     }
 
     private func metricCard(symbol: String, title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .font(.system(size: 9, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
                 .lineLimit(2)
-                .minimumScaleFactor(0.75)
+                .minimumScaleFactor(0.7)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 9)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(surfaceFill)
