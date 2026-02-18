@@ -20,6 +20,7 @@ jobs:
     runs-on: macos-26
     outputs:
       version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.set_versions.outputs.build_number }}
       dmg_name: ${{ steps.dmg.outputs.name }}
       dmg_size: ${{ steps.dmg.outputs.size }}
       zip_name: ${{ steps.zip.outputs.name }}
@@ -46,15 +47,23 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
           fi
 
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Version: $VERSION"
 
-      - name: Set marketing version
+      - name: Set marketing/build versions
+        id: set_versions
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+
           sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/g" \
             LunarV.xcodeproj/project.pbxproj
-          echo "✅ Updated MARKETING_VERSION to $VERSION"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" \
+            LunarV.xcodeproj/project.pbxproj
+
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "✅ MARKETING_VERSION=$VERSION"
+          echo "✅ CURRENT_PROJECT_VERSION=$BUILD_NUMBER"
 
       - name: Import Code Signing Certificate
         id: certificate
@@ -67,38 +76,31 @@ jobs:
             exit 1
           fi
 
-          # Create temporary keychain
-          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Import Apple WWDR Intermediate Certificate
-          curl -sL https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer -o $RUNNER_TEMP/AppleWWDRCAG3.cer
-          security import $RUNNER_TEMP/AppleWWDRCAG3.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign -T /usr/bin/security
+          curl -sL https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer -o "$RUNNER_TEMP/AppleWWDRCAG3.cer"
+          security import "$RUNNER_TEMP/AppleWWDRCAG3.cer" -k "$KEYCHAIN_PATH" -T /usr/bin/codesign -T /usr/bin/security
 
-          # Decode P12 file
-          echo "$CERTIFICATES_P12" > $RUNNER_TEMP/cert_base64.txt
+          echo "$CERTIFICATES_P12" > "$RUNNER_TEMP/cert_base64.txt"
           python3 -c "import base64; open('$RUNNER_TEMP/certificate.p12', 'wb').write(base64.b64decode(open('$RUNNER_TEMP/cert_base64.txt', 'r').read()))"
 
-          # Import P12
-          security import $RUNNER_TEMP/certificate.p12 \
+          security import "$RUNNER_TEMP/certificate.p12" \
             -k "$KEYCHAIN_PATH" \
             -P "$CERTIFICATE_PASSWORD" \
             -T /usr/bin/codesign \
             -T /usr/bin/security \
             -A
 
-          # Add keychain to search list
           security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_PATH"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Find identity
           IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep -o '"[^"]*"' | head -1 | tr -d '"')
-
           if [ -z "$IDENTITY" ]; then
             echo "❌ Error: No valid signing identity found."
             security find-identity -p codesigning "$KEYCHAIN_PATH"
@@ -106,8 +108,8 @@ jobs:
           fi
 
           echo "🔐 Identity found: $IDENTITY"
-          echo "identity=$IDENTITY" >> $GITHUB_OUTPUT
-          echo "keychain=$KEYCHAIN_PATH" >> $GITHUB_OUTPUT
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+          echo "keychain=$KEYCHAIN_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Build
         run: |
@@ -134,17 +136,18 @@ jobs:
             exit 1
           fi
 
-          # Verify signing
           echo "🔍 Verifying code signature..."
           codesign -dv --verbose=2 "./build/Build/Products/Release/LunarV.app" 2>&1
-
-          echo "🔍 Verifying signature validity..."
           codesign --verify --deep --strict "./build/Build/Products/Release/LunarV.app" 2>&1
-          if [ $? -ne 0 ]; then
-            echo "❌ Code signature verification failed!"
-            exit 1
-          fi
-          echo "✅ Code signature is valid"
+
+      - name: Verify Sparkle metadata in app bundle
+        run: |
+          APP_INFO="./build/Build/Products/Release/LunarV.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_INFO"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_INFO"
+          /usr/libexec/PlistBuddy -c "Print :SUFeedURL" "$APP_INFO"
+          /usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" "$APP_INFO"
+          echo "✅ Sparkle metadata exists in app Info.plist"
 
       - name: Create DMG
         id: dmg
@@ -153,9 +156,7 @@ jobs:
           APP_PATH="./build/Build/Products/Release/LunarV.app"
           DMG_NAME="LunarV-$VERSION.dmg"
 
-          # Remove extended attributes to prevent "damaged" error
           xattr -cr "$APP_PATH"
-          echo "✅ Removed extended attributes from app"
 
           TEMP_DIR=$(mktemp -d)
           cp -R "$APP_PATH" "$TEMP_DIR/"
@@ -170,8 +171,8 @@ jobs:
           rm -rf "$TEMP_DIR"
 
           SIZE=$(stat -f%z "$DMG_NAME")
-          echo "name=$DMG_NAME" >> $GITHUB_OUTPUT
-          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "name=$DMG_NAME" >> "$GITHUB_OUTPUT"
+          echo "size=$SIZE" >> "$GITHUB_OUTPUT"
           echo "✅ DMG created: $DMG_NAME ($SIZE bytes)"
 
       - name: Create ZIP
@@ -182,9 +183,50 @@ jobs:
           ZIP_NAME="LunarV-$VERSION.zip"
 
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_NAME"
-
-          echo "name=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "✅ ZIP created: $ZIP_NAME"
+
+      - name: Generate Sparkle appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "❌ Error: SPARKLE_PRIVATE_KEY secret is missing."
+            exit 1
+          fi
+
+          VERSION="${{ steps.version.outputs.version }}"
+          ZIP_NAME="${{ steps.zip.outputs.name }}"
+          ARCHIVES_DIR="$RUNNER_TEMP/sparkle_archives"
+          mkdir -p "$ARCHIVES_DIR"
+          cp "$ZIP_NAME" "$ARCHIVES_DIR/"
+          if git show origin/main:appcast.xml > "$ARCHIVES_DIR/appcast.xml" 2>/dev/null; then
+            echo "✅ Using latest appcast.xml from origin/main"
+          else
+            cp appcast.xml "$ARCHIVES_DIR/appcast.xml"
+            echo "⚠️ Falling back to appcast.xml from current checkout"
+          fi
+
+          GENERATE_APPCAST="./build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast"
+          if [ ! -x "$GENERATE_APPCAST" ]; then
+            echo "❌ Error: generate_appcast binary not found at $GENERATE_APPCAST"
+            exit 1
+          fi
+
+          DOWNLOAD_PREFIX="https://github.com/${{ github.repository }}/releases/download/v$VERSION/"
+          echo "$SPARKLE_PRIVATE_KEY" | "$GENERATE_APPCAST" \
+            --ed-key-file - \
+            --download-url-prefix "$DOWNLOAD_PREFIX" \
+            --maximum-versions 0 \
+            "$ARCHIVES_DIR"
+
+          cp "$ARCHIVES_DIR/appcast.xml" appcast.xml
+
+          if ! grep -q "sparkle:edSignature" appcast.xml; then
+            echo "❌ Error: appcast.xml has no sparkle:edSignature"
+            exit 1
+          fi
+          echo "✅ appcast.xml generated and signed"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
@@ -199,6 +241,13 @@ jobs:
           name: zip
           path: ${{ steps.zip.outputs.name }}
           retention-days: 1
+
+      - name: Upload appcast artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appcast
+          path: appcast.xml
+          retention-days: 7
 
       - name: Upload build log
         if: always()
@@ -243,3 +292,37 @@ jobs:
             checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_appcast:
+    name: Publish Appcast
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - release
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download appcast artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: appcast
+          path: /tmp/lunarv-appcast
+
+      - name: Commit and push appcast.xml
+        run: |
+          cp /tmp/lunarv-appcast/appcast.xml appcast.xml
+
+          if git diff --quiet -- appcast.xml; then
+            echo "No appcast.xml changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "chore: update appcast for v${{ needs.build.outputs.version }} [skip ci]"
+          git push origin main

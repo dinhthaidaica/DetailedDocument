@@ -18,6 +18,7 @@
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt](#cài-đặt)
 - [Build từ mã nguồn](#build-từ-mã-nguồn)
+- [Tự cập nhật (Sparkle)](#tự-cập-nhật-sparkle)
 - [Công nghệ sử dụng](#công-nghệ-sử-dụng)
 - [Cấu trúc dự án](#cấu-trúc-dự-án)
 - [Độ chính xác dữ liệu](#độ-chính-xác-dữ-liệu)
@@ -104,6 +105,27 @@ xcodebuild \
   -configuration Release \
   -sdk macosx \
   build
+```
+
+## Tự cập nhật (Sparkle)
+
+- Từ phiên bản tích hợp Sparkle trở đi, app có thể tự kiểm tra/cập nhật qua `appcast.xml`.
+- Người dùng đang ở bản cũ chưa có Sparkle (ví dụ `v1.0.0`) cần cập nhật thủ công 1 lần từ trang Releases.
+
+### Secrets bắt buộc cho workflow `release.yml`
+
+- `CERTIFICATES_P12`: chứng chỉ ký code (base64 của file `.p12`).
+- `CERTIFICATE_PASSWORD`: mật khẩu của file `.p12`.
+- `SPARKLE_PRIVATE_KEY`: EdDSA private key dùng để ký appcast.
+
+### Gợi ý rotate Sparkle private key
+
+```bash
+# In public key hiện tại (để đối chiếu SUPublicEDKey)
+./build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account lunarv-prod-2026 -p
+
+# Export private key từ keychain để thêm vào GitHub secret
+./build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account lunarv-prod-2026 -x /tmp/lunarv_sparkle_private_key.txt
 ```
 
 ## Công nghệ sử dụng

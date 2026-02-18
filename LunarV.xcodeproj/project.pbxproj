@@ -55,6 +55,13 @@
 			);
 			target = 460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */;
 		};
+		46C334612F48A0F300F84627 /* Exceptions for "LunarV" folder in "LunarV" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 462A574A2F424D1000853CB4 /* LunarV */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -68,6 +75,9 @@
 		};
 		462A574D2F424D1000853CB4 /* LunarV */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				46C334612F48A0F300F84627 /* Exceptions for "LunarV" folder in "LunarV" target */,
+			);
 			path = LunarV;
 			sourceTree = "<group>";
 		};
@@ -470,11 +480,8 @@
 				DEVELOPMENT_TEAM = F9XPW22T8M;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/PhamHungTien/LunarV/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "XCzc+bj6nqyhD5c8lVGEBITtUvjJO0oAmpmnwD0Pd3A=";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LunarV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -505,11 +512,8 @@
 				DEVELOPMENT_TEAM = F9XPW22T8M;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/PhamHungTien/LunarV/main/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "XCzc+bj6nqyhD5c8lVGEBITtUvjJO0oAmpmnwD0Pd3A=";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LunarV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
