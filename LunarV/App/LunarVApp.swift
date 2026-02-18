@@ -4,12 +4,18 @@
 //
 import SwiftUI
 import AppKit
+import Sparkle
 
 @main
 struct LunarVApp: App {
     @StateObject private var settings = AppSettings.shared
     @StateObject private var viewModel = LunarMenuBarViewModel(settings: AppSettings.shared)
     @StateObject private var notificationManager = HolidayNotificationManager(settings: AppSettings.shared)
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     private var menuBarTitleFontSizeCGFloat: CGFloat {
         settings.menuBarTitleFontSizeCGFloat
@@ -112,11 +118,11 @@ struct LunarVApp: App {
         }
         .menuBarExtraStyle(.window)
         .commands {
-            LunarVCommands()
+            LunarVCommands(updater: updaterController.updater)
         }
 
         Window("", id: "settings") {
-            AppSettingsView()
+            AppSettingsView(updater: updaterController.updater)
                 .environmentObject(settings)
                 .environmentObject(notificationManager)
         }
@@ -129,6 +135,7 @@ struct LunarVApp: App {
 
 
 private struct LunarVCommands: Commands {
+    let updater: SPUUpdater
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
@@ -137,6 +144,10 @@ private struct LunarVCommands: Commands {
                 openWindow(id: "settings")
             }
             .keyboardShortcut(",", modifiers: .command)
+        }
+
+        CommandGroup(after: .appInfo) {
+            CheckForUpdatesView(updater: updater)
         }
     }
 }

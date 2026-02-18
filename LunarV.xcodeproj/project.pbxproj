@@ -10,6 +10,7 @@
 		460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB152F42BC8C001E0406 /* WidgetKit.framework */; };
 		460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB172F42BC8C001E0406 /* SwiftUI.framework */; };
 		460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 46439CC82F45E5BB00CC42E0 /* Sparkle */; };
 		46CF02F92F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
 		46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
 /* End PBXBuildFile section */
@@ -91,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -180,6 +182,7 @@
 			);
 			name = LunarV;
 			packageProductDependencies = (
+				46439CC82F45E5BB00CC42E0 /* Sparkle */,
 			);
 			productName = LunarV;
 			productReference = 462A574B2F424D1000853CB4 /* LunarV.app */;
@@ -212,6 +215,9 @@
 			);
 			mainGroup = 462A57422F424D1000853CB4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				46439CC72F45E5BB00CC42E0 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 462A574C2F424D1000853CB4 /* Products */;
 			projectDirPath = "";
@@ -457,17 +463,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = LunarV;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LunarV/LunarV.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F9XPW22T8M;
-				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/PhamHungTien/LunarV/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "XCzc+bj6nqyhD5c8lVGEBITtUvjJO0oAmpmnwD0Pd3A=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -491,17 +498,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = LunarV;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LunarV/LunarV.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = F9XPW22T8M;
-				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/PhamHungTien/LunarV/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "XCzc+bj6nqyhD5c8lVGEBITtUvjJO0oAmpmnwD0Pd3A=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -551,6 +559,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		46439CC72F45E5BB00CC42E0 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		46439CC82F45E5BB00CC42E0 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 46439CC72F45E5BB00CC42E0 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 462A57432F424D1000853CB4 /* Project object */;
 }

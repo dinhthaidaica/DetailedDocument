@@ -3,9 +3,12 @@
 //  Phát triển bởi Phạm Hùng Tiến
 //
 import AppKit
+import Sparkle
 import SwiftUI
 
 struct AppSettingsView: View {
+    let updater: SPUUpdater
+
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var notificationManager: HolidayNotificationManager
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
@@ -14,6 +17,7 @@ struct AppSettingsView: View {
     @State private var searchText = ""
     @State private var isShowingFontPicker = false
     @State private var fontSearchText = ""
+    @State private var automaticallyChecksForUpdates: Bool
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
@@ -24,6 +28,11 @@ struct AppSettingsView: View {
         "Menlo",
         "Be Vietnam Pro",
     ]
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        _automaticallyChecksForUpdates = State(initialValue: updater.automaticallyChecksForUpdates)
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -49,6 +58,10 @@ struct AppSettingsView: View {
         .background(SettingsWindowBehavior(keepOnTop: settings.keepSettingsOnTop))
         .onAppear {
             launchAtLoginManager.refreshStatus()
+            automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
+        }
+        .onChange(of: automaticallyChecksForUpdates) { _, newValue in
+            updater.automaticallyChecksForUpdates = newValue
         }
         .confirmationDialog(
             "Khôi phục cài đặt mặc định?",
@@ -598,6 +611,28 @@ struct AppSettingsView: View {
                         donationQRCodeCard
                     }
                     .frame(maxWidth: .infinity)
+                }
+
+                LunarSettingsCard(
+                    title: "Cập nhật ứng dụng",
+                    subtitle: "Kiểm tra phiên bản mới từ GitHub Releases",
+                    icon: "arrow.down.circle.fill"
+                ) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        settingsToggleRow(
+                            title: "Tự động kiểm tra cập nhật",
+                            isOn: $automaticallyChecksForUpdates
+                        )
+
+                        Text("Khi bật, LunarV sẽ tự kiểm tra bản mới theo lịch của Sparkle.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        HStack {
+                            CheckForUpdatesView(updater: updater)
+                            Spacer(minLength: 0)
+                        }
+                    }
                 }
 
                 LunarSettingsCard(
