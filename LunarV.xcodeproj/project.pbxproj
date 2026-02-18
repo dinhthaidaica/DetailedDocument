@@ -329,10 +329,12 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/LunarV/Localization/Sparkle/vi.lproj/Sparkle.strings",
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework",
 			);
 			name = "Inject Sparkle Vietnamese Localization";
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework/Versions/B/Resources/vi.lproj/Sparkle.strings",
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sparkle.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -570,12 +572,13 @@
 				CODE_SIGN_ENTITLEMENTS = LunarV/LunarV.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = F9XPW22T8M;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LunarV/Info.plist;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = F9XPW22T8M;
+					ENABLE_HARDENED_RUNTIME = YES;
+					ENABLE_PREVIEWS = YES;
+					ENABLE_USER_SCRIPT_SANDBOXING = NO;
+					GENERATE_INFOPLIST_FILE = NO;
+					INFOPLIST_FILE = LunarV/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -603,12 +606,13 @@
 				CODE_SIGN_ENTITLEMENTS = LunarV/LunarV.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = F9XPW22T8M;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LunarV/Info.plist;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = F9XPW22T8M;
+					ENABLE_HARDENED_RUNTIME = YES;
+					ENABLE_PREVIEWS = YES;
+					ENABLE_USER_SCRIPT_SANDBOXING = NO;
+					GENERATE_INFOPLIST_FILE = NO;
+					INFOPLIST_FILE = LunarV/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
