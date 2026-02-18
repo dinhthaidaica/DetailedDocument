@@ -3,6 +3,9 @@
 //  Phát triển bởi Phạm Hùng Tiến
 //
 import Foundation
+import os
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.lunarv", category: "calendar")
 
 struct VietnameseLunarDateService {
     static let defaultTimeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
@@ -80,37 +83,34 @@ struct VietnameseLunarDateService {
         return lunarDate(day: solar.day, month: solar.month, year: solar.year)
     }
 
-    func solarDate(from targetLunarDate: LunarDate, searchGregorianYears: ClosedRange<Int>? = nil) -> SolarDateComponents? {
-        let searchRange = searchGregorianYears ?? (targetLunarDate.year - 1)...(targetLunarDate.year + 1)
+    func solarDate(from targetLunarDate: LunarDate) -> SolarDateComponents? {
+        // Ước lượng ngày dương gần đúng từ ngày âm, sau đó tìm trong cửa sổ hẹp ±35 ngày
+        // thay vì brute-force qua toàn bộ 3 năm (~1,080 ngày)
+        let estimatedMonth = targetLunarDate.month
+        let estimatedYear = targetLunarDate.year
+        let estimatedDay = min(targetLunarDate.day, 28)
 
-        for year in searchRange {
+        guard let centerDate = vietnamCalendar.date(from: DateComponents(
+            year: estimatedYear,
+            month: estimatedMonth,
+            day: estimatedDay
+        )) else {
+            logger.error("Không thể tạo center date cho lunar→solar: \(targetLunarDate.day)/\(targetLunarDate.month)/\(targetLunarDate.year)")
+            return nil
+        }
+
+        // Tìm trong cửa sổ ±35 ngày (~70 ngày thay vì ~1,080)
+        for offset in -35...35 {
             guard
-                let startOfYear = vietnamCalendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-                let months = vietnamCalendar.range(of: .month, in: .year, for: startOfYear)
+                let candidateDate = vietnamCalendar.date(byAdding: .day, value: offset, to: centerDate),
+                let solar = solarComponents(from: candidateDate, using: vietnamCalendar)
             else {
                 continue
             }
 
-            for month in months {
-                guard
-                    let monthStart = vietnamCalendar.date(from: DateComponents(year: year, month: month, day: 1)),
-                    let days = vietnamCalendar.range(of: .day, in: .month, for: monthStart)
-                else {
-                    continue
-                }
-
-                for day in days {
-                    let resolvedLunarDate = lunarDate(day: day, month: month, year: year)
-                    guard resolvedLunarDate == targetLunarDate else {
-                        continue
-                    }
-
-                    guard let candidateDate = vietnamCalendar.date(from: DateComponents(year: year, month: month, day: day)) else {
-                        continue
-                    }
-
-                    return solarComponents(from: candidateDate, using: vietnamCalendar)
-                }
+            let candidateLunar = lunarDate(day: solar.day, month: solar.month, year: solar.year)
+            if candidateLunar == targetLunarDate {
+                return solar
             }
         }
 

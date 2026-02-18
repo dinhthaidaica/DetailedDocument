@@ -5,6 +5,7 @@
 import AppKit
 import Combine
 import Foundation
+import os
 
 @MainActor
 final class LunarMenuBarViewModel: ObservableObject {
@@ -21,6 +22,8 @@ final class LunarMenuBarViewModel: ObservableObject {
         let month: Int
     }
 
+    private static let maxCachedMonths = 24
+
     private let solarCalendar: Calendar
     private let lunarService: VietnameseLunarDateService
     private var refreshTask: Task<Void, Never>?
@@ -28,6 +31,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private var workspaceNotificationObservers: [NSObjectProtocol] = []
     private var settingsCancellables = Set<AnyCancellable>()
     private var monthCellsCache: [YearMonth: [LunarMonthDayCell]] = [:]
+    private var monthCellsCacheOrder: [YearMonth] = []
     private var cachedUpcomingHolidays: [LunarHoliday] = []
     private var cachedUpcomingHolidaysAnchor: Date?
 
@@ -68,6 +72,12 @@ final class LunarMenuBarViewModel: ObservableObject {
         scheduleRefresh(from: now)
     }
 
+    func invalidateCaches() {
+        monthCellsCache.removeAll()
+        monthCellsCacheOrder.removeAll()
+        cachedUpcomingHolidaysAnchor = nil
+    }
+
     func nextMonth() {
         if let next = solarCalendar.date(byAdding: .month, value: 1, to: viewingDate) {
             viewingDate = next
@@ -96,7 +106,10 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     private func updateMenuBarTitle(now: Date) {
-        guard let snapshot = lunarService.snapshot(for: now) else { return }
+        guard let snapshot = lunarService.snapshot(for: now) else {
+            AppLogger.calendar.warning("Không thể tạo snapshot cho menu bar title tại \(now)")
+            return
+        }
         let timeComponents = solarCalendar.dateComponents([.hour, .minute, .second], from: now)
 
         let titleContext = MenuBarTitleContext(
@@ -135,7 +148,10 @@ final class LunarMenuBarViewModel: ObservableObject {
         guard
             let snapshot = lunarService.snapshot(for: now),
             let viewingComponents = lunarService.solarComponents(from: viewingDate)
-        else { return }
+        else {
+            AppLogger.calendar.warning("Không thể tạo snapshot hoặc solar components cho info update")
+            return
+        }
 
         info = buildInfo(
             now: now,
@@ -231,10 +247,23 @@ final class LunarMenuBarViewModel: ObservableObject {
         let baseCells: [LunarMonthDayCell]
 
         if let cachedCells = monthCellsCache[key] {
+            // Di chuyển lên đầu danh sách truy cập gần nhất
+            if let idx = monthCellsCacheOrder.firstIndex(of: key) {
+                monthCellsCacheOrder.remove(at: idx)
+            }
+            monthCellsCacheOrder.append(key)
             baseCells = cachedCells
         } else {
             let newCells = buildBaseMonthCells(year: year, month: month)
             monthCellsCache[key] = newCells
+            monthCellsCacheOrder.append(key)
+
+            // Loại bỏ entry cũ nhất nếu vượt quá giới hạn
+            while monthCellsCacheOrder.count > Self.maxCachedMonths {
+                let evicted = monthCellsCacheOrder.removeFirst()
+                monthCellsCache.removeValue(forKey: evicted)
+            }
+
             baseCells = newCells
         }
 
@@ -403,6 +432,7 @@ final class LunarMenuBarViewModel: ObservableObject {
         systemNotificationObservers = systemNames.map { name in
             defaultCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 Task { @MainActor [weak self] in
+                    self?.invalidateCaches()
                     self?.refresh()
                 }
             }
@@ -415,6 +445,7 @@ final class LunarMenuBarViewModel: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
+                self?.invalidateCaches()
                 self?.refresh()
             }
         }

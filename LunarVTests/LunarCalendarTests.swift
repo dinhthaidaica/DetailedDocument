@@ -1,0 +1,179 @@
+//
+//  LunarV - Lịch Âm Việt Nam
+//  Phát triển bởi Phạm Hùng Tiến
+//
+import XCTest
+@testable import LunarV
+
+final class LunarCalendarTests: XCTestCase {
+
+    private let converter = VietnameseLunarCalendarConverter(timeZone: 7.0)
+    private let service = VietnameseLunarDateService()
+
+    // MARK: - Solar to Lunar Conversion
+
+    func testTetNguyenDan2025() {
+        // 29/01/2025 (Dương) = Mùng 1 Tết Ất Tỵ (1/1 Âm)
+        let lunar = converter.solarToLunar(day: 29, month: 1, year: 2025)
+        XCTAssertEqual(lunar.day, 1)
+        XCTAssertEqual(lunar.month, 1)
+        XCTAssertEqual(lunar.year, 2025)
+        XCTAssertFalse(lunar.isLeapMonth)
+    }
+
+    func testTetNguyenDan2026() {
+        // 17/02/2026 (Dương) = Mùng 1 Tết Bính Ngọ (1/1 Âm)
+        let lunar = converter.solarToLunar(day: 17, month: 2, year: 2026)
+        XCTAssertEqual(lunar.day, 1)
+        XCTAssertEqual(lunar.month, 1)
+        XCTAssertEqual(lunar.year, 2026)
+        XCTAssertFalse(lunar.isLeapMonth)
+    }
+
+    func testMidAutumn2025() {
+        // 06/10/2025 (Dương) = 15/8 Âm lịch (Trung Thu)
+        let lunar = converter.solarToLunar(day: 6, month: 10, year: 2025)
+        XCTAssertEqual(lunar.day, 15)
+        XCTAssertEqual(lunar.month, 8)
+        XCTAssertEqual(lunar.year, 2025)
+    }
+
+    func testLeapMonth2025() {
+        // Năm 2025 có tháng 6 nhuận
+        // 25/07/2025 nằm trong tháng 6 nhuận
+        let lunar = converter.solarToLunar(day: 25, month: 7, year: 2025)
+        XCTAssertEqual(lunar.month, 6)
+        XCTAssertTrue(lunar.isLeapMonth)
+    }
+
+    func testEndOfYear() {
+        // 31/12/2025
+        let lunar = converter.solarToLunar(day: 31, month: 12, year: 2025)
+        XCTAssertEqual(lunar.month, 11)
+        XCTAssertEqual(lunar.year, 2025)
+    }
+
+    func testStartOfYear() {
+        // 01/01/2025
+        let lunar = converter.solarToLunar(day: 1, month: 1, year: 2025)
+        XCTAssertEqual(lunar.month, 12)
+        XCTAssertEqual(lunar.year, 2024)
+    }
+
+    // MARK: - Lunar to Solar (Reverse Conversion)
+
+    func testLunarToSolarTet() {
+        let target = LunarDate(day: 1, month: 1, year: 2025, isLeapMonth: false)
+        let solar = service.solarDate(from: target)
+        XCTAssertNotNil(solar)
+        XCTAssertEqual(solar?.day, 29)
+        XCTAssertEqual(solar?.month, 1)
+        XCTAssertEqual(solar?.year, 2025)
+    }
+
+    func testLunarToSolarRoundTrip() {
+        // Chuyển đổi qua lại phải cho kết quả ban đầu
+        let originalSolarDay = 15
+        let originalSolarMonth = 6
+        let originalSolarYear = 2025
+
+        let lunar = converter.solarToLunar(day: originalSolarDay, month: originalSolarMonth, year: originalSolarYear)
+        let solar = service.solarDate(from: lunar)
+
+        XCTAssertNotNil(solar)
+        XCTAssertEqual(solar?.day, originalSolarDay)
+        XCTAssertEqual(solar?.month, originalSolarMonth)
+        XCTAssertEqual(solar?.year, originalSolarYear)
+    }
+
+    // MARK: - Julian Day
+
+    func testJulianDayKnownDate() {
+        // J2000.0 epoch: 01/01/2000 12:00 TT = JD 2451545.0
+        // JulianDay.fromGregorian cho ngày 01/01/2000 = 2451545
+        let jd = JulianDay.fromGregorian(day: 1, month: 1, year: 2000)
+        XCTAssertEqual(jd, 2451545)
+    }
+
+    func testJulianDaySequential() {
+        // Hai ngày liên tiếp phải cách nhau 1
+        let jd1 = JulianDay.fromGregorian(day: 15, month: 3, year: 2025)
+        let jd2 = JulianDay.fromGregorian(day: 16, month: 3, year: 2025)
+        XCTAssertEqual(jd2 - jd1, 1)
+    }
+
+    // MARK: - Can Chi
+
+    func testCanChiYear2025() {
+        // 2025 = Ất Tỵ
+        let canChi = VietnameseCalendarMetadata.canChiYear(lunarYear: 2025)
+        XCTAssertEqual(canChi, "Ất Tỵ")
+    }
+
+    func testCanChiYear2026() {
+        // 2026 = Bính Ngọ
+        let canChi = VietnameseCalendarMetadata.canChiYear(lunarYear: 2026)
+        XCTAssertEqual(canChi, "Bính Ngọ")
+    }
+
+    func testZodiac2025() {
+        let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: 2025)
+        XCTAssertEqual(zodiac, "Rắn")
+    }
+
+    func testZodiac2024() {
+        let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: 2024)
+        XCTAssertEqual(zodiac, "Rồng")
+    }
+
+    // MARK: - Lunar Phase
+
+    func testLunarPhaseNewMoon() {
+        let phase = LunarPhase.from(day: 1)
+        XCTAssertEqual(phase, .newMoon)
+    }
+
+    func testLunarPhaseFullMoon() {
+        let phase = LunarPhase.from(day: 15)
+        XCTAssertEqual(phase, .fullMoon)
+    }
+
+    // MARK: - Holiday Provider
+
+    func testSolarHolidays() {
+        XCTAssertEqual(HolidayProvider.solarHoliday(day: 1, month: 1), "Tết Dương lịch")
+        XCTAssertEqual(HolidayProvider.solarHoliday(day: 2, month: 9), "Quốc khánh")
+        XCTAssertEqual(HolidayProvider.solarHoliday(day: 30, month: 4), "Giải phóng miền Nam")
+        XCTAssertEqual(HolidayProvider.solarHoliday(day: 20, month: 11), "Ngày Nhà giáo Việt Nam")
+        XCTAssertNil(HolidayProvider.solarHoliday(day: 15, month: 6))
+    }
+
+    func testLunarHolidays() {
+        XCTAssertEqual(HolidayProvider.lunarHoliday(day: 1, month: 1), "Mùng 1 Tết")
+        XCTAssertEqual(HolidayProvider.lunarHoliday(day: 15, month: 8), "Tết Trung Thu")
+        XCTAssertEqual(HolidayProvider.lunarHoliday(day: 10, month: 3), "Giỗ tổ Hùng Vương")
+        XCTAssertEqual(HolidayProvider.lunarHoliday(day: 3, month: 3), "Tết Hàn Thực")
+        XCTAssertEqual(HolidayProvider.lunarHoliday(day: 5, month: 5), "Tết Đoan Ngọ")
+        XCTAssertNil(HolidayProvider.lunarHoliday(day: 20, month: 6))
+    }
+
+    // MARK: - Service Snapshot
+
+    func testSnapshotReturnsValidData() {
+        let snapshot = service.snapshot(for: Date())
+        XCTAssertNotNil(snapshot)
+        XCTAssertGreaterThan(snapshot!.lunar.day, 0)
+        XCTAssertGreaterThan(snapshot!.lunar.month, 0)
+        XCTAssertGreaterThan(snapshot!.lunar.year, 2000)
+        XCTAssertFalse(snapshot!.canChiDay.isEmpty)
+        XCTAssertFalse(snapshot!.canChiYear.isEmpty)
+        XCTAssertFalse(snapshot!.zodiac.isEmpty)
+        XCTAssertFalse(snapshot!.solarTerm.isEmpty)
+    }
+
+    func testHourPeriodsAlways12() {
+        let snapshot = service.snapshot(for: Date())
+        XCTAssertNotNil(snapshot)
+        XCTAssertEqual(snapshot!.hourPeriods.count, 12)
+    }
+}
