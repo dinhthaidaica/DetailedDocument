@@ -874,34 +874,44 @@ struct AppSettingsView: View {
 
                 LunarSettingsCard(
                     title: "Thành phần hiển thị",
-                    subtitle: "Kéo thả để đổi thứ tự card",
+                    subtitle: "Sắp xếp thứ tự và bật/tắt từng card",
                     icon: "rectangle.grid.1x2.fill"
                 ) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Kéo để đổi thứ tự card, gạt công tắc để ẩn/hiện.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        HStack(spacing: 8) {
-                            PanelCardHintChip(icon: "line.3.horizontal", text: "Kéo để đổi vị trí")
-                            PanelCardHintChip(icon: "eye.fill", text: "Bật/tắt để ẩn hiện")
-                            Spacer(minLength: 0)
-                            Text("\(settings.panelCardOrder.count) mục")
-                                .font(.caption2.weight(.semibold))
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text("Kéo-thả để đổi thứ tự, dùng công tắc để ẩn/hiện card trong menu.")
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Spacer(minLength: 0)
+
+                            if hiddenPanelCardCount > 0 {
+                                LunarSettingsStatusPill(text: "Ẩn: \(hiddenPanelCardCount)", color: .orange)
+                            } else {
+                                LunarSettingsStatusPill(text: "Tất cả đang hiển thị", color: .green)
+                            }
                         }
 
                         panelOrderList
 
-                        HStack {
-                            Text("Kéo-thả trực tiếp trên từng hàng.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            Button("Hiện tất cả") {
+                                setAllPanelCardsVisible(true)
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button("Ẩn tất cả") {
+                                setAllPanelCardsVisible(false)
+                            }
+                            .buttonStyle(.bordered)
+
                             Spacer(minLength: 0)
+
                             Button("Khôi phục thứ tự mặc định") {
                                 settings.resetPanelCardOrder()
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.borderedProminent)
                         }
                     }
                 }
@@ -916,6 +926,10 @@ struct AppSettingsView: View {
         settings.panelCardOrder.filter { settings.isPanelCardVisible($0) }.count
     }
 
+    private var hiddenPanelCardCount: Int {
+        max(settings.panelCardOrder.count - visiblePanelCardCount, 0)
+    }
+
     private var panelOrderList: some View {
         List {
             ForEach(settings.panelCardOrder) { card in
@@ -923,7 +937,7 @@ struct AppSettingsView: View {
                     card: card,
                     isVisible: panelCardVisibilityBinding(for: card)
                 )
-                .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
+                .listRowInsets(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
@@ -931,10 +945,11 @@ struct AppSettingsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .environment(\.defaultMinListRowHeight, 60)
         .frame(height: panelOrderListHeight)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.primary.opacity(0.035))
+                .fill(Color.primary.opacity(0.045))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -944,9 +959,17 @@ struct AppSettingsView: View {
     }
 
     private var panelOrderListHeight: CGFloat {
-        let rowHeight: CGFloat = 54
+        let rowHeight: CGFloat = 60
         let visibleRows = min(max(settings.panelCardOrder.count, 4), 8)
         return CGFloat(visibleRows) * rowHeight
+    }
+
+    private func setAllPanelCardsVisible(_ isVisible: Bool) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            for card in settings.panelCardOrder {
+                settings.setPanelCardVisible(isVisible, for: card)
+            }
+        }
     }
 
     // MARK: - Notifications Pane

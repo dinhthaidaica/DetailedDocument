@@ -380,27 +380,62 @@ struct PanelCardOrderRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
-                    .frame(width: 22, height: 22)
-
-                Image(systemName: card.icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(card.title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
-
-                Text(card.subtitle)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-
+            dragIndicator
+            cardIcon
+            cardTextBlock
             Spacer()
+            trailingVisibilityControl
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(rowBackgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(rowBorderColor, lineWidth: 1)
+        )
+        .opacity(isVisible ? 1 : 0.88)
+    }
+
+    private var dragIndicator: some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.tertiary)
+            .frame(width: 12, alignment: .center)
+            .help("Kéo để đổi vị trí")
+    }
+
+    private var cardIcon: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+                .frame(width: 22, height: 22)
+
+            Image(systemName: card.icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+        }
+    }
+
+    private var cardTextBlock: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(card.title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.primary)
+
+            Text(card.subtitle)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var trailingVisibilityControl: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text(visibilityStatusText)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(visibilityStatusColor)
 
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
@@ -408,16 +443,28 @@ struct PanelCardOrderRow: View {
                 .frame(width: 40, alignment: .trailing)
                 .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.72 : 0.96))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08), lineWidth: 1)
-        )
+    }
+
+    private var visibilityStatusText: String {
+        isVisible ? "Hiển thị" : "Đang ẩn"
+    }
+
+    private var visibilityStatusColor: Color {
+        isVisible ? .secondary : .orange
+    }
+
+    private var rowBackgroundColor: Color {
+        if isVisible {
+            return Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.72 : 0.96)
+        }
+        return Color.orange.opacity(colorScheme == .dark ? 0.1 : 0.06)
+    }
+
+    private var rowBorderColor: Color {
+        if isVisible {
+            return Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08)
+        }
+        return Color.orange.opacity(colorScheme == .dark ? 0.4 : 0.25)
     }
 }
 
