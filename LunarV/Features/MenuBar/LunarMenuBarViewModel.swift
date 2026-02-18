@@ -409,8 +409,23 @@ final class LunarMenuBarViewModel: ObservableObject {
     private func scheduleRefresh(from now: Date) {
         refreshTask?.cancel()
 
-        let nextRefreshDate = nextSecondStart(from: now)
-        let delay = max(nextRefreshDate.timeIntervalSince(now) + 0.05, 0.05)
+        let granularity = MenuBarTitleFormatter.refreshGranularity(
+            preset: settings.menuBarDisplayPreset,
+            customTemplate: settings.customMenuBarTemplate
+        )
+
+        let delay: TimeInterval
+        switch granularity {
+        case .everySecond:
+            let nextSecond = nextSecondStart(from: now)
+            delay = max(nextSecond.timeIntervalSince(now) + 0.05, 0.05)
+        case .everyMinute:
+            let nextMinute = nextMinuteStart(from: now)
+            delay = max(nextMinute.timeIntervalSince(now) + 0.1, 0.1)
+        case .daily:
+            // Refresh mỗi 5 phút cho chế độ không hiển thị giờ
+            delay = 300
+        }
 
         refreshTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -453,11 +468,11 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     private func startObservingSettings() {
-        // Quan sát thay đổi từ settings object trực tiếp
         settings.objectWillChange
+            .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
             .sink { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    // Kích hoạt refresh khi bất kỳ setting nào thay đổi
+                    self?.invalidateCaches()
                     self?.refresh()
                 }
             }
@@ -470,6 +485,14 @@ final class LunarMenuBarViewModel: ObservableObject {
         }
 
         return solarCalendar.date(byAdding: .second, value: 1, to: secondStart) ?? now.addingTimeInterval(1)
+    }
+
+    private func nextMinuteStart(from now: Date) -> Date {
+        guard let minuteStart = solarCalendar.dateInterval(of: .minute, for: now)?.start else {
+            return now.addingTimeInterval(60)
+        }
+
+        return solarCalendar.date(byAdding: .minute, value: 1, to: minuteStart) ?? now.addingTimeInterval(60)
     }
 
     private func formattedWeekOfYear(_ week: Int?) -> String {

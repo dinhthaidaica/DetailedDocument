@@ -917,7 +917,12 @@ struct AppSettingsView: View {
     }
 
     private var previewMenuBarFont: NSFont {
-        resolvedMenuBarFont(size: settings.menuBarTitleFontSizeCGFloat)
+        MenuBarFontResolver.resolve(
+            family: settings.menuBarTitleFontFamilyValue,
+            size: settings.menuBarTitleFontSizeCGFloat,
+            bold: settings.menuBarTitleBoldValue,
+            italic: settings.menuBarTitleItalicValue
+        )
     }
 
     private var menuBarLeadingIconSizeBinding: Binding<Double> {
@@ -1000,44 +1005,6 @@ struct AppSettingsView: View {
         return NSFontManager.shared.availableFontFamilies.contains(family)
     }
 
-    private func resolvedMenuBarFont(size: CGFloat) -> NSFont {
-        let desiredFamily = settings.menuBarTitleFontFamilyValue
-        let traits = settings.menuBarTitleItalicValue ? NSFontTraitMask.italicFontMask : []
-        let weight = settings.menuBarTitleBoldValue ? 9 : 5
-
-        if !desiredFamily.isEmpty,
-           let custom = NSFontManager.shared.font(
-               withFamily: desiredFamily,
-               traits: traits,
-               weight: weight,
-               size: size
-           ) {
-            return custom
-        }
-
-        let base = NSFont.menuBarFont(ofSize: size)
-        let descriptorTraits = resolvedSymbolicTraits(for: base.fontDescriptor.symbolicTraits)
-        let descriptor = base.fontDescriptor.withSymbolicTraits(descriptorTraits)
-        if let resolved = NSFont(descriptor: descriptor, size: size) {
-            return resolved
-        }
-        return base
-    }
-
-    private func resolvedSymbolicTraits(for current: NSFontDescriptor.SymbolicTraits) -> NSFontDescriptor.SymbolicTraits {
-        var traits = current
-        if settings.menuBarTitleBoldValue {
-            traits.insert(.bold)
-        } else {
-            traits.remove(.bold)
-        }
-        if settings.menuBarTitleItalicValue {
-            traits.insert(.italic)
-        } else {
-            traits.remove(.italic)
-        }
-        return traits
-    }
 
     private func previewMenuBarTitle(at now: Date) -> String {
         guard let snapshot = previewLunarService.snapshot(for: now) else {

@@ -134,6 +134,24 @@ enum MenuBarTitleFormatter {
         render(template: template, context: context, timeValueMode: .live)
     }
 
+    /// Xác định tần suất refresh phù hợp dựa trên template đang dùng
+    static func refreshGranularity(preset: MenuBarDisplayPreset, customTemplate: String) -> RefreshGranularity {
+        let template = resolvedTemplate(preset: preset, customTemplate: customTemplate)
+        if template.contains("{ss}") || template.contains("{time}") {
+            return .everySecond
+        }
+        if template.contains("{hh}") || template.contains("{min}") {
+            return .everyMinute
+        }
+        return .daily
+    }
+
+    enum RefreshGranularity {
+        case everySecond
+        case everyMinute
+        case daily
+    }
+
     private static func render(
         template: String,
         context: MenuBarTitleContext,

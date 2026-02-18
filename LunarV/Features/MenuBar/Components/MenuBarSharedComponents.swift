@@ -56,6 +56,8 @@ struct InfoRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 
@@ -86,6 +88,8 @@ struct CanChiPill: View {
         }
         .frame(maxWidth: .infinity).padding(.vertical, 10)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Can chi \(title): \(value)")
     }
 }
 
@@ -106,6 +110,8 @@ struct HeroChip: View {
         }
         .padding(10)
         .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(value)")
     }
 }
 
@@ -130,6 +136,8 @@ struct HourPeriodPill: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Giờ hoàng đạo \(hour.canChi), \(hour.timeRange)")
     }
 }
 
@@ -153,6 +161,8 @@ struct GuidanceScoreView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(scoreColor.opacity(0.35), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Điểm ngày: \(score) trên 100")
     }
 
     private var scoreColor: Color {
@@ -213,6 +223,8 @@ struct DayOfficerPanel: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(levelColor.opacity(0.22), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Trực \(officer.name), \(levelTitle). \(officer.summary)")
     }
 
     private var levelTitle: String {
@@ -356,6 +368,18 @@ struct MonthDayCellView: View {
             }
         }
         .help(cell.holiday ?? "")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(cellAccessibilityLabel)
+    }
+
+    private var cellAccessibilityLabel: String {
+        guard let solar = cell.solarDay, let lunar = cell.lunarDay else {
+            return ""
+        }
+        var label = "Ngày \(solar), âm lịch \(lunar)"
+        if cell.isToday { label += ", hôm nay" }
+        if let holiday = cell.holiday { label += ", \(holiday)" }
+        return label
     }
 }
 

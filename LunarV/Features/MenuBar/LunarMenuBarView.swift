@@ -140,6 +140,8 @@ struct LunarMenuBarView: View {
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("LunarV – Lịch âm Việt Nam")
 
             Spacer()
 
@@ -214,6 +216,8 @@ struct LunarMenuBarView: View {
         .padding(20)
         .glassEffect(Material.regular, tint: Color.accentColor.opacity(tintOpacity), in: RoundedRectangle(cornerRadius: 24))
         .onHover { h in withAnimation(.spring(duration: 0.3)) { isHeroHovered = h } }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Ngày âm lịch: \(info.weekdayText), ngày \(info.lunarDayText), \(info.lunarMonthYearText). Dương lịch: \(info.solarDateText). Pha trăng: \(info.lunarPhaseName). Tiết khí: \(info.solarTermText)")
     }
 
     // MARK: - Panel Card Router
@@ -418,11 +422,15 @@ struct LunarMenuBarView: View {
             HStack(spacing: 10) {
                 Button("Nay") { viewModel.goToToday() }.buttonStyle(.plain)
                     .font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
+                    .accessibilityLabel("Về hôm nay")
 
                 HStack(spacing: 6) {
                     calendarNavButton(icon: "chevron.left") { viewModel.previousMonth() }
+                        .accessibilityLabel("Tháng trước")
                     Text(viewModel.info.monthTitleText).font(.system(size: 11, weight: .bold)).frame(width: 90)
+                        .accessibilityLabel("Tháng hiện tại: \(viewModel.info.monthTitleText)")
                     calendarNavButton(icon: "chevron.right") { viewModel.nextMonth() }
+                        .accessibilityLabel("Tháng sau")
                 }
             }
         }) {
