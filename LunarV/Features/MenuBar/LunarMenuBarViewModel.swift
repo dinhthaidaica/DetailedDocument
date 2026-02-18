@@ -9,6 +9,7 @@ import Foundation
 @MainActor
 final class LunarMenuBarViewModel: ObservableObject {
     @Published private(set) var menuBarTitle = "--/-- ÂL"
+    @Published private(set) var menuBarTitleSizingText = "--/-- ÂL"
     @Published private(set) var info = LunarMenuBarInfo.placeholder
     @Published private(set) var viewingDate: Date
     
@@ -115,9 +116,17 @@ final class LunarMenuBarViewModel: ObservableObject {
             second: timeComponents.second ?? 0
         )
 
+        let preset = settings.menuBarDisplayPreset
+        let customTemplate = settings.customMenuBarTemplate
+
         menuBarTitle = MenuBarTitleFormatter.render(
-            preset: settings.menuBarDisplayPreset,
-            customTemplate: settings.customMenuBarTemplate,
+            preset: preset,
+            customTemplate: customTemplate,
+            context: titleContext
+        )
+        menuBarTitleSizingText = MenuBarTitleFormatter.renderForStableTimeWidth(
+            preset: preset,
+            customTemplate: customTemplate,
             context: titleContext
         )
     }

@@ -98,6 +98,11 @@ struct MenuBarTitleContext {
 }
 
 enum MenuBarTitleFormatter {
+    private enum TimeValueMode {
+        case live
+        case widthProbe
+    }
+
     static func resolvedTemplate(preset: MenuBarDisplayPreset, customTemplate: String) -> String {
         if preset == .custom {
             let trimmed = customTemplate.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -113,19 +118,36 @@ enum MenuBarTitleFormatter {
         context: MenuBarTitleContext
     ) -> String {
         let template = resolvedTemplate(preset: preset, customTemplate: customTemplate)
-        return render(template: template, context: context)
+        return render(template: template, context: context, timeValueMode: .live)
+    }
+
+    static func renderForStableTimeWidth(
+        preset: MenuBarDisplayPreset,
+        customTemplate: String,
+        context: MenuBarTitleContext
+    ) -> String {
+        let template = resolvedTemplate(preset: preset, customTemplate: customTemplate)
+        return render(template: template, context: context, timeValueMode: .widthProbe)
     }
 
     static func render(template: String, context: MenuBarTitleContext) -> String {
+        render(template: template, context: context, timeValueMode: .live)
+    }
+
+    private static func render(
+        template: String,
+        context: MenuBarTitleContext,
+        timeValueMode: TimeValueMode
+    ) -> String {
         var result = template
 
         let tokens: [(String, String)] = [
             ("{wds}", context.solarWeekdayShortName),
             ("{wd}", context.solarWeekdayName),
-            ("{time}", "\(twoDigits(context.hour)):\(twoDigits(context.minute)):\(twoDigits(context.second))"),
-            ("{hh}", twoDigits(context.hour)),
-            ("{min}", twoDigits(context.minute)),
-            ("{ss}", twoDigits(context.second)),
+            ("{time}", "\(twoDigits(context.hour, mode: timeValueMode)):\(twoDigits(context.minute, mode: timeValueMode)):\(twoDigits(context.second, mode: timeValueMode))"),
+            ("{hh}", twoDigits(context.hour, mode: timeValueMode)),
+            ("{min}", twoDigits(context.minute, mode: timeValueMode)),
+            ("{ss}", twoDigits(context.second, mode: timeValueMode)),
             ("{yyyy}", "\(context.lunarYear)"),
             ("{dd}", twoDigits(context.lunarDay)),
             ("{mm}", twoDigits(context.lunarMonth)),
@@ -150,6 +172,16 @@ enum MenuBarTitleFormatter {
         result = result.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return result.isEmpty ? "--" : result
+    }
+
+    private static func twoDigits(_ value: Int, mode: TimeValueMode) -> String {
+        switch mode {
+        case .live:
+            return twoDigits(value)
+        case .widthProbe:
+            // "88" thường là cặp số rộng nhất với hầu hết font, giúp cố định bề ngang cho token thời gian.
+            return "88"
+        }
     }
 
     private static func twoDigits(_ value: Int) -> String {

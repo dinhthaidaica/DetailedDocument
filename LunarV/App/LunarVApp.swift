@@ -26,6 +26,7 @@ struct LunarVApp: App {
 
     private var menuBarLabelIdentity: String {
         let title = viewModel.menuBarTitle
+        let sizingTitle = viewModel.menuBarTitleSizingText
         let titleSize = settings.menuBarTitleFontSizeValue
         let titleFamily = settings.menuBarTitleFontFamilyValue
         let titleBold = settings.menuBarTitleBoldValue ? 1 : 0
@@ -33,11 +34,12 @@ struct LunarVApp: App {
         let titleUnderline = settings.menuBarTitleUnderlineValue ? 1 : 0
         let iconVisibility = settings.showMenuBarLeadingIconValue ? 1 : 0
         let iconSize = settings.menuBarLeadingIconSizeValue
-        return "\(title)|\(titleSize)|\(titleFamily)|\(titleBold)|\(titleItalic)|\(titleUnderline)|\(iconVisibility)|\(iconSize)"
+        return "\(title)|\(sizingTitle)|\(titleSize)|\(titleFamily)|\(titleBold)|\(titleItalic)|\(titleUnderline)|\(iconVisibility)|\(iconSize)"
     }
 
     private var menuBarLabelImage: NSImage? {
         let text = viewModel.menuBarTitle
+        let sizingText = viewModel.menuBarTitleSizingText
         guard !text.isEmpty else {
             return nil
         }
@@ -52,11 +54,14 @@ struct LunarVApp: App {
         }
         let attributedText = NSAttributedString(string: text, attributes: attributes)
         let textSize = attributedText.size()
+        let sizingSample = sizingText.isEmpty ? text : sizingText
+        let sizingAttributedText = NSAttributedString(string: sizingSample, attributes: attributes)
+        let sizingTextSize = sizingAttributedText.size()
 
         let spacing: CGFloat = settings.showMenuBarLeadingIconValue ? AppSettings.menuBarIconTitleSpacing : 0
         let iconSize: CGFloat = settings.showMenuBarLeadingIconValue ? menuBarLeadingIconRenderSize : 0
 
-        let width = ceil(iconSize + spacing + textSize.width)
+        let width = ceil(iconSize + spacing + max(textSize.width, sizingTextSize.width))
         let height = ceil(max(iconSize, textSize.height))
         guard width > 0, height > 0 else {
             return nil
