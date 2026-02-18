@@ -30,6 +30,16 @@ struct AppSettingsView: View {
         "Be Vietnam Pro",
     ]
 
+    private struct SettingsSearchEntry: Identifiable {
+        let id: String
+        let pane: SettingsPane
+        let section: String
+        let title: String
+        let subtitle: String
+        let icon: String
+        let keywords: [String]
+    }
+
     init(updater: SPUUpdater) {
         self.updater = updater
         _automaticallyChecksForUpdates = State(initialValue: updater.automaticallyChecksForUpdates)
@@ -117,6 +127,222 @@ struct AppSettingsView: View {
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm tính năng...")
     }
 
+    private var hasActiveSearchQuery: Bool {
+        !normalizedSearchValue(searchText).isEmpty
+    }
+
+    private var settingsSearchIndex: [SettingsSearchEntry] {
+        [
+            SettingsSearchEntry(
+                id: "appearance.displayPreset",
+                pane: .appearance,
+                section: "Menu Bar",
+                title: "Kiểu hiển thị Menu Bar",
+                subtitle: "Chọn chế độ preset hoặc mẫu tùy chỉnh",
+                icon: "menubar.rectangle",
+                keywords: ["preset", "chế độ", "compact", "full", "custom", "template", "mẫu tùy chỉnh"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.customTemplate",
+                pane: .appearance,
+                section: "Menu Bar",
+                title: "Mẫu tùy chỉnh",
+                subtitle: "Tự tạo format hiển thị bằng token",
+                icon: "textformat.alt",
+                keywords: ["token", "template", "mẫu", "{dd}", "{mm}", "{hh}", "format"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.fontSize",
+                pane: .appearance,
+                section: "Kiểu chữ",
+                title: "Kích cỡ chữ Menu Bar",
+                subtitle: "Điều chỉnh kích thước chữ hiển thị trên thanh menu",
+                icon: "textformat.size",
+                keywords: ["font size", "cỡ chữ", "kích cỡ chữ", "slider"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.fontFamily",
+                pane: .appearance,
+                section: "Kiểu chữ",
+                title: "Phông chữ Menu Bar",
+                subtitle: "Chọn font hệ thống hoặc font cài đặt",
+                icon: "character.book.closed",
+                keywords: ["font", "phông chữ", "font family", "hệ thống", "gợi ý"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.textStyle",
+                pane: .appearance,
+                section: "Kiểu chữ",
+                title: "Định dạng chữ",
+                subtitle: "Bật/tắt đậm, nghiêng và gạch chân",
+                icon: "bold.italic.underline",
+                keywords: ["đậm", "nghiêng", "gạch chân", "bold", "italic", "underline"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.leadingIconVisibility",
+                pane: .appearance,
+                section: "Menu Bar",
+                title: "Hiển thị icon bên trái",
+                subtitle: "Bật/tắt icon đứng trước nội dung ngày",
+                icon: "photo",
+                keywords: ["icon", "biểu tượng", "leading icon", "ẩn icon", "hiện icon"]
+            ),
+            SettingsSearchEntry(
+                id: "appearance.leadingIconSize",
+                pane: .appearance,
+                section: "Menu Bar",
+                title: "Kích cỡ icon Menu Bar",
+                subtitle: "Điều chỉnh kích thước icon ở thanh menu",
+                icon: "arrow.up.left.and.arrow.down.right",
+                keywords: ["icon size", "kích cỡ icon", "slider", "menu bar icon"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.order",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Sắp xếp thứ tự card",
+                subtitle: "Kéo thả để đổi vị trí các thành phần",
+                icon: "line.3.horizontal.decrease",
+                keywords: ["kéo thả", "thứ tự", "card order", "sắp xếp", "onMove"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.visibility",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Ẩn/hiện từng card",
+                subtitle: "Bật hoặc tắt thành phần trong menu",
+                icon: "eye",
+                keywords: ["ẩn", "hiện", "toggle", "visibility", "card", "thành phần"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.restoreDefaultOrder",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Khôi phục thứ tự mặc định",
+                subtitle: "Đưa thứ tự card về cấu hình ban đầu",
+                icon: "arrow.counterclockwise",
+                keywords: ["khôi phục", "default order", "reset order"]
+            ),
+            SettingsSearchEntry(
+                id: "notifications.enable",
+                pane: .notifications,
+                section: "Nhắc ngày lễ",
+                title: "Bật thông báo ngày lễ",
+                subtitle: "Cho phép LunarV gửi nhắc lễ âm lịch",
+                icon: "bell.badge",
+                keywords: ["thông báo", "nhắc", "holiday", "permission", "authorization", "quyền"]
+            ),
+            SettingsSearchEntry(
+                id: "notifications.leadDays",
+                pane: .notifications,
+                section: "Nhắc ngày lễ",
+                title: "Nhắc trước",
+                subtitle: "Chọn số ngày nhắc trước ngày lễ",
+                icon: "calendar.badge.clock",
+                keywords: ["nhắc trước", "lead days", "đúng ngày", "trước 1 ngày", "trước 3 ngày"]
+            ),
+            SettingsSearchEntry(
+                id: "notifications.hour",
+                pane: .notifications,
+                section: "Nhắc ngày lễ",
+                title: "Giờ thông báo",
+                subtitle: "Chọn thời điểm nhận thông báo trong ngày",
+                icon: "clock.badge",
+                keywords: ["giờ", "reminder hour", "time", "08:00", "20:00"]
+            ),
+            SettingsSearchEntry(
+                id: "notifications.windowDays",
+                pane: .notifications,
+                section: "Nhắc ngày lễ",
+                title: "Phạm vi lập lịch",
+                subtitle: "Tính trước các ngày lễ trong khoảng thời gian chọn",
+                icon: "calendar.badge.plus",
+                keywords: ["30 ngày", "60 ngày", "90 ngày", "180 ngày", "window days", "lập lịch"]
+            ),
+            SettingsSearchEntry(
+                id: "updates.autoCheck",
+                pane: .updates,
+                section: "Cập nhật ứng dụng",
+                title: "Tự động kiểm tra cập nhật",
+                subtitle: "Bật/tắt kiểm tra phiên bản mới tự động",
+                icon: "arrow.triangle.2.circlepath.circle",
+                keywords: ["auto update", "tự động", "check updates", "sparkle"]
+            ),
+            SettingsSearchEntry(
+                id: "updates.frequency",
+                pane: .updates,
+                section: "Cập nhật ứng dụng",
+                title: "Tần suất kiểm tra cập nhật",
+                subtitle: "Chọn chu kỳ kiểm tra phiên bản mới",
+                icon: "timer",
+                keywords: ["tần suất", "mỗi giờ", "mỗi ngày", "mỗi tuần", "frequency"]
+            ),
+            SettingsSearchEntry(
+                id: "updates.checkNow",
+                pane: .updates,
+                section: "Cập nhật ứng dụng",
+                title: "Kiểm tra cập nhật ngay",
+                subtitle: "Kiểm tra thủ công phiên bản mới",
+                icon: "arrow.down.circle",
+                keywords: ["check now", "kiểm tra ngay", "phiên bản mới", "github releases"]
+            ),
+            SettingsSearchEntry(
+                id: "system.keepOnTop",
+                pane: .system,
+                section: "Cửa sổ Cài đặt",
+                title: "Luôn ở trên cùng",
+                subtitle: "Giữ cửa sổ cài đặt nổi phía trên ứng dụng khác",
+                icon: "pin",
+                keywords: ["floating", "always on top", "cửa sổ nổi", "window behavior"]
+            ),
+            SettingsSearchEntry(
+                id: "system.launchAtLogin",
+                pane: .system,
+                section: "Tự động hóa",
+                title: "Mở LunarV khi đăng nhập",
+                subtitle: "Tự khởi động ứng dụng khi mở máy",
+                icon: "power",
+                keywords: ["launch at login", "đăng nhập", "tự khởi động", "startup"]
+            ),
+            SettingsSearchEntry(
+                id: "system.data",
+                pane: .system,
+                section: "Dữ liệu & Thời gian",
+                title: "Thông số tính toán lịch",
+                subtitle: "Xem múi giờ và thuật toán lịch đang sử dụng",
+                icon: "clock.arrow.trianglehead.counterclockwise.rotate.90",
+                keywords: ["múi giờ", "timezone", "algorithm", "thuật toán", "asia ho chi minh"]
+            ),
+            SettingsSearchEntry(
+                id: "system.reset",
+                pane: .system,
+                section: "Khôi phục",
+                title: "Khôi phục cài đặt mặc định",
+                subtitle: "Đặt lại toàn bộ tùy chỉnh về giá trị ban đầu",
+                icon: "arrow.uturn.backward",
+                keywords: ["reset", "khôi phục", "mặc định", "restore defaults"]
+            ),
+            SettingsSearchEntry(
+                id: "about.version",
+                pane: .about,
+                section: "Thông tin ứng dụng",
+                title: "Phiên bản LunarV",
+                subtitle: "Xem phiên bản hiện tại của ứng dụng",
+                icon: "info.circle",
+                keywords: ["version", "phiên bản", "build", "about"]
+            ),
+            SettingsSearchEntry(
+                id: "about.donation",
+                pane: .about,
+                section: "Hỗ trợ phát triển",
+                title: "Ủng hộ dự án qua QR",
+                subtitle: "Mở mã QR để đóng góp cho LunarV",
+                icon: "qrcode",
+                keywords: ["donate", "ủng hộ", "qr", "hỗ trợ", "quét mã"]
+            ),
+        ]
+    }
+
     private var filteredPanes: [SettingsPane] {
         filteredPanes(for: searchText)
     }
@@ -127,18 +353,108 @@ struct AppSettingsView: View {
             return SettingsPane.allCases
         }
         let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
+        let resultPanes = Set(searchResults(for: query).map(\.pane))
 
         return SettingsPane.allCases.filter { pane in
-            let normalizedValues = paneSearchValues(for: pane).map(normalizedSearchValue)
-            let combinedValues = normalizedValues.joined(separator: " ")
+            resultPanes.contains(pane) ||
+            matchesSearchQuery(
+                normalizedQuery: normalizedQuery,
+                queryTokens: queryTokens,
+                values: paneSearchValues(for: pane)
+            )
+        }
+    }
 
-            if combinedValues.contains(normalizedQuery) {
-                return true
-            }
+    private var searchResults: [SettingsSearchEntry] {
+        searchResults(for: searchText)
+    }
 
-            return queryTokens.allSatisfy { token in
-                combinedValues.contains(token)
+    private func searchResults(for query: String) -> [SettingsSearchEntry] {
+        let normalizedQuery = normalizedSearchValue(query)
+        guard !normalizedQuery.isEmpty else {
+            return []
+        }
+        let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
+        let paneOrderMap = Dictionary(
+            uniqueKeysWithValues: SettingsPane.allCases.enumerated().map { ($1, $0) }
+        )
+
+        return settingsSearchIndex
+            .compactMap { entry -> (SettingsSearchEntry, Int)? in
+                let score = searchScore(
+                    for: entry,
+                    normalizedQuery: normalizedQuery,
+                    queryTokens: queryTokens
+                )
+                guard score > 0 else {
+                    return nil
+                }
+                return (entry, score)
             }
+            .sorted { lhs, rhs in
+                if lhs.1 != rhs.1 {
+                    return lhs.1 > rhs.1
+                }
+
+                let lhsPaneOrder = paneOrderMap[lhs.0.pane] ?? .max
+                let rhsPaneOrder = paneOrderMap[rhs.0.pane] ?? .max
+                if lhsPaneOrder != rhsPaneOrder {
+                    return lhsPaneOrder < rhsPaneOrder
+                }
+
+                return lhs.0.title.localizedCaseInsensitiveCompare(rhs.0.title) == .orderedAscending
+            }
+            .map(\.0)
+    }
+
+    private func searchScore(
+        for entry: SettingsSearchEntry,
+        normalizedQuery: String,
+        queryTokens: [String]
+    ) -> Int {
+        let title = normalizedSearchValue(entry.title)
+        let section = normalizedSearchValue(entry.section)
+        let subtitle = normalizedSearchValue(entry.subtitle)
+        let keywords = entry.keywords.map(normalizedSearchValue)
+        let combinedValues = ([title, section, subtitle] + keywords).joined(separator: " ")
+
+        guard
+            combinedValues.contains(normalizedQuery) ||
+            queryTokens.allSatisfy({ combinedValues.contains($0) })
+        else {
+            return 0
+        }
+
+        var score = 0
+        if title.contains(normalizedQuery) { score += 120 }
+        if section.contains(normalizedQuery) { score += 85 }
+        if subtitle.contains(normalizedQuery) { score += 70 }
+        if keywords.contains(where: { $0.contains(normalizedQuery) }) { score += 95 }
+
+        for token in queryTokens {
+            if title.contains(token) { score += 16 }
+            if section.contains(token) { score += 11 }
+            if subtitle.contains(token) { score += 9 }
+            if keywords.contains(where: { $0.contains(token) }) { score += 14 }
+        }
+
+        return max(score, 1)
+    }
+
+    private func matchesSearchQuery(
+        normalizedQuery: String,
+        queryTokens: [String],
+        values: [String]
+    ) -> Bool {
+        let normalizedValues = values.map(normalizedSearchValue)
+        let combinedValues = normalizedValues.joined(separator: " ")
+
+        if combinedValues.contains(normalizedQuery) {
+            return true
+        }
+
+        return queryTokens.allSatisfy { token in
+            combinedValues.contains(token)
         }
     }
 
@@ -158,20 +474,134 @@ struct AppSettingsView: View {
 
     @ViewBuilder
     private var detailPane: some View {
-        switch selectedPane {
-        case .appearance:
-            appearancePane
-        case .panel:
-            panelPane
-        case .notifications:
-            notificationsPane
-        case .updates:
-            updatesPane
-        case .system:
-            systemPane
-        case .about:
-            aboutPane
+        if hasActiveSearchQuery {
+            searchResultsPane
+        } else {
+            switch selectedPane {
+            case .appearance:
+                appearancePane
+            case .panel:
+                panelPane
+            case .notifications:
+                notificationsPane
+            case .updates:
+                updatesPane
+            case .system:
+                systemPane
+            case .about:
+                aboutPane
+            }
         }
+    }
+
+    // MARK: - Search Results Pane
+
+    private var searchResultsPane: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                LunarSettingsHeader(
+                    title: "Kết quả tìm kiếm",
+                    subtitle: "Hiển thị theo từng chức năng giống cách Apple tổ chức trong Settings.",
+                    icon: "magnifyingglass"
+                ) {
+                    LunarSettingsStatusPill(text: "\(searchResults.count) kết quả", color: .accentColor)
+                }
+
+                if searchResults.isEmpty {
+                    LunarSettingsCard(
+                        title: "Không tìm thấy kết quả",
+                        subtitle: "Thử từ khóa ngắn hơn hoặc đổi cách diễn đạt",
+                        icon: "magnifyingglass.circle"
+                    ) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Không có chức năng nào khớp với từ khóa \"\(searchText.trimmingCharacters(in: .whitespacesAndNewlines))\".")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text("Gợi ý: thử các từ như \"menu bar\", \"cập nhật\", \"nhắc lễ\", \"đăng nhập\", \"khôi phục\".")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    ForEach(searchResultGroups) { group in
+                        LunarSettingsCard(
+                            title: group.pane.title,
+                            subtitle: group.pane.subtitle,
+                            icon: group.pane.icon
+                        ) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ForEach(group.results) { result in
+                                    searchResultRow(result)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(14)
+        }
+        .lunarSettingsBackground()
+    }
+
+    private struct SettingsSearchResultGroup: Identifiable {
+        let pane: SettingsPane
+        let results: [SettingsSearchEntry]
+        var id: String { pane.id }
+    }
+
+    private var searchResultGroups: [SettingsSearchResultGroup] {
+        let groupedResults = Dictionary(grouping: searchResults, by: \.pane)
+
+        return SettingsPane.allCases.compactMap { pane in
+            guard let results = groupedResults[pane], !results.isEmpty else {
+                return nil
+            }
+            return SettingsSearchResultGroup(pane: pane, results: results)
+        }
+    }
+
+    @ViewBuilder
+    private func searchResultRow(_ result: SettingsSearchEntry) -> some View {
+        Button {
+            selectedPane = result.pane
+            searchText = ""
+        } label: {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.12))
+                        .frame(width: 24, height: 24)
+                    Image(systemName: result.icon)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(result.title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text("\(result.section) • \(result.subtitle)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "arrow.forward.circle.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 9))
+            .overlay(
+                RoundedRectangle(cornerRadius: 9)
+                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Appearance Pane
