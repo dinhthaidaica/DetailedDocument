@@ -29,6 +29,8 @@ struct AppSettingsView: View {
         "Menlo",
         "Be Vietnam Pro",
     ]
+    private let sidebarMinimumWidth: CGFloat = 230
+    private let sidebarMaximumWidth: CGFloat = 320
 
     private struct SettingsSearchEntry: Identifiable {
         let id: String
@@ -134,8 +136,21 @@ struct AppSettingsView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 240)
+        .navigationSplitViewColumnWidth(min: sidebarWidth, ideal: sidebarWidth, max: sidebarWidth)
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm tính năng...")
+    }
+
+    private var sidebarWidth: CGFloat {
+        let font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        let maxTitleWidth = SettingsPane.allCases
+            .map { pane -> CGFloat in
+                (pane.title as NSString).size(withAttributes: [.font: font]).width
+            }
+            .max() ?? 0
+
+        // icon + spacing + text + row/list paddings + safety padding.
+        let requiredWidth = ceil(maxTitleWidth + 24 + 10 + 8 + 8 + 72)
+        return min(max(requiredWidth, sidebarMinimumWidth), sidebarMaximumWidth)
     }
 
     private var hasActiveSearchQuery: Bool {

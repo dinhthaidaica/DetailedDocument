@@ -137,6 +137,7 @@ struct LunarSettingsSidebarRow: View {
             Text(pane.title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.primary)
+                .lineLimit(1)
 
             Spacer(minLength: 0)
         }
