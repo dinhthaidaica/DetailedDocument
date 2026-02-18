@@ -42,9 +42,7 @@ jobs:
       - name: Test
         run: |
           set -o pipefail
-          LOG_FILE=$(mktemp)
-
-          if xcodebuild test \
+          xcodebuild test \
             -project LunarV.xcodeproj \
             -scheme LunarV \
             -configuration Debug \
@@ -53,14 +51,4 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
-            2>&1 | tee "$LOG_FILE" | xcpretty; then
-            exit 0
-          fi
-
-          if grep -q "not currently configured for the test action" "$LOG_FILE"; then
-            echo "⚠️ Scheme LunarV chưa cấu hình Test action. Bỏ qua bước test."
-            exit 0
-          fi
-
-          echo "❌ xcodebuild test failed."
-          exit 1
+            | xcpretty

@@ -22,6 +22,16 @@ final class LunarMenuBarViewModel: ObservableObject {
         let month: Int
     }
 
+    private struct RefreshSettings: Equatable {
+        let displayPreset: MenuBarDisplayPreset
+        let customTemplate: String
+
+        init(settings: AppSettings) {
+            displayPreset = settings.menuBarDisplayPreset
+            customTemplate = settings.customMenuBarTemplate
+        }
+    }
+
     private static let maxCachedMonths = 24
 
     private let solarCalendar: Calendar
@@ -34,6 +44,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private var monthCellsCacheOrder: [YearMonth] = []
     private var cachedUpcomingHolidays: [LunarHoliday] = []
     private var cachedUpcomingHolidaysAnchor: Date?
+    private var lastObservedRefreshSettings: RefreshSettings
 
     init(
         lunarService: VietnameseLunarDateService? = nil,
@@ -46,6 +57,7 @@ final class LunarMenuBarViewModel: ObservableObject {
         let targetSettings = settings ?? AppSettings.shared
         self.settings = targetSettings
         self.viewingDate = Date()
+        self.lastObservedRefreshSettings = RefreshSettings(settings: targetSettings)
 
         startObservingSettings()
         startObservingSystemChanges()
@@ -471,8 +483,17 @@ final class LunarMenuBarViewModel: ObservableObject {
         settings.objectWillChange
             .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
             .sink { [weak self] _ in
+                guard let self else {
+                    return
+                }
+
+                let currentSettings = RefreshSettings(settings: self.settings)
+                guard currentSettings != self.lastObservedRefreshSettings else {
+                    return
+                }
+                self.lastObservedRefreshSettings = currentSettings
+
                 Task { @MainActor [weak self] in
-                    self?.invalidateCaches()
                     self?.refresh()
                 }
             }

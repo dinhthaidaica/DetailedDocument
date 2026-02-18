@@ -7,22 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB152F42BC8C001E0406 /* WidgetKit.framework */; };
-		460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB172F42BC8C001E0406 /* SwiftUI.framework */; };
-		460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 46439CC82F45E5BB00CC42E0 /* Sparkle */; };
-		46CF02F92F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
-		46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
+			460CAB162F42BC8C001E0406 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB152F42BC8C001E0406 /* WidgetKit.framework */; };
+			460CAB182F42BC8C001E0406 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 460CAB172F42BC8C001E0406 /* SwiftUI.framework */; };
+			460CAB272F42BC8D001E0406 /* LunarVWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+			46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 46439CC82F45E5BB00CC42E0 /* Sparkle */; };
+			47A100012F50000000AAA001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47A100032F50000000AAA001 /* XCTest.framework */; };
+			46CF02F92F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
+			46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */ = {isa = PBXBuildFile; fileRef = 46CF02F82F4306BF007E6849 /* LunarV.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */ = {
+			460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 462A57432F424D1000853CB4 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 460CAB122F42BC8C001E0406;
-			remoteInfo = LunarVWidgetExtension;
-		};
+				remoteGlobalIDString = 460CAB122F42BC8C001E0406;
+				remoteInfo = LunarVWidgetExtension;
+			};
+			47A100042F50000000AAA001 /* PBXContainerItemProxy */ = {
+				isa = PBXContainerItemProxy;
+				containerPortal = 462A57432F424D1000853CB4 /* Project object */;
+				proxyType = 1;
+				remoteGlobalIDString = 462A574A2F424D1000853CB4;
+				remoteInfo = LunarV;
+			};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,11 +48,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LunarVWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		460CAB152F42BC8C001E0406 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		460CAB172F42BC8C001E0406 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		462A574B2F424D1000853CB4 /* LunarV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LunarV.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		46CF02F82F4306BF007E6849 /* LunarV.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = LunarV.icon; sourceTree = "<group>"; };
+			460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LunarVWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+			460CAB152F42BC8C001E0406 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+			460CAB172F42BC8C001E0406 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+			462A574B2F424D1000853CB4 /* LunarV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LunarV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+			47A100022F50000000AAA001 /* LunarVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LunarVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+			47A100032F50000000AAA001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+			46CF02F82F4306BF007E6849 /* LunarV.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = LunarV.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -65,8 +75,8 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		460CAB192F42BC8C001E0406 /* LunarVWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
+			460CAB192F42BC8C001E0406 /* LunarVWidget */ = {
+				isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				460CAB282F42BC8D001E0406 /* Exceptions for "LunarVWidget" folder in "LunarVWidgetExtension" target */,
 			);
@@ -78,14 +88,19 @@
 			exceptions = (
 				46C334612F48A0F300F84627 /* Exceptions for "LunarV" folder in "LunarV" target */,
 			);
-			path = LunarV;
-			sourceTree = "<group>";
-		};
-		46D5A8D92F43A2A200853CB4 /* LunarV/Core/LunarCalendar */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = LunarV/Core/LunarCalendar;
-			sourceTree = "<group>";
-		};
+				path = LunarV;
+				sourceTree = "<group>";
+			};
+			47A100052F50000000AAA001 /* LunarVTests */ = {
+				isa = PBXFileSystemSynchronizedRootGroup;
+				path = LunarVTests;
+				sourceTree = "<group>";
+			};
+			46D5A8D92F43A2A200853CB4 /* LunarV/Core/LunarCalendar */ = {
+				isa = PBXFileSystemSynchronizedRootGroup;
+				path = LunarV/Core/LunarCalendar;
+				sourceTree = "<group>";
+			};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,47 +113,58 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		462A57482F424D1000853CB4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			462A57482F424D1000853CB4 /* Frameworks */ = {
+				isa = PBXFrameworksBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+					46439CC92F45E5BB00CC42E0 /* Sparkle in Frameworks */,
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			47A100062F50000000AAA001 /* Frameworks */ = {
+				isa = PBXFrameworksBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+					47A100012F50000000AAA001 /* XCTest.framework in Frameworks */,
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		460CAB142F42BC8C001E0406 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				460CAB152F42BC8C001E0406 /* WidgetKit.framework */,
-				460CAB172F42BC8C001E0406 /* SwiftUI.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
+			460CAB142F42BC8C001E0406 /* Frameworks */ = {
+				isa = PBXGroup;
+				children = (
+					460CAB152F42BC8C001E0406 /* WidgetKit.framework */,
+					460CAB172F42BC8C001E0406 /* SwiftUI.framework */,
+					47A100032F50000000AAA001 /* XCTest.framework */,
+				);
+				name = Frameworks;
+				sourceTree = "<group>";
+			};
+			462A57422F424D1000853CB4 = {
+				isa = PBXGroup;
+				children = (
+					46CF02F82F4306BF007E6849 /* LunarV.icon */,
+					462A574D2F424D1000853CB4 /* LunarV */,
+					460CAB192F42BC8C001E0406 /* LunarVWidget */,
+					47A100052F50000000AAA001 /* LunarVTests */,
+					460CAB142F42BC8C001E0406 /* Frameworks */,
+					462A574C2F424D1000853CB4 /* Products */,
+					46CE6E2C2F42C1D600115810 /* Recovered References */,
+				);
+				sourceTree = "<group>";
 		};
-		462A57422F424D1000853CB4 = {
-			isa = PBXGroup;
-			children = (
-				46CF02F82F4306BF007E6849 /* LunarV.icon */,
-				462A574D2F424D1000853CB4 /* LunarV */,
-				460CAB192F42BC8C001E0406 /* LunarVWidget */,
-				460CAB142F42BC8C001E0406 /* Frameworks */,
-				462A574C2F424D1000853CB4 /* Products */,
-				46CE6E2C2F42C1D600115810 /* Recovered References */,
-			);
-			sourceTree = "<group>";
-		};
-		462A574C2F424D1000853CB4 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				462A574B2F424D1000853CB4 /* LunarV.app */,
-				460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
+			462A574C2F424D1000853CB4 /* Products */ = {
+				isa = PBXGroup;
+				children = (
+					462A574B2F424D1000853CB4 /* LunarV.app */,
+					460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */,
+					47A100022F50000000AAA001 /* LunarVTests.xctest */,
+				);
+				name = Products;
+				sourceTree = "<group>";
+			};
 		46CE6E2C2F42C1D600115810 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
@@ -173,8 +199,8 @@
 			productReference = 460CAB132F42BC8C001E0406 /* LunarVWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		462A574A2F424D1000853CB4 /* LunarV */ = {
-			isa = PBXNativeTarget;
+			462A574A2F424D1000853CB4 /* LunarV */ = {
+				isa = PBXNativeTarget;
 			buildConfigurationList = 462A57562F424D1100853CB4 /* Build configuration list for PBXNativeTarget "LunarV" */;
 			buildPhases = (
 				462A57472F424D1000853CB4 /* Sources */,
@@ -195,9 +221,32 @@
 				46439CC82F45E5BB00CC42E0 /* Sparkle */,
 			);
 			productName = LunarV;
-			productReference = 462A574B2F424D1000853CB4 /* LunarV.app */;
-			productType = "com.apple.product-type.application";
-		};
+				productReference = 462A574B2F424D1000853CB4 /* LunarV.app */;
+				productType = "com.apple.product-type.application";
+			};
+			47A100072F50000000AAA001 /* LunarVTests */ = {
+				isa = PBXNativeTarget;
+				buildConfigurationList = 47A1000D2F50000000AAA001 /* Build configuration list for PBXNativeTarget "LunarVTests" */;
+				buildPhases = (
+					47A100092F50000000AAA001 /* Sources */,
+					47A100062F50000000AAA001 /* Frameworks */,
+					47A100082F50000000AAA001 /* Resources */,
+				);
+				buildRules = (
+				);
+				dependencies = (
+					47A1000A2F50000000AAA001 /* PBXTargetDependency */,
+				);
+				fileSystemSynchronizedGroups = (
+					47A100052F50000000AAA001 /* LunarVTests */,
+				);
+				name = LunarVTests;
+				packageProductDependencies = (
+				);
+				productName = LunarVTests;
+				productReference = 47A100022F50000000AAA001 /* LunarVTests.xctest */;
+				productType = "com.apple.product-type.bundle.unit-test";
+			};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -207,15 +256,19 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
-				TargetAttributes = {
-					460CAB122F42BC8C001E0406 = {
-						CreatedOnToolsVersion = 26.2;
-					};
-					462A574A2F424D1000853CB4 = {
-						CreatedOnToolsVersion = 26.2;
+					TargetAttributes = {
+						460CAB122F42BC8C001E0406 = {
+							CreatedOnToolsVersion = 26.2;
+						};
+						462A574A2F424D1000853CB4 = {
+							CreatedOnToolsVersion = 26.2;
+						};
+						47A100072F50000000AAA001 = {
+							CreatedOnToolsVersion = 26.2;
+							TestTargetID = 462A574A2F424D1000853CB4;
+						};
 					};
 				};
-			};
 			buildConfigurationList = 462A57462F424D1000853CB4 /* Build configuration list for PBXProject "LunarV" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -232,11 +285,12 @@
 			productRefGroup = 462A574C2F424D1000853CB4 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (
-				462A574A2F424D1000853CB4 /* LunarV */,
-				460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */,
-			);
-		};
+				targets = (
+					462A574A2F424D1000853CB4 /* LunarV */,
+					460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */,
+					47A100072F50000000AAA001 /* LunarVTests */,
+				);
+			};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -248,14 +302,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		462A57492F424D1000853CB4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			462A57492F424D1000853CB4 /* Resources */ = {
+				isa = PBXResourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+					46CF02FA2F4306BF007E6849 /* LunarV.icon in Resources */,
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			47A100082F50000000AAA001 /* Resources */ = {
+				isa = PBXResourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -266,21 +327,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		462A57472F424D1000853CB4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			462A57472F424D1000853CB4 /* Sources */ = {
+				isa = PBXSourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			47A100092F50000000AAA001 /* Sources */ = {
+				isa = PBXSourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		460CAB262F42BC8D001E0406 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */;
-			targetProxy = 460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */;
-		};
+			460CAB262F42BC8D001E0406 /* PBXTargetDependency */ = {
+				isa = PBXTargetDependency;
+				target = 460CAB122F42BC8C001E0406 /* LunarVWidgetExtension */;
+				targetProxy = 460CAB252F42BC8D001E0406 /* PBXContainerItemProxy */;
+			};
+			47A1000A2F50000000AAA001 /* PBXTargetDependency */ = {
+				isa = PBXTargetDependency;
+				target = 462A574A2F424D1000853CB4 /* LunarV */;
+				targetProxy = 47A100042F50000000AAA001 /* PBXContainerItemProxy */;
+			};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -500,9 +573,9 @@
 			};
 			name = Debug;
 		};
-		462A57582F424D1100853CB4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
+			462A57582F424D1100853CB4 /* Release */ = {
+				isa = XCBuildConfiguration;
+				buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = LunarV;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LunarV/LunarV.entitlements;
@@ -529,9 +602,48 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				};
+				name = Release;
 			};
-			name = Release;
-		};
+			47A1000B2F50000000AAA001 /* Debug */ = {
+				isa = XCBuildConfiguration;
+				buildSettings = {
+					BUNDLE_LOADER = "$(TEST_HOST)";
+					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = F9XPW22T8M;
+					GENERATE_INFOPLIST_FILE = YES;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
+					MARKETING_VERSION = 1.0;
+					PRODUCT_BUNDLE_IDENTIFIER = phamhungtien.LunarVTests;
+					PRODUCT_NAME = "$(TARGET_NAME)";
+					SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+					SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+					SWIFT_VERSION = 5.0;
+					TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LunarV.app/Contents/MacOS/LunarV";
+					TEST_TARGET_NAME = LunarV;
+				};
+				name = Debug;
+			};
+			47A1000C2F50000000AAA001 /* Release */ = {
+				isa = XCBuildConfiguration;
+				buildSettings = {
+					BUNDLE_LOADER = "$(TEST_HOST)";
+					CODE_SIGN_STYLE = Automatic;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = F9XPW22T8M;
+					GENERATE_INFOPLIST_FILE = YES;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
+					MARKETING_VERSION = 1.0;
+					PRODUCT_BUNDLE_IDENTIFIER = phamhungtien.LunarVTests;
+					PRODUCT_NAME = "$(TARGET_NAME)";
+					SWIFT_COMPILATION_MODE = wholemodule;
+					SWIFT_VERSION = 5.0;
+					TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LunarV.app/Contents/MacOS/LunarV";
+					TEST_TARGET_NAME = LunarV;
+				};
+				name = Release;
+			};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -553,15 +665,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		462A57562F424D1100853CB4 /* Build configuration list for PBXNativeTarget "LunarV" */ = {
-			isa = XCConfigurationList;
+			462A57562F424D1100853CB4 /* Build configuration list for PBXNativeTarget "LunarV" */ = {
+				isa = XCConfigurationList;
 			buildConfigurations = (
 				462A57572F424D1100853CB4 /* Debug */,
 				462A57582F424D1100853CB4 /* Release */,
 			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
+				defaultConfigurationIsVisible = 0;
+				defaultConfigurationName = Release;
+			};
+			47A1000D2F50000000AAA001 /* Build configuration list for PBXNativeTarget "LunarVTests" */ = {
+				isa = XCConfigurationList;
+				buildConfigurations = (
+					47A1000B2F50000000AAA001 /* Debug */,
+					47A1000C2F50000000AAA001 /* Release */,
+				);
+				defaultConfigurationIsVisible = 0;
+				defaultConfigurationName = Release;
+			};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */

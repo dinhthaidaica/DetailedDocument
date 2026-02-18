@@ -20,6 +20,20 @@
                ReferencedContainer = "container:LunarV.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "47A100072F50000000AAA001"
+               BuildableName = "LunarVTests.xctest"
+               BlueprintName = "LunarVTests"
+               ReferencedContainer = "container:LunarV.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -28,7 +42,27 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "47A100072F50000000AAA001"
+               BuildableName = "LunarVTests.xctest"
+               BlueprintName = "LunarVTests"
+               ReferencedContainer = "container:LunarV.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "462A574A2F424D1000853CB4"
+            BuildableName = "LunarV.app"
+            BlueprintName = "LunarV"
+            ReferencedContainer = "container:LunarV.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

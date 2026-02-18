@@ -8,7 +8,11 @@ import XCTest
 final class LunarCalendarTests: XCTestCase {
 
     private let converter = VietnameseLunarCalendarConverter(timeZone: 7.0)
-    private let service = VietnameseLunarDateService()
+    private let vietnamTimeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+    private lazy var service = VietnameseLunarDateService(
+        timeZone: vietnamTimeZone,
+        solarTimeZone: vietnamTimeZone
+    )
 
     // MARK: - Solar to Lunar Conversion
 
@@ -118,24 +122,26 @@ final class LunarCalendarTests: XCTestCase {
 
     func testZodiac2025() {
         let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: 2025)
-        XCTAssertEqual(zodiac, "Rắn")
+        XCTAssertEqual(zodiac, "Tỵ")
     }
 
     func testZodiac2024() {
         let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: 2024)
-        XCTAssertEqual(zodiac, "Rồng")
+        XCTAssertEqual(zodiac, "Thìn")
     }
 
     // MARK: - Lunar Phase
 
     func testLunarPhaseNewMoon() {
         let phase = LunarPhase.from(day: 1)
-        XCTAssertEqual(phase, .newMoon)
+        XCTAssertEqual(phase.icon, "moonphase.new.moon")
+        XCTAssertEqual(phase.name, "Trăng mới")
     }
 
     func testLunarPhaseFullMoon() {
         let phase = LunarPhase.from(day: 15)
-        XCTAssertEqual(phase, .fullMoon)
+        XCTAssertEqual(phase.icon, "moonphase.full.moon")
+        XCTAssertEqual(phase.name, "Trăng tròn")
     }
 
     // MARK: - Holiday Provider
@@ -160,7 +166,7 @@ final class LunarCalendarTests: XCTestCase {
     // MARK: - Service Snapshot
 
     func testSnapshotReturnsValidData() {
-        let snapshot = service.snapshot(for: Date())
+        let snapshot = service.snapshot(for: makeDate(year: 2026, month: 2, day: 18, hour: 9))
         XCTAssertNotNil(snapshot)
         XCTAssertGreaterThan(snapshot!.lunar.day, 0)
         XCTAssertGreaterThan(snapshot!.lunar.month, 0)
@@ -172,8 +178,15 @@ final class LunarCalendarTests: XCTestCase {
     }
 
     func testHourPeriodsAlways12() {
-        let snapshot = service.snapshot(for: Date())
+        let snapshot = service.snapshot(for: makeDate(year: 2026, month: 2, day: 18, hour: 21))
         XCTAssertNotNil(snapshot)
         XCTAssertEqual(snapshot!.hourPeriods.count, 12)
+    }
+
+    private func makeDate(year: Int, month: Int, day: Int, hour: Int) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = vietnamTimeZone
+        return calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: 0, second: 0))
+            ?? Date(timeIntervalSince1970: 0)
     }
 }

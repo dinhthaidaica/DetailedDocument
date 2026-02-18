@@ -6,6 +6,7 @@ import Combine
 import Sparkle
 import SwiftUI
 
+@MainActor
 final class CheckForUpdatesViewModel: ObservableObject {
     let updater: SPUUpdater
     @Published var canCheckForUpdates = false
@@ -23,10 +24,10 @@ final class CheckForUpdatesViewModel: ObservableObject {
 }
 
 struct CheckForUpdatesView: View {
-    @ObservedObject private var viewModel: CheckForUpdatesViewModel
+    @StateObject private var viewModel: CheckForUpdatesViewModel
 
     init(updater: SPUUpdater) {
-        self.viewModel = CheckForUpdatesViewModel(updater: updater)
+        _viewModel = StateObject(wrappedValue: CheckForUpdatesViewModel(updater: updater))
     }
 
     var body: some View {

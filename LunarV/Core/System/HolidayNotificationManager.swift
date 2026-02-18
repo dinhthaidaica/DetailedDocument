@@ -17,12 +17,27 @@ final class HolidayNotificationManager: ObservableObject {
         static let maximumWindowDays = 180
     }
 
+    private struct NotificationPreferences: Equatable {
+        let isEnabled: Bool
+        let leadDays: Int
+        let reminderHour: Int
+        let windowDays: Int
+
+        init(from settings: AppSettings) {
+            isEnabled = settings.enableHolidayNotifications
+            leadDays = settings.holidayReminderLeadDays
+            reminderHour = settings.holidayReminderHour
+            windowDays = settings.notificationWindowDays
+        }
+    }
+
     private let settings: AppSettings
     private let lunarService: VietnameseLunarDateService
     private let center: UNUserNotificationCenter
     private var settingsCancellables = Set<AnyCancellable>()
     private var systemNotificationObservers: [NSObjectProtocol] = []
     private var workspaceNotificationObservers: [NSObjectProtocol] = []
+    private var lastObservedNotificationSettings: NotificationPreferences
 
     init(
         settings: AppSettings,
@@ -32,6 +47,7 @@ final class HolidayNotificationManager: ObservableObject {
         self.settings = settings
         self.lunarService = lunarService ?? VietnameseLunarDateService()
         self.center = center
+        self.lastObservedNotificationSettings = NotificationPreferences(from: settings)
 
         startObservingSettings()
         startObservingSystemChanges()
@@ -98,6 +114,7 @@ final class HolidayNotificationManager: ObservableObject {
         let granted = await requestAuthorizationIfNeeded()
         guard granted else {
             settings.enableHolidayNotifications = false
+            lastObservedNotificationSettings = NotificationPreferences(from: settings)
             await clearPendingHolidayNotifications()
             return
         }
@@ -224,6 +241,12 @@ final class HolidayNotificationManager: ObservableObject {
                 guard let self else {
                     return
                 }
+
+                let currentPreferences = NotificationPreferences(from: self.settings)
+                guard currentPreferences != self.lastObservedNotificationSettings else {
+                    return
+                }
+                self.lastObservedNotificationSettings = currentPreferences
 
                 Task { @MainActor [weak self] in
                     await self?.synchronizeSchedules()

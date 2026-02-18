@@ -50,20 +50,13 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Version: $VERSION"
 
-      - name: Set marketing/build versions
+      - name: Compute build number
         id: set_versions
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
 
-          sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = $VERSION;/g" \
-            LunarV.xcodeproj/project.pbxproj
-          sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" \
-            LunarV.xcodeproj/project.pbxproj
-
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "✅ MARKETING_VERSION=$VERSION"
-          echo "✅ CURRENT_PROJECT_VERSION=$BUILD_NUMBER"
+          echo "✅ BUILD_NUMBER=$BUILD_NUMBER"
 
       - name: Import Code Signing Certificate
         id: certificate
@@ -115,10 +108,14 @@ jobs:
         run: |
           echo "🔐 Building with mandatory code signing..."
           echo "Identity: ${{ steps.certificate.outputs.identity }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER="${{ steps.set_versions.outputs.build_number }}"
 
           xcodebuild -project LunarV.xcodeproj -scheme LunarV \
             -configuration Release \
             -derivedDataPath ./build \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="${{ steps.certificate.outputs.identity }}" \

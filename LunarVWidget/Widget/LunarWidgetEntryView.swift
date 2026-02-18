@@ -12,6 +12,9 @@ struct LunarWidgetEntryView: View {
     @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.colorScheme) private var colorScheme
 
+    private let heroCornerRadius: CGFloat = 16
+    private let cardCornerRadius: CGFloat = 12
+
     private var usesTintedStyle: Bool {
         switch renderingMode {
         case .fullColor:
@@ -43,44 +46,42 @@ struct LunarWidgetEntryView: View {
     }
 
     private var smallWidget: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 capsuleTag(text: entry.info.weekday.uppercased(), symbol: "calendar")
                 Spacer(minLength: 0)
                 phaseBadge
             }
 
-            Spacer(minLength: 0)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(entry.info.lunarDay)
+                    .font(.system(size: 56, weight: .black, design: .rounded))
+                    .foregroundStyle(heroNumberStyle)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.62)
 
-            Text(entry.info.lunarDay)
-                .font(.system(size: 50, weight: .black, design: .rounded))
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-                .minimumScaleFactor(0.65)
-                .lineLimit(1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(entry.info.lunarMonthText)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
 
-            Text(entry.info.lunarMonthText)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                    compactMetaRow(symbol: "sparkles", text: entry.info.canChiYear, fontSize: 9, weight: .bold)
+                }
+                .padding(.top, 6)
+            }
 
-            Label(entry.info.solarDate, systemImage: "sun.max.fill")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
-            Label(entry.info.canChiYear, systemImage: "sparkles")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            compactMetaRow(symbol: "sun.max.fill", text: entry.info.solarDate)
+            compactMetaRow(symbol: "leaf.fill", text: entry.info.canChiDay)
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 
     private var mediumWidget: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             mediumHeroCard
 
             Grid(horizontalSpacing: 8, verticalSpacing: 8) {
@@ -120,9 +121,9 @@ struct LunarWidgetEntryView: View {
     }
 
     private var mediumHeroCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
-                Text("ÂM LỊCH")
+                Text("HÔM NAY")
                     .font(.system(size: 9, weight: .heavy, design: .rounded))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -131,12 +132,10 @@ struct LunarWidgetEntryView: View {
                 phaseBadge
             }
 
-            Spacer(minLength: 0)
-
             Text(entry.info.lunarDay)
-                .font(.system(size: 40, weight: .black, design: .rounded))
+                .font(.system(size: 42, weight: .black, design: .rounded))
+                .foregroundStyle(heroNumberStyle)
                 .monospacedDigit()
-                .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
@@ -146,42 +145,46 @@ struct LunarWidgetEntryView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
-            Text(entry.info.weekday.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
+            Rectangle()
+                .fill(surfaceStroke)
+                .frame(height: 1)
+
+            compactMetaRow(symbol: "calendar", text: entry.info.weekday.uppercased(), fontSize: 9, weight: .bold)
+            compactMetaRow(symbol: "sparkles", text: entry.info.canChiYear, fontSize: 9, weight: .bold)
         }
-        .padding(10)
-        .frame(width: 116, alignment: .leading)
+        .padding(11)
+        .frame(width: 122, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: heroCornerRadius, style: .continuous)
                 .fill(surfaceFill)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: heroCornerRadius, style: .continuous)
                 .stroke(surfaceStroke, lineWidth: 1)
         )
     }
 
     private var largeHeroCard: some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(entry.info.lunarDay)
-                    .font(.system(size: 52, weight: .black, design: .rounded))
+                    .font(.system(size: 54, weight: .black, design: .rounded))
+                    .foregroundStyle(heroNumberStyle)
                     .monospacedDigit()
-                    .foregroundStyle(.primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.65)
+                    .minimumScaleFactor(0.62)
 
                 Text(entry.info.lunarMonthYear)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+
+                compactMetaRow(symbol: "leaf.fill", text: entry.info.canChiDay, fontSize: 11)
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 6)
 
             VStack(alignment: .trailing, spacing: 7) {
                 capsuleTag(text: entry.info.weekday.uppercased(), symbol: "calendar")
@@ -195,22 +198,29 @@ struct LunarWidgetEntryView: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: heroCornerRadius, style: .continuous)
                 .fill(surfaceFill)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: heroCornerRadius, style: .continuous)
                 .stroke(surfaceStroke, lineWidth: 1)
         )
     }
 
     private func metricCard(symbol: String, title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Label(title, systemImage: symbol)
-                .font(.system(size: 9, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 4) {
+                Image(systemName: symbol)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(accentColor)
+                    .symbolRenderingMode(.hierarchical)
+
+                Text(title)
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
 
             Text(value)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -223,13 +233,27 @@ struct LunarWidgetEntryView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 9)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(surfaceFill)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .stroke(surfaceStroke, lineWidth: 1)
         )
+    }
+
+    private func compactMetaRow(symbol: String, text: String, fontSize: CGFloat = 10, weight: Font.Weight = .semibold) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol)
+                .font(.system(size: max(fontSize - 1, 8), weight: .bold))
+                .symbolRenderingMode(.hierarchical)
+
+            Text(text)
+                .font(.system(size: fontSize, weight: weight, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .foregroundStyle(.secondary)
     }
 
     private func capsuleTag(text: String, symbol: String? = nil) -> some View {
@@ -237,6 +261,8 @@ struct LunarWidgetEntryView: View {
             if let symbol {
                 Image(systemName: symbol)
                     .font(.system(size: 9, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(accentColor)
             }
 
             Text(text)
@@ -261,7 +287,7 @@ struct LunarWidgetEntryView: View {
         Image(systemName: entry.info.phaseIcon)
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(accentColor)
-            .frame(width: 26, height: 26)
+            .frame(width: 28, height: 28)
             .background(
                 Circle()
                     .fill(accentBadgeFill)
@@ -280,9 +306,9 @@ struct LunarWidgetEntryView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color.cyan.opacity(colorScheme == .dark ? 0.24 : 0.2),
-                        Color.blue.opacity(colorScheme == .dark ? 0.16 : 0.1),
-                        Color.indigo.opacity(colorScheme == .dark ? 0.12 : 0.08),
+                        Color.cyan.opacity(colorScheme == .dark ? 0.22 : 0.18),
+                        Color.blue.opacity(colorScheme == .dark ? 0.15 : 0.11),
+                        Color.teal.opacity(colorScheme == .dark ? 0.12 : 0.08),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -290,49 +316,61 @@ struct LunarWidgetEntryView: View {
 
                 RadialGradient(
                     colors: [
-                        Color.white.opacity(colorScheme == .dark ? 0.08 : 0.22),
+                        Color.white.opacity(colorScheme == .dark ? 0.05 : 0.2),
                         Color.clear,
                     ],
                     center: .topLeading,
-                    startRadius: 6,
+                    startRadius: 8,
                     endRadius: 180
                 )
 
-                RadialGradient(
-                    colors: [
-                        Color.teal.opacity(colorScheme == .dark ? 0.14 : 0.12),
-                        Color.clear,
-                    ],
-                    center: .bottomTrailing,
-                    startRadius: 12,
-                    endRadius: 220
-                )
+                Circle()
+                    .fill(Color.cyan.opacity(colorScheme == .dark ? 0.14 : 0.12))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 2)
+                    .offset(x: -58, y: 56)
             }
         }
     }
 
+    private var heroNumberStyle: AnyShapeStyle {
+        if usesTintedStyle {
+            return AnyShapeStyle(Color.primary)
+        }
+        return AnyShapeStyle(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.08, green: 0.39, blue: 0.93),
+                    Color(red: 0.2, green: 0.3, blue: 0.92),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+    }
+
     private var accentColor: Color {
-        usesTintedStyle ? .primary : .blue
+        usesTintedStyle ? .primary : Color(red: 0.16, green: 0.42, blue: 0.93)
     }
 
     private var accentBadgeFill: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.16)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.45)
+        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.5)
     }
 
     private var surfaceFill: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.1)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.5)
+        return Color.white.opacity(colorScheme == .dark ? 0.08 : 0.58)
     }
 
     private var surfaceStroke: Color {
         if usesTintedStyle {
             return Color.primary.opacity(0.18)
         }
-        return Color.white.opacity(colorScheme == .dark ? 0.12 : 0.52)
+        return Color.white.opacity(colorScheme == .dark ? 0.14 : 0.52)
     }
 }

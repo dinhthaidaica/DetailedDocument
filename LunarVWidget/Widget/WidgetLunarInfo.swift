@@ -9,6 +9,7 @@ struct WidgetLunarInfo {
     let weekday: String
     let solarDate: String
     let lunarDay: String
+    let lunarMonthText: String
     let lunarMonthYear: String
     let canChiDay: String
     let solarTerm: String
@@ -20,6 +21,7 @@ struct WidgetLunarInfo {
         weekday: "THỨ HAI",
         solarDate: "16/02/2026",
         lunarDay: "29",
+        lunarMonthText: "Tháng 12",
         lunarMonthYear: "Tháng 12 năm Ất Tỵ",
         canChiDay: "Canh Thân",
         solarTerm: "Lập Xuân",
@@ -27,10 +29,6 @@ struct WidgetLunarInfo {
         phaseIcon: "moonphase.waxing.crescent",
         zodiac: "Rắn"
     )
-
-    var lunarMonthText: String {
-        lunarMonthYear.components(separatedBy: " năm").first ?? lunarMonthYear
-    }
 
     var accessibilitySummary: String {
         "Ngày âm \(lunarDay), \(lunarMonthYear), \(canChiDay), dương lịch \(solarDate)"

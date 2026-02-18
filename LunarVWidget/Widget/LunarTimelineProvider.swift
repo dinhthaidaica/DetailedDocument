@@ -77,6 +77,7 @@ struct LunarTimelineProvider: TimelineProvider {
             weekday: service.weekdayName(from: snapshot.solar.weekday),
             solarDate: snapshot.solar.formattedDate,
             lunarDay: "\(snapshot.lunar.day)",
+            lunarMonthText: "Tháng \(snapshot.lunar.month)",
             lunarMonthYear: "Tháng \(snapshot.lunar.month) năm \(snapshot.canChiYear)",
             canChiDay: snapshot.canChiDay,
             solarTerm: snapshot.solarTerm,
