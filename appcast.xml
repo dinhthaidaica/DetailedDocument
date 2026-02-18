@@ -1,8 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-  <channel>
-    <title>LunarV</title>
-    <description>Cập nhật cho LunarV</description>
-    <language>vi</language>
-  </channel>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>LunarV</title>
+        <description>Cập nhật cho LunarV</description>
+        <language>vi</language>
+        <item>
+            <title>1.0.1</title>
+            <pubDate>Wed, 18 Feb 2026 12:48:05 +0000</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/PhamHungTien/LunarV/releases/download/v1.0.1/LunarV-1.0.1.zip" length="4613515" type="application/octet-stream" sparkle:edSignature="hS1GfTHFYBeRAsyqLninXhDZ0mL98Y5EiXMEE9isIYe/sUu51xVzDYS7WnsrOGFxnaCqsO3pS95QUDdr3+eyDw=="/>
+        </item>
+    </channel>
 </rss>
