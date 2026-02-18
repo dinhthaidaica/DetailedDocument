@@ -50,8 +50,7 @@ struct AppSettingsView: View {
         NavigationSplitView {
             sidebar
         } detail: {
-            detailPane
-                .frame(minWidth: 400, minHeight: 400)
+            detailPaneContainer
         }
         .navigationSplitViewStyle(.balanced)
         .frame(width: 820, height: 600)
@@ -98,6 +97,18 @@ struct AppSettingsView: View {
             Button("Huỷ", role: .cancel) {}
         } message: {
             Text("Tất cả các tuỳ chỉnh về hiển thị và thông báo sẽ quay về giá trị ban đầu.")
+        }
+    }
+
+    @ViewBuilder
+    private var detailPaneContainer: some View {
+        if #available(macOS 26.0, *) {
+            detailPane
+                .frame(minWidth: 400, minHeight: 400)
+                .backgroundExtensionEffect()
+        } else {
+            detailPane
+                .frame(minWidth: 400, minHeight: 400)
         }
     }
 
