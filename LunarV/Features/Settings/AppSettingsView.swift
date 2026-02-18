@@ -69,6 +69,16 @@ struct AppSettingsView: View {
         .onChange(of: updateCheckFrequency) { newValue in
             updater.updateCheckInterval = newValue.rawValue
         }
+        .onChange(of: searchText) { newValue in
+            let matches = filteredPanes(for: newValue)
+            guard
+                let firstMatch = matches.first,
+                !matches.contains(selectedPane)
+            else {
+                return
+            }
+            selectedPane = firstMatch
+        }
         .confirmationDialog(
             "Khôi phục cài đặt mặc định?",
             isPresented: $isShowingResetDialog,
@@ -84,28 +94,64 @@ struct AppSettingsView: View {
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        List(selection: $selectedPane) {
-            ForEach(filteredPanes) { pane in
-                LunarSettingsSidebarRow(pane: pane)
-                    .tag(pane)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+        let panes = filteredPanes
+
+        return List(selection: $selectedPane) {
+            if panes.isEmpty {
+                Text("Không tìm thấy tuỳ chọn phù hợp")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            } else {
+                ForEach(panes) { pane in
+                    LunarSettingsSidebarRow(pane: pane)
+                        .tag(pane)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                }
             }
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 240)
-        .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm cài đặt...")
+        .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm tính năng...")
     }
 
     private var filteredPanes: [SettingsPane] {
-        if searchText.isEmpty {
+        filteredPanes(for: searchText)
+    }
+
+    private func filteredPanes(for query: String) -> [SettingsPane] {
+        let normalizedQuery = normalizedSearchValue(query)
+        guard !normalizedQuery.isEmpty else {
             return SettingsPane.allCases
-        } else {
-            return SettingsPane.allCases.filter { pane in
-                pane.title.localizedCaseInsensitiveContains(searchText) ||
-                pane.subtitle.localizedCaseInsensitiveContains(searchText) ||
-                pane.searchKeywords.contains { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+        let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
+
+        return SettingsPane.allCases.filter { pane in
+            let normalizedValues = paneSearchValues(for: pane).map(normalizedSearchValue)
+            let combinedValues = normalizedValues.joined(separator: " ")
+
+            if combinedValues.contains(normalizedQuery) {
+                return true
+            }
+
+            return queryTokens.allSatisfy { token in
+                combinedValues.contains(token)
             }
         }
+    }
+
+    private func paneSearchValues(for pane: SettingsPane) -> [String] {
+        [pane.title, pane.subtitle] + pane.searchKeywords
+    }
+
+    private func normalizedSearchValue(_ value: String) -> String {
+        value
+            .folding(options: [.diacriticInsensitive, .caseInsensitive, .widthInsensitive], locale: .current)
+            .replacingOccurrences(of: "[\\p{P}\\p{S}]+", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // MARK: - Detail Pane Router
@@ -117,6 +163,10 @@ struct AppSettingsView: View {
             appearancePane
         case .panel:
             panelPane
+        case .notifications:
+            notificationsPane
+        case .updates:
+            updatesPane
         case .system:
             systemPane
         case .about:
@@ -443,6 +493,62 @@ struct AppSettingsView: View {
         return CGFloat(visibleRows) * rowHeight
     }
 
+    // MARK: - Notifications Pane
+
+    private var notificationsPane: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                LunarSettingsHeader(
+                    title: "Thông báo",
+                    subtitle: "Thiết lập nhắc ngày lễ âm lịch theo thời điểm bạn muốn nhận.",
+                    icon: "bell.badge.fill"
+                ) {
+                    VStack(alignment: .trailing, spacing: 6) {
+                        LunarSettingsStatusPill(
+                            text: settings.enableHolidayNotifications ? "Nhắc lễ: Bật" : "Nhắc lễ: Tắt",
+                            color: settings.enableHolidayNotifications ? .green : .secondary
+                        )
+                        if settings.enableHolidayNotifications {
+                            LunarSettingsStatusPill(text: notificationLeadSummary, color: .accentColor)
+                        }
+                    }
+                }
+
+                holidayNotificationsCard
+            }
+            .frame(maxWidth: .infinity)
+            .padding(14)
+        }
+        .lunarSettingsBackground()
+    }
+
+    // MARK: - Updates Pane
+
+    private var updatesPane: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                LunarSettingsHeader(
+                    title: "Cập nhật",
+                    subtitle: "Theo dõi phiên bản mới và chọn chế độ kiểm tra phù hợp.",
+                    icon: "arrow.down.circle.fill"
+                ) {
+                    VStack(alignment: .trailing, spacing: 6) {
+                        LunarSettingsStatusPill(
+                            text: automaticallyChecksForUpdates ? "Tự kiểm tra: Bật" : "Tự kiểm tra: Tắt",
+                            color: automaticallyChecksForUpdates ? .green : .secondary
+                        )
+                        LunarSettingsStatusPill(text: "Phiên bản \(appVersionText)", color: .accentColor)
+                    }
+                }
+
+                updatesSettingsCard
+            }
+            .frame(maxWidth: .infinity)
+            .padding(14)
+        }
+        .lunarSettingsBackground()
+    }
+
     // MARK: - System Pane
 
     private var systemPane: some View {
@@ -450,7 +556,7 @@ struct AppSettingsView: View {
             LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Hệ thống",
-                    subtitle: "Quản lý hành vi cửa sổ, tự động hóa, cập nhật và khôi phục cài đặt.",
+                    subtitle: "Quản lý cửa sổ, tự khởi động và thông số dữ liệu của ứng dụng.",
                     icon: "gearshape.2.fill"
                 ) {
                     VStack(alignment: .trailing, spacing: 6) {
@@ -459,174 +565,210 @@ struct AppSettingsView: View {
                             color: launchAtLoginManager.isEnabled ? .accentColor : .secondary
                         )
                         LunarSettingsStatusPill(
-                            text: settings.enableHolidayNotifications ? "Nhắc lễ: Bật" : "Nhắc lễ: Tắt",
-                            color: settings.enableHolidayNotifications ? .green : .secondary
-                        )
-                        LunarSettingsStatusPill(
-                            text: automaticallyChecksForUpdates ? "Tự kiểm tra cập nhật: Bật" : "Tự kiểm tra cập nhật: Tắt",
-                            color: automaticallyChecksForUpdates ? .green : .secondary
+                            text: settings.keepSettingsOnTop ? "Cửa sổ nổi: Bật" : "Cửa sổ nổi: Tắt",
+                            color: settings.keepSettingsOnTop ? .green : .secondary
                         )
                     }
                 }
 
-                LunarSettingsCard(
-                    title: "Cửa sổ Cài đặt",
-                    subtitle: "Hành vi hiển thị cửa sổ",
-                    icon: "rectangle.inset.filled.and.person.filled"
-                ) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        settingsToggleRow(
-                            title: "Luôn ở trên cùng (Floating)",
-                            isOn: $settings.keepSettingsOnTop
-                        )
-                        Text("Khi bật, cửa sổ Cài đặt sẽ luôn nằm trên các cửa sổ khác để bạn dễ dàng tuỳ chỉnh và quan sát Menu Bar.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Tự động hóa",
-                    subtitle: "Khởi chạy ứng dụng cùng hệ thống",
-                    icon: "power.circle.fill"
-                ) {
-                    settingsToggleRow(
-                        title: "Mở LunarV khi đăng nhập máy tính",
-                        isOn: launchAtLoginBinding
-                    )
-                }
-
-                LunarSettingsCard(
-                    title: "Nhắc ngày lễ",
-                    subtitle: "Lập lịch thông báo theo lịch âm",
-                    icon: "bell.badge.fill"
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        settingsToggleRow(
-                            title: "Bật thông báo ngày lễ",
-                            isOn: holidayNotificationBinding
-                        )
-
-                        Divider()
-
-                        settingsPickerRow(
-                            title: "Nhắc trước",
-                            isEnabled: settings.enableHolidayNotifications
-                        ) {
-                            Picker("", selection: $settings.holidayReminderLeadDays) {
-                                Text("Đúng ngày").tag(0)
-                                Text("Trước 1 ngày").tag(1)
-                                Text("Trước 3 ngày").tag(3)
-                            }
-                        }
-
-                        settingsPickerRow(
-                            title: "Giờ thông báo",
-                            isEnabled: settings.enableHolidayNotifications
-                        ) {
-                            Picker("", selection: $settings.holidayReminderHour) {
-                                ForEach([6, 7, 8, 9, 18, 20, 21], id: \.self) { hour in
-                                    Text(hourDisplay(hour)).tag(hour)
-                                }
-                            }
-                        }
-
-                        settingsPickerRow(
-                            title: "Phạm vi lập lịch",
-                            isEnabled: settings.enableHolidayNotifications
-                        ) {
-                            Picker("", selection: $settings.notificationWindowDays) {
-                                Text("30 ngày tới").tag(30)
-                                Text("60 ngày tới").tag(60)
-                                Text("90 ngày tới").tag(90)
-                                Text("180 ngày tới").tag(180)
-                            }
-                        }
-
-                        Text(notificationManager.authorizationDescription)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Dữ liệu & Thời gian",
-                    subtitle: "Thông số tính toán lịch",
-                    icon: "clock.arrow.trianglehead.counterclockwise.rotate.90"
-                ) {
-                    VStack(spacing: 10) {
-                        settingsInfoRow(title: "Múi giờ tính toán", value: "Asia/Ho_Chi_Minh (GMT+7)")
-                        Divider()
-                        settingsInfoRow(title: "Thuật toán", value: "Vietnamese Lunar Calendar 2.0")
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Cập nhật ứng dụng",
-                    subtitle: "Kiểm tra phiên bản mới từ GitHub Releases",
-                    icon: "arrow.down.circle.fill"
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        settingsToggleRow(
-                            title: "Tự động kiểm tra cập nhật",
-                            isOn: $automaticallyChecksForUpdates
-                        )
-
-                        settingsPickerRow(
-                            title: "Tần suất kiểm tra",
-                            isEnabled: automaticallyChecksForUpdates
-                        ) {
-                            Picker("", selection: $updateCheckFrequency) {
-                                ForEach(UpdateCheckFrequency.allCases) { frequency in
-                                    Text(frequency.title).tag(frequency)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .controlSize(.regular)
-                        }
-
-                        Text(
-                            automaticallyChecksForUpdates
-                                ? "Khi bật, LunarV sẽ tự kiểm tra theo tần suất bạn chọn."
-                                : "Khi tắt, LunarV chỉ kiểm tra khi bạn bấm nút bên dưới."
-                        )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                        Text("Việc cập nhật phiên bản mới sẽ giữ nguyên toàn bộ cài đặt hiện tại của bạn.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        HStack {
-                            CheckForUpdatesView(updater: updater)
-                            Spacer(minLength: 0)
-                        }
-                    }
-                }
-
-                LunarSettingsCard(
-                    title: "Khôi phục cài đặt",
-                    subtitle: "Đưa toàn bộ tuỳ chỉnh về mặc định",
-                    icon: "arrow.counterclockwise"
-                ) {
-                    HStack {
-                        Text("Bạn có thể đặt lại nhanh tất cả cấu hình giao diện, hiển thị và thông báo.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer(minLength: 0)
-                        Button(role: .destructive) {
-                            isShowingResetDialog = true
-                        } label: {
-                            Label("Khôi phục", systemImage: "arrow.counterclockwise")
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
+                systemWindowBehaviorCard
+                systemLaunchAtLoginCard
+                systemDataCard
+                resetSettingsCard
             }
             .frame(maxWidth: .infinity)
             .padding(14)
         }
         .lunarSettingsBackground()
+    }
+
+    private var systemWindowBehaviorCard: some View {
+        LunarSettingsCard(
+            title: "Cửa sổ Cài đặt",
+            subtitle: "Hành vi hiển thị cửa sổ",
+            icon: "rectangle.inset.filled.and.person.filled"
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                settingsToggleRow(
+                    title: "Luôn ở trên cùng (Floating)",
+                    isOn: $settings.keepSettingsOnTop
+                )
+                Text("Khi bật, cửa sổ Cài đặt sẽ luôn nằm trên các cửa sổ khác để bạn vừa chỉnh vừa quan sát Menu Bar dễ hơn.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var systemLaunchAtLoginCard: some View {
+        LunarSettingsCard(
+            title: "Tự động hóa",
+            subtitle: "Khởi chạy ứng dụng cùng hệ thống",
+            icon: "power.circle.fill"
+        ) {
+            settingsToggleRow(
+                title: "Mở LunarV khi đăng nhập máy tính",
+                isOn: launchAtLoginBinding
+            )
+        }
+    }
+
+    private var holidayNotificationsCard: some View {
+        LunarSettingsCard(
+            title: "Nhắc ngày lễ",
+            subtitle: "Lập lịch thông báo theo lịch âm",
+            icon: "bell.badge.fill"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                settingsToggleRow(
+                    title: "Bật thông báo ngày lễ",
+                    isOn: holidayNotificationBinding
+                )
+
+                Divider()
+
+                settingsPickerRow(
+                    title: "Nhắc trước",
+                    isEnabled: settings.enableHolidayNotifications
+                ) {
+                    Picker("", selection: $settings.holidayReminderLeadDays) {
+                        Text("Đúng ngày").tag(0)
+                        Text("Trước 1 ngày").tag(1)
+                        Text("Trước 3 ngày").tag(3)
+                    }
+                }
+
+                settingsPickerRow(
+                    title: "Giờ thông báo",
+                    isEnabled: settings.enableHolidayNotifications
+                ) {
+                    Picker("", selection: $settings.holidayReminderHour) {
+                        ForEach([6, 7, 8, 9, 18, 20, 21], id: \.self) { hour in
+                            Text(hourDisplay(hour)).tag(hour)
+                        }
+                    }
+                }
+
+                settingsPickerRow(
+                    title: "Phạm vi lập lịch",
+                    isEnabled: settings.enableHolidayNotifications
+                ) {
+                    Picker("", selection: $settings.notificationWindowDays) {
+                        Text("30 ngày tới").tag(30)
+                        Text("60 ngày tới").tag(60)
+                        Text("90 ngày tới").tag(90)
+                        Text("180 ngày tới").tag(180)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Trạng thái quyền thông báo")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(notificationManager.authorizationDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
+            }
+        }
+    }
+
+    private var updatesSettingsCard: some View {
+        LunarSettingsCard(
+            title: "Cập nhật ứng dụng",
+            subtitle: "Kiểm tra phiên bản mới từ GitHub Releases",
+            icon: "arrow.down.circle.fill"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                settingsInfoRow(title: "Phiên bản hiện tại", value: appVersionText)
+
+                Divider()
+
+                settingsToggleRow(
+                    title: "Tự động kiểm tra cập nhật",
+                    isOn: $automaticallyChecksForUpdates
+                )
+
+                settingsPickerRow(
+                    title: "Tần suất kiểm tra",
+                    isEnabled: automaticallyChecksForUpdates
+                ) {
+                    Picker("", selection: $updateCheckFrequency) {
+                        ForEach(UpdateCheckFrequency.allCases) { frequency in
+                            Text(frequency.title).tag(frequency)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .controlSize(.regular)
+                }
+
+                Text(
+                    automaticallyChecksForUpdates
+                        ? "Khi bật, LunarV sẽ tự kiểm tra theo tần suất bạn chọn."
+                        : "Khi tắt, LunarV chỉ kiểm tra khi bạn bấm nút bên dưới."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                Text("Việc cập nhật phiên bản mới sẽ giữ nguyên toàn bộ cài đặt hiện tại của bạn.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    CheckForUpdatesView(updater: updater)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private var systemDataCard: some View {
+        LunarSettingsCard(
+            title: "Dữ liệu & Thời gian",
+            subtitle: "Thông số tính toán lịch",
+            icon: "clock.arrow.trianglehead.counterclockwise.rotate.90"
+        ) {
+            VStack(spacing: 10) {
+                settingsInfoRow(title: "Múi giờ tính toán", value: "Asia/Ho_Chi_Minh (GMT+7)")
+                Divider()
+                settingsInfoRow(title: "Thuật toán", value: "Vietnamese Lunar Calendar 2.0")
+            }
+        }
+    }
+
+    private var resetSettingsCard: some View {
+        LunarSettingsCard(
+            title: "Khôi phục cài đặt",
+            subtitle: "Đưa toàn bộ tuỳ chỉnh về mặc định",
+            icon: "arrow.counterclockwise"
+        ) {
+            HStack {
+                Text("Bạn có thể đặt lại nhanh tất cả cấu hình giao diện, hiển thị và thông báo.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Button(role: .destructive) {
+                    isShowingResetDialog = true
+                } label: {
+                    Label("Khôi phục", systemImage: "arrow.counterclockwise")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+
+    private var notificationLeadSummary: String {
+        switch settings.holidayReminderLeadDays {
+        case 0:
+            return "Nhắc đúng ngày"
+        case 1:
+            return "Nhắc trước 1 ngày"
+        default:
+            return "Nhắc trước \(settings.holidayReminderLeadDays) ngày"
+        }
     }
 
     @ViewBuilder

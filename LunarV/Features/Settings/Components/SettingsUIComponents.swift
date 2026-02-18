@@ -9,6 +9,8 @@ import SwiftUI
 enum SettingsPane: String, CaseIterable, Identifiable {
     case appearance
     case panel
+    case notifications
+    case updates
     case system
     case about
 
@@ -20,6 +22,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return "Giao diện"
         case .panel:
             return "Bảng điều khiển"
+        case .notifications:
+            return "Thông báo"
+        case .updates:
+            return "Cập nhật"
         case .system:
             return "Hệ thống"
         case .about:
@@ -30,11 +36,15 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .appearance:
-            return "Màu sắc và hiển thị"
+            return "Menu Bar và kiểu chữ"
         case .panel:
             return "Sắp xếp card"
+        case .notifications:
+            return "Nhắc ngày lễ âm lịch"
+        case .updates:
+            return "Kiểm tra phiên bản mới"
         case .system:
-            return "Tự động hoá, cập nhật & thông báo"
+            return "Cửa sổ, khởi động & dữ liệu"
         case .about:
             return "Phiên bản và hỗ trợ"
         }
@@ -46,6 +56,10 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return "paintbrush.fill"
         case .panel:
             return "list.bullet.indent"
+        case .notifications:
+            return "bell.badge.fill"
+        case .updates:
+            return "arrow.down.circle.fill"
         case .system:
             return "gearshape.2.fill"
         case .about:
@@ -57,13 +71,43 @@ enum SettingsPane: String, CaseIterable, Identifiable {
     var searchKeywords: [String] {
         switch self {
         case .appearance:
-            return ["menu bar", "chế độ", "mẫu tuỳ chỉnh", "template", "cỡ chữ", "font", "icon", "biểu tượng", "xem trước", "paintbrush", "thứ", "giờ", "phút", "giây", "time", "weekday", "đậm", "nghiêng", "gạch chân", "bold", "italic", "underline", "phông chữ"]
+            return [
+                "menu bar", "kiểu hiển thị", "chế độ", "preset", "compact", "full", "custom",
+                "mẫu tuỳ chỉnh", "template", "token", "xem trước", "preview",
+                "font", "phông chữ", "cỡ chữ", "kích cỡ chữ", "đậm", "nghiêng", "gạch chân",
+                "bold", "italic", "underline", "icon", "biểu tượng", "icon bên trái",
+                "thứ", "giờ", "phút", "giây", "time", "weekday"
+            ]
         case .panel:
-            return ["card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả"]
+            return [
+                "card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả",
+                "hero", "can chi", "con giáp", "giờ hoàng đạo", "gợi ý trong ngày",
+                "sự kiện sắp tới", "lịch tháng", "chuyển đổi nhanh", "thông tin khác"
+            ]
+        case .notifications:
+            return [
+                "thông báo", "nhắc", "nhắc lễ", "holiday", "permission", "authorization", "quyền",
+                "nhắc trước", "giờ thông báo", "phạm vi lập lịch", "window days", "lead day",
+                "đúng ngày", "trước 1 ngày", "trước 3 ngày", "bell"
+            ]
+        case .updates:
+            return [
+                "cập nhật", "update", "sparkle", "phiên bản mới", "release", "github",
+                "check for updates", "kiểm tra ngay", "tự động kiểm tra", "tần suất",
+                "mỗi 1 giờ", "mỗi 6 giờ", "mỗi 12 giờ", "mỗi ngày", "mỗi tuần"
+            ]
         case .system:
-            return ["khởi động", "đăng nhập", "login", "tự động", "thông báo", "ngày lễ", "nhắc nhở", "holiday", "múi giờ", "timezone", "thuật toán", "algorithm", "gear", "cập nhật", "update", "khôi phục", "reset"]
+            return [
+                "hệ thống", "window", "floating", "always on top", "cửa sổ cài đặt",
+                "khởi động", "đăng nhập", "launch at login", "tự động",
+                "dữ liệu", "thời gian", "múi giờ", "timezone", "thuật toán", "algorithm",
+                "khôi phục", "reset", "mặc định"
+            ]
         case .about:
-            return ["phiên bản", "version", "tác giả", "ủng hộ", "donate", "qr", "info"]
+            return [
+                "thông tin", "phiên bản", "version", "lunarv", "tác giả",
+                "ủng hộ", "donate", "qr", "info"
+            ]
         }
     }
 }
