@@ -846,18 +846,6 @@ struct AppSettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text("{wdn}: Chuẩn 1-7 (T2=1, CN=7) • {wdn2}: Mở rộng 2-8 (T2=2, CN=8)")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
-
-            Text("{:}: dấu hai chấm nhấp nháy theo từng giây (ví dụ: {hh}{:}{min})")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
-
-            Text("AM/PM: {hh12}{:}{min} {ampm} • Việt: {h12}:{min} {ampmvn} • Nhanh: {time12m}/{time12}")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
-
             VStack(alignment: .leading, spacing: 10) {
                 Text("ÂM LỊCH")
                     .font(.system(size: 9, weight: .heavy))
@@ -1218,7 +1206,10 @@ struct AppSettingsView: View {
                                 .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
                         )
 
-                    LunarMenuBarView(viewModel: menuBarViewModel)
+                    LunarMenuBarView(
+                        viewModel: menuBarViewModel,
+                        updater: updater
+                    )
                         .frame(width: targetWidth, height: targetHeight, alignment: .top)
                         .scaleEffect(scale, anchor: .center)
                         .frame(width: scaledWidth, height: scaledHeight, alignment: .center)

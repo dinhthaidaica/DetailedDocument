@@ -3,6 +3,7 @@
 //  Phát triển bởi Phạm Hùng Tiến
 //
 import AppKit
+import Sparkle
 import SwiftUI
 
 struct LunarMenuBarView: View {
@@ -23,6 +24,7 @@ struct LunarMenuBarView: View {
     @State private var lunarToSolarResult: SolarDateComponents?
     @State private var hoveredCalendarHolidayText: String?
     @ObservedObject var viewModel: LunarMenuBarViewModel
+    let updater: SPUUpdater
 
     private let calendarColumns = Array(
         repeating: GridItem(.flexible(minimum: MenuBarMetrics.calendarMinimumCellWidth), spacing: MenuBarMetrics.calendarGridSpacing),
@@ -171,6 +173,10 @@ struct LunarMenuBarView: View {
 
                 toolbarButton(icon: "gearshape", help: "Cài đặt") {
                     openWindow(id: "settings")
+                }
+
+                toolbarButton(icon: "arrow.triangle.2.circlepath", help: "Kiểm tra cập nhật") {
+                    updater.checkForUpdates()
                 }
 
                 toolbarButton(icon: "power", help: "Thoát ứng dụng", color: .red) {

@@ -124,7 +124,10 @@ struct LunarVApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            LunarMenuBarView(viewModel: viewModel)
+            LunarMenuBarView(
+                viewModel: viewModel,
+                updater: updaterController.updater
+            )
         } label: {
             Group {
                 if let menuBarLabelImage {
