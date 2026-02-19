@@ -11,7 +11,6 @@ struct AppSettingsView: View {
 
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var notificationManager: HolidayNotificationManager
-    @EnvironmentObject var menuBarViewModel: LunarMenuBarViewModel
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var selectedPane: SettingsPane = .appearance
     @State private var isShowingResetDialog = false
@@ -1280,7 +1279,7 @@ struct AppSettingsView: View {
 
     private var menuBarPanelInlinePreview: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Xem trước trực tiếp (đúng giao diện menu bar)")
+            Text("Xem trước bố cục panel (tối ưu hiệu năng)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
@@ -1302,9 +1301,8 @@ struct AppSettingsView: View {
                                 .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
                         )
 
-                    LunarMenuBarView(
-                        viewModel: menuBarViewModel,
-                        updater: updater
+                    MenuBarPanelStructurePreview(
+                        visibleCards: settings.panelCardOrder.filter { settings.isPanelCardVisible($0) }
                     )
                         .frame(width: targetWidth, height: targetHeight, alignment: .top)
                         .scaleEffect(scale, anchor: .center)
@@ -1320,7 +1318,7 @@ struct AppSettingsView: View {
             }
             .frame(height: 300)
 
-            Text("Kéo slider để xem thay đổi theo thời gian thực ngay tại đây.")
+            Text("Kéo slider để xem thay đổi theo thời gian thực. Giao diện thật sẽ dùng khi mở menu bar.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -2297,24 +2295,6 @@ struct AppSettingsView: View {
         )
     }
 
-    private static func utcOffsetTextRaw(for timeZoneIdentifier: String, at date: Date) -> String {
-        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
-            return "UTC?"
-        }
-
-        let offsetMinutes = timeZone.secondsFromGMT(for: date) / 60
-        let sign = offsetMinutes >= 0 ? "+" : "-"
-        let absoluteMinutes = abs(offsetMinutes)
-        let hours = absoluteMinutes / 60
-        let minutes = absoluteMinutes % 60
-
-        if minutes == 0 {
-            return String(format: "UTC%@%02d", sign, hours)
-        }
-
-        return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
-    }
-
     private static func hourBucket(for date: Date) -> Int {
         Int(date.timeIntervalSince1970 / 3600)
     }
@@ -2330,7 +2310,7 @@ struct AppSettingsView: View {
             return cached
         }
 
-        let computed = utcOffsetTextRaw(for: timeZoneIdentifier, at: date)
+        let computed = InternationalTimeFormatter.utcOffsetText(for: timeZoneIdentifier, at: date)
         cachedUTCOffsetTextByTimeZoneID[timeZoneIdentifier] = computed
         return computed
     }
@@ -2374,31 +2354,10 @@ struct AppSettingsView: View {
             return ""
         }
 
-        let now = Date()
-        let localCalendar = Calendar.autoupdatingCurrent
-        var targetCalendar = Calendar(identifier: .gregorian)
-        targetCalendar.timeZone = timeZone
-
-        guard
-            let localDay = localCalendar.ordinality(of: .day, in: .era, for: now),
-            let targetDay = targetCalendar.ordinality(of: .day, in: .era, for: now)
-        else {
-            return "Hôm nay"
-        }
-
-        let dayOffset = targetDay - localDay
-        switch dayOffset {
-        case 0:
-            return "Hôm nay"
-        case 1:
-            return "Ngày mai"
-        case -1:
-            return "Hôm qua"
-        case let value where value > 1:
-            return "+\(value) ngày"
-        default:
-            return "\(dayOffset) ngày"
-        }
+        return InternationalTimeFormatter.relativeDayText(
+            at: Date(),
+            targetTimeZone: timeZone
+        )
     }
 
     private static func internationalClockTimeFormatter(for timeZone: TimeZone) -> DateFormatter {

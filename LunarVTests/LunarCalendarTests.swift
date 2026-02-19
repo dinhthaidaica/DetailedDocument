@@ -183,6 +183,72 @@ final class LunarCalendarTests: XCTestCase {
         XCTAssertEqual(snapshot!.hourPeriods.count, 12)
     }
 
+    // MARK: - International Time Formatter
+
+    func testUTCOffsetTextFormatting() {
+        let referenceDate = makeDate(year: 2026, month: 2, day: 1, hour: 12)
+        guard
+            let hoChiMinh = TimeZone(identifier: "Asia/Ho_Chi_Minh"),
+            let kolkata = TimeZone(identifier: "Asia/Kolkata")
+        else {
+            XCTFail("Unable to resolve expected time zones for UTC offset test")
+            return
+        }
+
+        XCTAssertEqual(
+            InternationalTimeFormatter.utcOffsetText(for: hoChiMinh, at: referenceDate),
+            "UTC+07"
+        )
+        XCTAssertEqual(
+            InternationalTimeFormatter.utcOffsetText(for: kolkata, at: referenceDate),
+            "UTC+05:30"
+        )
+        XCTAssertEqual(
+            InternationalTimeFormatter.utcOffsetText(for: "Invalid/Zone", at: referenceDate),
+            "UTC?"
+        )
+    }
+
+    func testRelativeDayTextMapping() {
+        XCTAssertEqual(InternationalTimeFormatter.relativeDayText(for: 0), "Hôm nay")
+        XCTAssertEqual(InternationalTimeFormatter.relativeDayText(for: 1), "Ngày mai")
+        XCTAssertEqual(InternationalTimeFormatter.relativeDayText(for: -1), "Hôm qua")
+        XCTAssertEqual(InternationalTimeFormatter.relativeDayText(for: 2), "+2 ngày")
+        XCTAssertEqual(InternationalTimeFormatter.relativeDayText(for: -2), "-2 ngày")
+    }
+
+    func testRelativeDayOffsetAcrossTimeZones() {
+        var localCalendar = Calendar(identifier: .gregorian)
+        localCalendar.timeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh") ?? .current
+        guard
+            let referenceDate = localCalendar.date(
+                from: DateComponents(year: 2026, month: 1, day: 1, hour: 0, minute: 30, second: 0)
+            ),
+            let losAngeles = TimeZone(identifier: "America/Los_Angeles"),
+            let tokyo = TimeZone(identifier: "Asia/Tokyo")
+        else {
+            XCTFail("Unable to resolve reference date or expected time zones")
+            return
+        }
+
+        XCTAssertEqual(
+            InternationalTimeFormatter.relativeDayOffset(
+                at: referenceDate,
+                localCalendar: localCalendar,
+                targetTimeZone: losAngeles
+            ),
+            -1
+        )
+        XCTAssertEqual(
+            InternationalTimeFormatter.relativeDayOffset(
+                at: referenceDate,
+                localCalendar: localCalendar,
+                targetTimeZone: tokyo
+            ),
+            0
+        )
+    }
+
     private func makeDate(year: Int, month: Int, day: Int, hour: Int) -> Date {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = vietnamTimeZone

@@ -52,7 +52,6 @@ final class LunarMenuBarViewModel: ObservableObject {
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
     private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
     private static var internationalClockWeekdayFormatterByTimeZoneID: [String: DateFormatter] = [:]
-    private static var internationalCalendarByTimeZoneID: [String: Calendar] = [:]
 
     private let solarCalendar: Calendar
     private let lunarService: VietnameseLunarDateService
@@ -469,18 +468,16 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private func buildInternationalTimes(now: Date) -> [InternationalTimeInfo] {
         let localCalendar = Calendar.autoupdatingCurrent
-        let localDayOrdinal = localCalendar.ordinality(of: .day, in: .era, for: now)
 
         return settings.selectedInternationalTimeZones.compactMap { preset -> InternationalTimeInfo? in
             guard let timeZone = TimeZone(identifier: preset.id) else {
                 return nil
             }
 
-            let targetCalendar = Self.internationalCalendar(for: timeZone)
-            let dayOffset = relativeDayOffset(
+            let dayOffset = InternationalTimeFormatter.relativeDayOffset(
                 at: now,
-                localDayOrdinal: localDayOrdinal,
-                targetCalendar: targetCalendar
+                localCalendar: localCalendar,
+                targetTimeZone: timeZone
             )
 
             let timeText = formattedClockTime(now, timeZone: timeZone)
@@ -491,35 +488,10 @@ final class LunarMenuBarViewModel: ObservableObject {
                 city: preset.city,
                 timeText: timeText,
                 weekdayText: weekdayText,
-                utcOffsetText: formattedUTCOffset(for: timeZone, at: now),
-                relativeDayText: relativeDayText(for: dayOffset)
+                utcOffsetText: InternationalTimeFormatter.utcOffsetText(for: timeZone, at: now),
+                relativeDayText: InternationalTimeFormatter.relativeDayText(for: dayOffset)
             )
         }
-    }
-
-    private func formattedUTCOffset(for timeZone: TimeZone, at date: Date) -> String {
-        let offsetMinutes = timeZone.secondsFromGMT(for: date) / 60
-        let sign = offsetMinutes >= 0 ? "+" : "-"
-        let absoluteMinutes = abs(offsetMinutes)
-        let hours = absoluteMinutes / 60
-        let minutes = absoluteMinutes % 60
-
-        if minutes == 0 {
-            return String(format: "UTC%@%02d", sign, hours)
-        }
-
-        return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
-    }
-
-    private func relativeDayOffset(at date: Date, localDayOrdinal: Int?, targetCalendar: Calendar) -> Int {
-        guard
-            let localDay = localDayOrdinal,
-            let targetDay = targetCalendar.ordinality(of: .day, in: .era, for: date)
-        else {
-            return 0
-        }
-
-        return targetDay - localDay
     }
 
     private func formattedClockTime(_ date: Date, timeZone: TimeZone) -> String {
@@ -555,32 +527,6 @@ final class LunarMenuBarViewModel: ObservableObject {
         formatter.dateFormat = "EEE"
         internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] = formatter
         return formatter
-    }
-
-    private static func internationalCalendar(for timeZone: TimeZone) -> Calendar {
-        if let cachedCalendar = internationalCalendarByTimeZoneID[timeZone.identifier] {
-            return cachedCalendar
-        }
-
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        internationalCalendarByTimeZoneID[timeZone.identifier] = calendar
-        return calendar
-    }
-
-    private func relativeDayText(for dayOffset: Int) -> String {
-        switch dayOffset {
-        case 0:
-            return "Hôm nay"
-        case 1:
-            return "Ngày mai"
-        case -1:
-            return "Hôm qua"
-        case let value where value > 1:
-            return "+\(value) ngày"
-        default:
-            return "\(dayOffset) ngày"
-        }
     }
 
     private func formattedLunarDate(from lunarDate: LunarDate) -> String {
