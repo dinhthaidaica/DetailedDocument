@@ -255,6 +255,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -388,6 +389,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -629,6 +631,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -662,6 +665,7 @@ struct AppSettingsView: View {
             .onMove(perform: settings.movePanelCard)
         }
         .listStyle(.plain)
+        .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 66)
         .frame(height: panelOrderListHeight)
@@ -874,6 +878,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -961,7 +966,7 @@ struct AppSettingsView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        ScrollView(.horizontal) {
+                        ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(smartInternationalTimeZoneSuggestions) { preset in
                                     Button {
@@ -1023,6 +1028,7 @@ struct AppSettingsView: View {
                             }
                             .padding(1)
                         }
+                        .scrollIndicators(.hidden)
                         .frame(maxHeight: 220)
                     }
                 }
@@ -1143,6 +1149,7 @@ struct AppSettingsView: View {
             .onMove(perform: settings.moveInternationalTimeZone)
         }
         .listStyle(.plain)
+        .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
         .environment(\.defaultMinListRowHeight, 66)
         .frame(height: selectedInternationalTimeZoneOrderListHeight)
@@ -1236,6 +1243,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -1263,6 +1271,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -1296,6 +1305,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -1582,6 +1592,7 @@ struct AppSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
+        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -1997,6 +2008,7 @@ struct AppSettingsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollIndicators(.hidden)
             .frame(maxHeight: 330)
         }
         .padding(12)
