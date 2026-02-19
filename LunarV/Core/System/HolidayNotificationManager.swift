@@ -38,6 +38,8 @@ final class HolidayNotificationManager: ObservableObject {
     private var systemNotificationObservers: [NSObjectProtocol] = []
     private var workspaceNotificationObservers: [NSObjectProtocol] = []
     private var lastObservedNotificationSettings: NotificationPreferences
+    private var synchronizationTask: Task<Void, Never>?
+    private var hasPendingSynchronizationRequest = false
 
     init(
         settings: AppSettings,
@@ -59,6 +61,8 @@ final class HolidayNotificationManager: ObservableObject {
     }
 
     deinit {
+        synchronizationTask?.cancel()
+
         systemNotificationObservers.forEach { observer in
             NotificationCenter.default.removeObserver(observer)
         }
@@ -106,6 +110,40 @@ final class HolidayNotificationManager: ObservableObject {
     }
 
     func synchronizeSchedules() async {
+        hasPendingSynchronizationRequest = true
+
+        if let task = synchronizationTask {
+            await task.value
+            return
+        }
+
+        let task = Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            while self.hasPendingSynchronizationRequest {
+                if Task.isCancelled {
+                    return
+                }
+
+                self.hasPendingSynchronizationRequest = false
+                await self.performScheduleSynchronization()
+            }
+        }
+
+        synchronizationTask = task
+        await task.value
+        synchronizationTask = nil
+    }
+
+    func setHolidayNotificationsEnabled(_ isEnabled: Bool) async {
+        settings.enableHolidayNotifications = isEnabled
+        lastObservedNotificationSettings = NotificationPreferences(from: settings)
+        await synchronizeSchedules()
+    }
+
+    private func performScheduleSynchronization() async {
         guard settings.enableHolidayNotifications else {
             await clearPendingHolidayNotifications()
             return
@@ -137,6 +175,9 @@ final class HolidayNotificationManager: ObservableObject {
 
     private func scheduleHolidayNotifications() async {
         await clearPendingHolidayNotifications()
+        if Task.isCancelled || hasPendingSynchronizationRequest {
+            return
+        }
 
         let now = Date()
         let calendar = lunarService.calendar
@@ -149,6 +190,10 @@ final class HolidayNotificationManager: ObservableObject {
         requests.reserveCapacity(windowDays)
 
         for offset in 0 ... windowDays {
+            if Task.isCancelled || hasPendingSynchronizationRequest {
+                return
+            }
+
             guard
                 let eventDate = calendar.date(byAdding: .day, value: offset, to: dayStart),
                 let solar = lunarService.solarComponents(from: eventDate),
@@ -197,6 +242,10 @@ final class HolidayNotificationManager: ObservableObject {
         }
 
         for request in requests {
+            if Task.isCancelled || hasPendingSynchronizationRequest {
+                return
+            }
+
             do {
                 try await center.addRequest(request)
             } catch {

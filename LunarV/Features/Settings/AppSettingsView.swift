@@ -2108,18 +2108,8 @@ struct AppSettingsView: View {
         Binding(
             get: { settings.enableHolidayNotifications },
             set: { isEnabled in
-                guard isEnabled else {
-                    settings.enableHolidayNotifications = false
-                    Task { @MainActor in
-                        await notificationManager.clearPendingHolidayNotifications()
-                    }
-                    return
-                }
-
                 Task { @MainActor in
-                    let granted = await notificationManager.requestAuthorizationIfNeeded()
-                    settings.enableHolidayNotifications = granted
-                    await notificationManager.synchronizeSchedules()
+                    await notificationManager.setHolidayNotificationsEnabled(isEnabled)
                 }
             }
         )
