@@ -515,6 +515,11 @@ struct LunarMenuBarView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                )
             } else {
                 VStack(spacing: 6) {
                     ForEach(viewModel.info.internationalTimes) { cityTime in
@@ -551,7 +556,11 @@ struct LunarMenuBarView: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
-                        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+                        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                        )
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(cityTime.city), \(cityTime.timeText), \(cityTime.weekdayText), \(cityTime.relativeDayText), \(cityTime.utcOffsetText)")
                     }
