@@ -182,6 +182,15 @@ struct AppSettingsView: View {
                 keywords: ["preset", "chế độ", "compact", "full", "custom", "template", "mẫu tùy chỉnh"]
             ),
             SettingsSearchEntry(
+                id: "appearance.weekdayStyle",
+                pane: .appearance,
+                section: "Menu Bar",
+                title: "Kiểu hiển thị thứ trong tuần",
+                subtitle: "Đổi giữa dạng đầy đủ, viết tắt hoặc số 1-7",
+                icon: "calendar",
+                keywords: ["thứ", "trong tuần", "weekday", "t2", "chủ nhật", "1 2 3 4 5 6 7", "số đếm"]
+            ),
+            SettingsSearchEntry(
                 id: "appearance.customTemplate",
                 pane: .appearance,
                 section: "Menu Bar",
@@ -808,6 +817,8 @@ struct AppSettingsView: View {
                             .controlSize(.regular)
                         }
 
+                        weekdayDisplayStyleControl
+
                         if settings.menuBarDisplayPreset == .custom {
                             customTemplateEditor
                         } else {
@@ -877,6 +888,25 @@ struct AppSettingsView: View {
             }
             .padding(10)
             .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private var weekdayDisplayStyleControl: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            settingsPickerRow(title: "Kiểu thứ trong tuần", isEnabled: true) {
+                Picker("Kiểu thứ trong tuần", selection: menuBarWeekdayDisplayStyleBinding) {
+                    ForEach(WeekdayDisplayStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+                .pickerStyle(.menu)
+                .controlSize(.regular)
+            }
+
+            Text(settings.menuBarWeekdayDisplayStyleValue.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
         }
     }
 
@@ -1132,7 +1162,8 @@ struct AppSettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 settingsInfoRow(
                     title: "Kích thước hiện tại",
-                    value: "\(Int(settings.menuBarPanelWidthValue)) × \(Int(settings.menuBarPanelHeightValue))"
+                    value: "\(Int(settings.menuBarPanelWidthValue)) × \(Int(settings.menuBarPanelHeightValue))",
+                    isHighlighted: true
                 )
 
                 menuBarPanelInlinePreview
@@ -1199,7 +1230,11 @@ struct AppSettingsView: View {
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.primary.opacity(0.04))
+                        .fill(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
+                        )
 
                     LunarMenuBarView(viewModel: menuBarViewModel)
                         .frame(width: targetWidth, height: targetHeight, alignment: .top)
@@ -1908,7 +1943,10 @@ struct AppSettingsView: View {
     }
 
     @ViewBuilder
-    private func settingsInfoRow(title: String, value: String) -> some View {
+    private func settingsInfoRow(title: String, value: String, isHighlighted: Bool = false) -> some View {
+        let valueColor: Color = isHighlighted ? .accentColor : .primary
+        let badgeBackground: Color = isHighlighted ? Color.accentColor.opacity(0.14) : Color.primary.opacity(0.05)
+
         HStack(alignment: .center) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
@@ -1916,10 +1954,17 @@ struct AppSettingsView: View {
             Spacer(minLength: 0)
             Text(value)
                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+                .foregroundStyle(valueColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
+                .background(badgeBackground, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(
+                            isHighlighted ? Color.accentColor.opacity(0.22) : Color.clear,
+                            lineWidth: 0.6
+                        )
+                )
         }
     }
 
@@ -2462,6 +2507,13 @@ struct AppSettingsView: View {
         )
     }
 
+    private var menuBarWeekdayDisplayStyleBinding: Binding<WeekdayDisplayStyle> {
+        Binding(
+            get: { settings.menuBarWeekdayDisplayStyleValue },
+            set: { settings.setMenuBarWeekdayDisplayStyle($0) }
+        )
+    }
+
     private var menuBarPanelWidthBinding: Binding<Double> {
         Binding(
             get: { settings.menuBarPanelWidthValue },
@@ -2600,6 +2652,7 @@ struct AppSettingsView: View {
             return "--"
         }
         let timeComponents = previewLunarService.calendar.dateComponents([.hour, .minute, .second], from: now)
+        let weekdayStyle = settings.menuBarWeekdayDisplayStyleValue
         let context = MenuBarTitleContext(
             lunarDay: snapshot.lunar.day,
             lunarMonth: snapshot.lunar.month,
@@ -2610,8 +2663,8 @@ struct AppSettingsView: View {
             solarDay: snapshot.solar.day,
             solarMonth: snapshot.solar.month,
             solarYear: snapshot.solar.year,
-            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday),
-            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday),
+            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday, style: weekdayStyle),
+            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday, style: weekdayStyle),
             hour: timeComponents.hour ?? 0,
             minute: timeComponents.minute ?? 0,
             second: timeComponents.second ?? 0

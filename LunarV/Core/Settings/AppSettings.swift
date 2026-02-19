@@ -136,6 +136,7 @@ struct InternationalTimeZonePreset: Identifiable, Hashable {
 @MainActor
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
+    static let defaultMenuBarWeekdayDisplayStyle: WeekdayDisplayStyle = .full
     static let defaultMenuBarTitleFontSize: Double = 12
     static let menuBarTitleFontSizeRange: ClosedRange<Double> = 11 ... 16
     static let defaultMenuBarTitleFontFamily: String = ""
@@ -233,6 +234,7 @@ final class AppSettings: ObservableObject {
     ]
     private static let defaultSettingsValues: [String: Any] = [
         "settings.menuBar.displayPreset": MenuBarDisplayPreset.compact.rawValue,
+        "settings.menuBar.weekdayDisplayStyle": AppSettings.defaultMenuBarWeekdayDisplayStyle.rawValue,
         "settings.menuBar.customTemplate": "",
         "settings.menuBar.titleFontSize": AppSettings.defaultMenuBarTitleFontSize,
         "settings.menuBar.titleFontFamily": AppSettings.defaultMenuBarTitleFontFamily,
@@ -274,6 +276,7 @@ final class AppSettings: ObservableObject {
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
+    @AppStorage("settings.menuBar.weekdayDisplayStyle") private var menuBarWeekdayDisplayStyleStorage: String = AppSettings.defaultMenuBarWeekdayDisplayStyle.rawValue
     @AppStorage("settings.menuBar.customTemplate") var customMenuBarTemplate: String = ""
     @AppStorage("settings.menuBar.titleFontSize") private var menuBarTitleFontSizeStorage: Double = AppSettings.defaultMenuBarTitleFontSize
     @AppStorage("settings.menuBar.titleFontFamily") private var menuBarTitleFontFamilyStorage: String = AppSettings.defaultMenuBarTitleFontFamily
@@ -309,6 +312,7 @@ final class AppSettings: ObservableObject {
 
     private init() {
         restoreSettingsFromBackupIfNeeded()
+        normalizeMenuBarWeekdayDisplayStyleIfNeeded()
         normalizeMenuBarTitleFontSizeIfNeeded()
         normalizeMenuBarTitleFontFamilyIfNeeded()
         normalizeMenuBarLeadingIconSizeIfNeeded()
@@ -321,6 +325,19 @@ final class AppSettings: ObservableObject {
 
     var menuBarTitleFontSizeValue: Double {
         Self.clampedMenuBarTitleFontSize(menuBarTitleFontSizeStorage)
+    }
+
+    var menuBarWeekdayDisplayStyleValue: WeekdayDisplayStyle {
+        WeekdayDisplayStyle(rawValue: menuBarWeekdayDisplayStyleStorage) ?? Self.defaultMenuBarWeekdayDisplayStyle
+    }
+
+    func setMenuBarWeekdayDisplayStyle(_ style: WeekdayDisplayStyle) {
+        let nextRawValue = style.rawValue
+        guard nextRawValue != menuBarWeekdayDisplayStyleStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarWeekdayDisplayStyleStorage = nextRawValue
     }
 
     var menuBarTitleFontSizeCGFloat: CGFloat {
@@ -661,6 +678,7 @@ final class AppSettings: ObservableObject {
 
     func resetMenuBarDisplaySettings() {
         menuBarDisplayPreset = .compact
+        setMenuBarWeekdayDisplayStyle(Self.defaultMenuBarWeekdayDisplayStyle)
         customMenuBarTemplate = ""
         setMenuBarTitleFontSize(Self.defaultMenuBarTitleFontSize)
         setMenuBarTitleFontFamily(Self.defaultMenuBarTitleFontFamily)
@@ -763,6 +781,14 @@ final class AppSettings: ObservableObject {
             return
         }
         menuBarTitleFontSizeStorage = normalized
+    }
+
+    private func normalizeMenuBarWeekdayDisplayStyleIfNeeded() {
+        let normalized = menuBarWeekdayDisplayStyleValue.rawValue
+        guard normalized != menuBarWeekdayDisplayStyleStorage else {
+            return
+        }
+        menuBarWeekdayDisplayStyleStorage = normalized
     }
 
     private func normalizeMenuBarTitleFontFamilyIfNeeded() {

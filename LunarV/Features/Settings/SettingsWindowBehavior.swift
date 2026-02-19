@@ -58,9 +58,12 @@ struct SettingsWindowBehavior: NSViewRepresentable {
             window.isMovableByWindowBackground = true
             window.collectionBehavior.insert(.moveToActiveSpace)
 
-            NSApp.activate(ignoringOtherApps: true)
-            window.orderFrontRegardless()
-            window.makeKeyAndOrderFront(nil)
+            // Defer bring-to-front until current layout pass is done to avoid
+            // reentrant NSHostingView layout warnings.
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                window.makeKeyAndOrderFront(nil)
+            }
         }
 
     }

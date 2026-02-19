@@ -135,7 +135,6 @@ struct LunarVApp: App {
                         .underline(settings.menuBarTitleUnderlineValue)
                 }
             }
-            .id(menuBarLabelIdentity)
         }
         .menuBarExtraStyle(.window)
         .commands {

@@ -7,6 +7,99 @@ import os
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.lunarv", category: "calendar")
 
+enum WeekdayDisplayStyle: String, CaseIterable, Identifiable {
+    case full
+    case short
+    case numeric
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .full:
+            return "Đầy đủ"
+        case .short:
+            return "Viết tắt"
+        case .numeric:
+            return "Số 1-7"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .full:
+            return "Hiển thị dạng Thứ Hai, Thứ Ba..."
+        case .short:
+            return "Hiển thị dạng T2, T3... như hiện nay"
+        case .numeric:
+            return "Hiển thị theo số đếm 1-7 (Thứ Hai = 1)"
+        }
+    }
+
+    func weekdayName(from weekday: Int?) -> String {
+        guard let weekday, (1 ... 7).contains(weekday) else {
+            return fallbackWeekdayName
+        }
+
+        switch self {
+        case .full:
+            return VietnameseLunarDateService.weekdayNames[weekday - 1]
+        case .short:
+            return VietnameseLunarDateService.weekdayShortNames[weekday - 1]
+        case .numeric:
+            return "\(isoWeekdayNumber(from: weekday))"
+        }
+    }
+
+    func weekdayShortName(from weekday: Int?) -> String {
+        guard let weekday, (1 ... 7).contains(weekday) else {
+            return fallbackWeekdayShortName
+        }
+
+        switch self {
+        case .full:
+            return VietnameseLunarDateService.weekdayShortNames[weekday - 1]
+        case .short:
+            return VietnameseLunarDateService.weekdayShortNames[weekday - 1]
+        case .numeric:
+            return "\(isoWeekdayNumber(from: weekday))"
+        }
+    }
+
+    var monthHeaderSymbols: [String] {
+        switch self {
+        case .full, .short:
+            return [2, 3, 4, 5, 6, 7, 1].map { VietnameseLunarDateService.weekdayShortNames[$0 - 1] }
+        case .numeric:
+            return (1 ... 7).map(String.init)
+        }
+    }
+
+    private var fallbackWeekdayName: String {
+        switch self {
+        case .full:
+            return VietnameseLunarDateService.weekdayNames[0]
+        case .short:
+            return VietnameseLunarDateService.weekdayShortNames[0]
+        case .numeric:
+            return "7"
+        }
+    }
+
+    private var fallbackWeekdayShortName: String {
+        switch self {
+        case .full, .short:
+            return VietnameseLunarDateService.weekdayShortNames[0]
+        case .numeric:
+            return "7"
+        }
+    }
+
+    private func isoWeekdayNumber(from weekday: Int) -> Int {
+        weekday == 1 ? 7 : weekday - 1
+    }
+}
+
 struct VietnameseLunarDateService {
     static let defaultTimeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
         ?? TimeZone(secondsFromGMT: 7 * 3600)
@@ -214,6 +307,14 @@ struct VietnameseLunarDateService {
             return Self.weekdayShortNames[0]
         }
         return Self.weekdayShortNames[weekday - 1]
+    }
+
+    func weekdayName(from weekday: Int?, style: WeekdayDisplayStyle) -> String {
+        style.weekdayName(from: weekday)
+    }
+
+    func weekdayShortName(from weekday: Int?, style: WeekdayDisplayStyle) -> String {
+        style.weekdayShortName(from: weekday)
     }
 
     private func hourInterval(for branchIndex: Int, on dayDate: Date) -> DateInterval? {

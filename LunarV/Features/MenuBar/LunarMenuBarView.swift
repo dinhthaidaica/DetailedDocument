@@ -9,7 +9,6 @@ struct LunarMenuBarView: View {
     @Environment(\.controlActiveState) private var controlActiveState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openWindow) private var openWindow
-    @State private var isHeroHovered = false
     @State private var hasAppeared = false
     @State private var converterMode: DateConverterMode = .solarToLunar
     @State private var solarConversionDate = Date()
@@ -38,9 +37,12 @@ struct LunarMenuBarView: View {
         cal.timeZone = VietnameseLunarDateService.defaultTimeZone
         return cal
     }()
-    private let weekdayHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
     private var solarInputDayRange: ClosedRange<Int> {
         1 ... solarDaysInMonth(month: solarInputMonth, year: solarInputYear)
+    }
+
+    private var isControlEffectivelyActive: Bool {
+        controlActiveState != .inactive
     }
 
     var body: some View {
@@ -50,7 +52,7 @@ struct LunarMenuBarView: View {
                 .overlay(
                     LinearGradient(
                         colors: [
-                            Color.accentColor.opacity(controlActiveState == .active ? 0.08 : 0.03),
+                            Color.accentColor.opacity(isControlEffectivelyActive ? 0.08 : 0.03),
                             Color.clear,
                         ],
                         startPoint: .topLeading,
@@ -182,7 +184,6 @@ struct LunarMenuBarView: View {
 
     private var heroCard: some View {
         let info = viewModel.info
-        let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.4 : 0.2
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -232,8 +233,7 @@ struct LunarMenuBarView: View {
             }
         }
         .padding(20)
-        .glassEffect(Material.regular, tint: Color.accentColor.opacity(tintOpacity), in: RoundedRectangle(cornerRadius: 24))
-        .onHover { h in withAnimation(.spring(duration: 0.3)) { isHeroHovered = h } }
+        .glassEffect(Material.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ngày âm lịch: \(info.weekdayText), ngày \(info.lunarDayText), \(info.lunarMonthYearText). Dương lịch: \(info.solarDateText). Pha trăng: \(info.lunarPhaseName). Tiết khí: \(info.solarTermText)")
     }
@@ -545,9 +545,9 @@ struct LunarMenuBarView: View {
         }) {
             VStack(spacing: 8) {
                 HStack(spacing: 0) {
-                    ForEach(weekdayHeaders, id: \.self) { day in
+                    ForEach(Array(viewModel.monthWeekdayHeaders.enumerated()), id: \.offset) { index, day in
                         Text(day).font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(day == "T7" || day == "CN" ? .red.opacity(0.8) : .primary.opacity(0.6))
+                            .foregroundStyle(index >= 5 ? .red.opacity(0.8) : .primary.opacity(0.6))
                             .frame(maxWidth: .infinity)
                     }
                 }
