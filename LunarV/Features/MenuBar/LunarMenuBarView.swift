@@ -50,7 +50,7 @@ struct LunarMenuBarView: View {
     var body: some View {
         ZStack(alignment: .top) {
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(Color(nsColor: .windowBackgroundColor).opacity(isControlEffectivelyActive ? 0.96 : 0.92))
                 .overlay(
                     LinearGradient(
                         colors: [
@@ -67,7 +67,10 @@ struct LunarMenuBarView: View {
                 topToolbar
                     .padding(.horizontal, MenuBarMetrics.panelPadding)
                     .padding(.vertical, 14)
-                    .background(.ultraThickMaterial.opacity(0.5))
+                    .background(
+                        Color(nsColor: .controlBackgroundColor)
+                            .opacity(isControlEffectivelyActive ? 0.52 : 0.44)
+                    )
                     .overlay(alignment: .bottom) {
                         Divider().opacity(0.1)
                     }
