@@ -790,11 +790,11 @@ final class AppSettings: ObservableObject {
     }
 
     private static func clampedMenuBarPanelWidth(_ value: Double) -> Double {
-        round(min(max(value, menuBarPanelWidthRange.lowerBound), menuBarPanelWidthRange.upperBound))
+        min(max(value, menuBarPanelWidthRange.lowerBound), menuBarPanelWidthRange.upperBound)
     }
 
     private static func clampedMenuBarPanelHeight(_ value: Double) -> Double {
-        round(min(max(value, menuBarPanelHeightRange.lowerBound), menuBarPanelHeightRange.upperBound))
+        min(max(value, menuBarPanelHeightRange.lowerBound), menuBarPanelHeightRange.upperBound)
     }
 
     private static func normalizedInternationalTimeZoneIDs(from rawValue: String) -> [String] {

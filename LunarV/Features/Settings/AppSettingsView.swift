@@ -2513,7 +2513,7 @@ struct AppSettingsView: View {
                 .foregroundStyle(.secondary)
                 .frame(minWidth: 28, alignment: .trailing)
 
-            Slider(value: value, in: range, step: 1)
+            Slider(value: value, in: range)
                 .controlSize(.small)
                 .tint(Color(nsColor: .controlAccentColor))
 
