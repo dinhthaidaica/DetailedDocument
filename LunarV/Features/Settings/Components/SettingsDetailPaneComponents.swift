@@ -86,7 +86,6 @@ struct SettingsNotificationsPane: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
-        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -235,7 +234,6 @@ struct SettingsUpdatesPane: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
-        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -388,7 +386,6 @@ struct SettingsSystemPane: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
-        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 
@@ -563,7 +560,6 @@ struct SettingsAboutPane: View {
             .frame(maxWidth: .infinity)
             .padding(14)
         }
-        .scrollIndicators(.hidden)
         .lunarSettingsBackground()
     }
 

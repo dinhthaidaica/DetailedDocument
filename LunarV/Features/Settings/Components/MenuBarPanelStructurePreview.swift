@@ -16,7 +16,7 @@ struct MenuBarPanelStructurePreview: View {
 
             Divider().opacity(0.1)
 
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: 10) {
                     if visibleCards.isEmpty {
                         emptyState
