@@ -72,6 +72,15 @@ struct LunarHoliday: Identifiable {
     let daysUntil: Int
 }
 
+struct InternationalTimeInfo: Identifiable {
+    let id: String
+    let city: String
+    let timeText: String
+    let weekdayText: String
+    let utcOffsetText: String
+    let relativeDayText: String
+}
+
 struct LunarMenuBarInfo {
     let weekdayText: String
     let solarDateText: String
@@ -101,6 +110,7 @@ struct LunarMenuBarInfo {
     let lunarPhaseIcon: String
     let lunarPhaseName: String
     let upcomingHolidays: [LunarHoliday]
+    let internationalTimes: [InternationalTimeInfo]
 
     static let placeholder = LunarMenuBarInfo(
         weekdayText: "--",
@@ -129,7 +139,8 @@ struct LunarMenuBarInfo {
         monthCells: [],
         lunarPhaseIcon: "moon.fill",
         lunarPhaseName: "--",
-        upcomingHolidays: []
+        upcomingHolidays: [],
+        internationalTimes: []
     )
 }
 

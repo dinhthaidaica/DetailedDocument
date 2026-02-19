@@ -245,6 +245,10 @@ struct LunarMenuBarView: View {
             if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
                 holidaysCard
             }
+        case .internationalTimes:
+            if viewModel.settings.showInternationalTimesSection {
+                internationalTimesCard
+            }
         case .monthCalendar:
             if viewModel.settings.showMonthCalendar {
                 monthCalendarCard
@@ -412,6 +416,56 @@ struct LunarMenuBarView: View {
                     }
                     .padding(10)
                     .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+        }
+    }
+
+    private var internationalTimesCard: some View {
+        SectionCard(title: "Giờ quốc tế", trailingView: {
+            Button("Sao chép") {
+                copyInternationalTimes()
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10, weight: .bold))
+            .foregroundStyle(Color.accentColor)
+            .help("Sao chép danh sách giờ quốc tế")
+        }) {
+            if viewModel.info.internationalTimes.isEmpty {
+                Text("Không có dữ liệu múi giờ quốc tế.")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(viewModel.info.internationalTimes) { cityTime in
+                        HStack(alignment: .top, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(cityTime.city)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(.primary)
+                                Text("\(cityTime.weekdayText) • \(cityTime.utcOffsetText)")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer(minLength: 0)
+
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(cityTime.timeText)
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Color.accentColor)
+                                Text(cityTime.relativeDayText)
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(10)
+                        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(cityTime.city), \(cityTime.timeText), \(cityTime.weekdayText), \(cityTime.relativeDayText), \(cityTime.utcOffsetText)")
+                    }
                 }
             }
         }
@@ -613,6 +667,16 @@ struct LunarMenuBarView: View {
         let info = viewModel.info
         let text = "\(info.weekdayText), \(info.solarDateText) (Âm lịch: \(info.lunarDateText) năm \(info.canChiYearText))"
         copyToPasteboard(text)
+    }
+
+    private func copyInternationalTimes() {
+        let lines = viewModel.info.internationalTimes.map {
+            "\($0.city): \($0.timeText) (\($0.weekdayText), \($0.utcOffsetText), \($0.relativeDayText))"
+        }
+        guard !lines.isEmpty else {
+            return
+        }
+        copyToPasteboard(lines.joined(separator: "\n"))
     }
 
     private func copyToPasteboard(_ text: String) {

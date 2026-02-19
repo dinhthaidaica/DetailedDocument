@@ -12,6 +12,7 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
     case auspiciousHours
     case dayGuidance
     case holidays
+    case internationalTimes
     case monthCalendar
     case dateConverter
     case detail
@@ -30,6 +31,8 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
             return "Gợi ý trong ngày"
         case .holidays:
             return "Sự kiện sắp tới"
+        case .internationalTimes:
+            return "Giờ quốc tế"
         case .monthCalendar:
             return "Lịch tháng"
         case .dateConverter:
@@ -51,6 +54,8 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
             return "Điểm ngày và gợi ý hoạt động"
         case .holidays:
             return "Các ngày lễ sắp tới"
+        case .internationalTimes:
+            return "Giờ hiện tại ở các múi giờ chính"
         case .monthCalendar:
             return "Lưới tháng dương - âm"
         case .dateConverter:
@@ -72,6 +77,8 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
             return "list.star"
         case .holidays:
             return "calendar.badge.clock"
+        case .internationalTimes:
+            return "globe"
         case .monthCalendar:
             return "calendar"
         case .dateConverter:
@@ -87,6 +94,7 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
         .auspiciousHours,
         .dayGuidance,
         .holidays,
+        .internationalTimes,
         .monthCalendar,
         .dateConverter,
         .detail,
@@ -119,6 +127,12 @@ enum PanelCardKind: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+struct InternationalTimeZonePreset: Identifiable, Hashable {
+    let id: String
+    let city: String
+    let country: String
+}
+
 @MainActor
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
@@ -131,6 +145,79 @@ final class AppSettings: ObservableObject {
     static let defaultMenuBarLeadingIconSize: Double = 14
     static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
     static let menuBarIconTitleSpacing: CGFloat = 4
+    static let availableInternationalTimeZones: [InternationalTimeZonePreset] = [
+        InternationalTimeZonePreset(id: "Asia/Ho_Chi_Minh", city: "Hà Nội", country: "Việt Nam"),
+        InternationalTimeZonePreset(id: "Asia/Bangkok", city: "Bangkok", country: "Thái Lan"),
+        InternationalTimeZonePreset(id: "Asia/Singapore", city: "Singapore", country: "Singapore"),
+        InternationalTimeZonePreset(id: "Asia/Hong_Kong", city: "Hồng Kông", country: "Trung Quốc"),
+        InternationalTimeZonePreset(id: "Asia/Tokyo", city: "Tokyo", country: "Nhật Bản"),
+        InternationalTimeZonePreset(id: "Asia/Seoul", city: "Seoul", country: "Hàn Quốc"),
+        InternationalTimeZonePreset(id: "Australia/Sydney", city: "Sydney", country: "Úc"),
+        InternationalTimeZonePreset(id: "Pacific/Auckland", city: "Auckland", country: "New Zealand"),
+        InternationalTimeZonePreset(id: "Asia/Dubai", city: "Dubai", country: "UAE"),
+        InternationalTimeZonePreset(id: "Asia/Kolkata", city: "Mumbai", country: "Ấn Độ"),
+        InternationalTimeZonePreset(id: "Europe/London", city: "London", country: "Anh"),
+        InternationalTimeZonePreset(id: "Europe/Paris", city: "Paris", country: "Pháp"),
+        InternationalTimeZonePreset(id: "Europe/Berlin", city: "Berlin", country: "Đức"),
+        InternationalTimeZonePreset(id: "America/New_York", city: "New York", country: "Mỹ"),
+        InternationalTimeZonePreset(id: "America/Chicago", city: "Chicago", country: "Mỹ"),
+        InternationalTimeZonePreset(id: "America/Denver", city: "Denver", country: "Mỹ"),
+        InternationalTimeZonePreset(id: "America/Los_Angeles", city: "Los Angeles", country: "Mỹ"),
+    ]
+    static let defaultInternationalTimeZoneIDs: [String] = [
+        "Asia/Ho_Chi_Minh",
+        "Asia/Tokyo",
+        "Australia/Sydney",
+        "Europe/London",
+        "America/New_York",
+        "America/Los_Angeles",
+    ]
+    private static let smartRecommendationLimit = 6
+    private static let smartRecommendationByRegionPrefix: [String: [String]] = [
+        "Asia": [
+            "Asia/Ho_Chi_Minh",
+            "Asia/Tokyo",
+            "Europe/London",
+            "America/New_York",
+            "America/Los_Angeles",
+            "Australia/Sydney",
+        ],
+        "Europe": [
+            "Europe/London",
+            "Europe/Paris",
+            "Asia/Ho_Chi_Minh",
+            "America/New_York",
+            "America/Los_Angeles",
+            "Asia/Tokyo",
+        ],
+        "America": [
+            "America/New_York",
+            "America/Chicago",
+            "America/Los_Angeles",
+            "Europe/London",
+            "Asia/Ho_Chi_Minh",
+            "Asia/Tokyo",
+        ],
+        "Australia": [
+            "Australia/Sydney",
+            "Asia/Ho_Chi_Minh",
+            "Asia/Tokyo",
+            "Europe/London",
+            "America/New_York",
+            "America/Los_Angeles",
+        ],
+        "Pacific": [
+            "Pacific/Auckland",
+            "Australia/Sydney",
+            "Asia/Ho_Chi_Minh",
+            "Asia/Tokyo",
+            "Europe/London",
+            "America/Los_Angeles",
+        ],
+    ]
+    private static let internationalTimeZoneByID = Dictionary(
+        uniqueKeysWithValues: availableInternationalTimeZones.map { ($0.id, $0) }
+    )
     private static let settingsBackupDirectoryName = "LunarV"
     private static let settingsBackupFileName = "settings-backup.plist"
     private static let legacyDefaultsSuites = [
@@ -150,11 +237,13 @@ final class AppSettings: ObservableObject {
         "settings.panel.showHeroCard": true,
         "settings.panel.showCanChiSection": true,
         "settings.panel.showHolidaySection": true,
+        "settings.panel.showInternationalTimesSection": true,
         "settings.panel.showMonthCalendar": true,
         "settings.panel.showAuspiciousHoursSection": true,
         "settings.panel.showDayGuidanceSection": true,
         "settings.panel.showDetailSection": true,
         "settings.panel.showDateConverter": true,
+        "settings.panel.internationalTimeZoneIDs": AppSettings.serializedInternationalTimeZoneIDs(AppSettings.defaultInternationalTimeZoneIDs),
         "settings.panel.cardOrder": PanelCardKind.serialized(PanelCardKind.defaultOrder),
         "settings.window.keepSettingsOnTop": true,
         "settings.notifications.enableHolidayNotifications": false,
@@ -180,11 +269,13 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showHeroCard") var showHeroCard: Bool = true
     @AppStorage("settings.panel.showCanChiSection") var showCanChiSection: Bool = true
     @AppStorage("settings.panel.showHolidaySection") var showHolidaySection: Bool = true
+    @AppStorage("settings.panel.showInternationalTimesSection") var showInternationalTimesSection: Bool = true
     @AppStorage("settings.panel.showMonthCalendar") var showMonthCalendar: Bool = true
     @AppStorage("settings.panel.showAuspiciousHoursSection") var showAuspiciousHoursSection: Bool = true
     @AppStorage("settings.panel.showDayGuidanceSection") var showDayGuidanceSection: Bool = true
     @AppStorage("settings.panel.showDetailSection") var showDetailSection: Bool = true
     @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
+    @AppStorage("settings.panel.internationalTimeZoneIDs") private var internationalTimeZoneIDsRaw: String = AppSettings.serializedInternationalTimeZoneIDs(AppSettings.defaultInternationalTimeZoneIDs)
     @AppStorage("settings.panel.cardOrder") private var panelCardOrderRaw: String = PanelCardKind.serialized(PanelCardKind.defaultOrder)
 
     // MARK: - Window Behavior
@@ -201,6 +292,7 @@ final class AppSettings: ObservableObject {
         normalizeMenuBarTitleFontSizeIfNeeded()
         normalizeMenuBarTitleFontFamilyIfNeeded()
         normalizeMenuBarLeadingIconSizeIfNeeded()
+        normalizeInternationalTimeZoneIDsIfNeeded()
         normalizePanelCardOrderIfNeeded()
         persistForUpdateSafety()
         observeDefaultsChangesForUpdateSafety()
@@ -315,6 +407,74 @@ final class AppSettings: ObservableObject {
         panelCardOrderRaw = PanelCardKind.serialized(PanelCardKind.defaultOrder)
     }
 
+    var selectedInternationalTimeZoneIDs: [String] {
+        Self.normalizedInternationalTimeZoneIDs(from: internationalTimeZoneIDsRaw)
+    }
+
+    var selectedInternationalTimeZones: [InternationalTimeZonePreset] {
+        selectedInternationalTimeZoneIDs.compactMap { Self.internationalTimeZoneByID[$0] }
+    }
+
+    var smartRecommendedInternationalTimeZones: [InternationalTimeZonePreset] {
+        let recommendedIDs = Self.smartRecommendedInternationalTimeZoneIDs(for: TimeZone.autoupdatingCurrent.identifier)
+        return recommendedIDs.compactMap { Self.internationalTimeZoneByID[$0] }
+    }
+
+    func isInternationalTimeZoneSelected(_ preset: InternationalTimeZonePreset) -> Bool {
+        selectedInternationalTimeZoneIDs.contains(preset.id)
+    }
+
+    func setInternationalTimeZoneSelected(_ isSelected: Bool, preset: InternationalTimeZonePreset) {
+        var nextIDs = selectedInternationalTimeZoneIDs
+        if isSelected {
+            guard !nextIDs.contains(preset.id) else {
+                return
+            }
+            nextIDs.append(preset.id)
+        } else {
+            guard nextIDs.contains(preset.id) else {
+                return
+            }
+            nextIDs.removeAll { $0 == preset.id }
+            guard !nextIDs.isEmpty else {
+                return
+            }
+        }
+
+        setInternationalTimeZoneIDs(nextIDs)
+    }
+
+    func moveInternationalTimeZone(fromOffsets: IndexSet, toOffset: Int) {
+        var nextIDs = selectedInternationalTimeZoneIDs
+        nextIDs.move(fromOffsets: fromOffsets, toOffset: toOffset)
+        setInternationalTimeZoneIDs(nextIDs)
+    }
+
+    func applySmartInternationalTimeZones() {
+        let recommendedIDs = Self.smartRecommendedInternationalTimeZoneIDs(for: TimeZone.autoupdatingCurrent.identifier)
+        setInternationalTimeZoneIDs(recommendedIDs)
+    }
+
+    func selectAllInternationalTimeZones() {
+        let allIDs = Self.availableInternationalTimeZones.map(\.id)
+        setInternationalTimeZoneIDs(allIDs)
+    }
+
+    func resetInternationalTimeZones() {
+        setInternationalTimeZoneIDs(Self.defaultInternationalTimeZoneIDs)
+    }
+
+    private func setInternationalTimeZoneIDs(_ ids: [String]) {
+        let normalizedIDs = Self.normalizedInternationalTimeZoneIDs(from: Self.serializedInternationalTimeZoneIDs(ids))
+        let nextRaw = Self.serializedInternationalTimeZoneIDs(normalizedIDs)
+        guard nextRaw != internationalTimeZoneIDsRaw else {
+            return
+        }
+
+        objectWillChange.send()
+        internationalTimeZoneIDsRaw = nextRaw
+    }
+
     func isPanelCardVisible(_ card: PanelCardKind) -> Bool {
         switch card {
         case .hero:
@@ -327,6 +487,8 @@ final class AppSettings: ObservableObject {
             return showDayGuidanceSection
         case .holidays:
             return showHolidaySection
+        case .internationalTimes:
+            return showInternationalTimesSection
         case .monthCalendar:
             return showMonthCalendar
         case .dateConverter:
@@ -348,6 +510,8 @@ final class AppSettings: ObservableObject {
             showDayGuidanceSection = isVisible
         case .holidays:
             showHolidaySection = isVisible
+        case .internationalTimes:
+            showInternationalTimesSection = isVisible
         case .monthCalendar:
             showMonthCalendar = isVisible
         case .dateConverter:
@@ -374,11 +538,13 @@ final class AppSettings: ObservableObject {
         showHeroCard = true
         showCanChiSection = true
         showHolidaySection = true
+        showInternationalTimesSection = true
         showMonthCalendar = true
         showAuspiciousHoursSection = true
         showDayGuidanceSection = true
         showDetailSection = true
         showDateConverter = true
+        resetInternationalTimeZones()
         resetPanelCardOrder()
         enableHolidayNotifications = false
         holidayReminderLeadDays = 1
@@ -420,6 +586,15 @@ final class AppSettings: ObservableObject {
         panelCardOrderRaw = normalized
     }
 
+    private func normalizeInternationalTimeZoneIDsIfNeeded() {
+        let normalizedIDs = Self.normalizedInternationalTimeZoneIDs(from: internationalTimeZoneIDsRaw)
+        let normalizedRaw = Self.serializedInternationalTimeZoneIDs(normalizedIDs)
+        guard normalizedRaw != internationalTimeZoneIDsRaw else {
+            return
+        }
+        internationalTimeZoneIDsRaw = normalizedRaw
+    }
+
     private func normalizeMenuBarTitleFontSizeIfNeeded() {
         let normalized = Self.clampedMenuBarTitleFontSize(menuBarTitleFontSizeStorage)
         guard normalized != menuBarTitleFontSizeStorage else {
@@ -450,6 +625,50 @@ final class AppSettings: ObservableObject {
 
     private static func clampedMenuBarLeadingIconSize(_ value: Double) -> Double {
         min(max(value, menuBarLeadingIconSizeRange.lowerBound), menuBarLeadingIconSizeRange.upperBound)
+    }
+
+    private static func normalizedInternationalTimeZoneIDs(from rawValue: String) -> [String] {
+        var normalized: [String] = []
+        var seen = Set<String>()
+
+        for rawID in rawValue.split(separator: ",").map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) {
+            guard internationalTimeZoneByID[rawID] != nil, !seen.contains(rawID) else {
+                continue
+            }
+            normalized.append(rawID)
+            seen.insert(rawID)
+        }
+
+        return normalized.isEmpty ? defaultInternationalTimeZoneIDs : normalized
+    }
+
+    private static func serializedInternationalTimeZoneIDs(_ ids: [String]) -> String {
+        ids.joined(separator: ",")
+    }
+
+    private static func smartRecommendedInternationalTimeZoneIDs(for localTimeZoneID: String) -> [String] {
+        let prefix = localTimeZoneID.split(separator: "/").first.map(String.init) ?? ""
+
+        var candidates: [String] = []
+        if internationalTimeZoneByID[localTimeZoneID] != nil {
+            candidates.append(localTimeZoneID)
+        }
+        if let regionBased = smartRecommendationByRegionPrefix[prefix] {
+            candidates.append(contentsOf: regionBased)
+        }
+        candidates.append(contentsOf: defaultInternationalTimeZoneIDs)
+
+        var recommended: [String] = []
+        var seen = Set<String>()
+        for id in candidates where internationalTimeZoneByID[id] != nil && !seen.contains(id) {
+            recommended.append(id)
+            seen.insert(id)
+            if recommended.count >= smartRecommendationLimit {
+                break
+            }
+        }
+
+        return recommended.isEmpty ? defaultInternationalTimeZoneIDs : recommended
     }
 
     private func restoreSettingsFromBackupIfNeeded() {

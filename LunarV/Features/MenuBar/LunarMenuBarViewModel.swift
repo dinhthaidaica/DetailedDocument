@@ -25,14 +25,19 @@ final class LunarMenuBarViewModel: ObservableObject {
     private struct RefreshSettings: Equatable {
         let displayPreset: MenuBarDisplayPreset
         let customTemplate: String
+        let showInternationalTimesSection: Bool
+        let selectedInternationalTimeZoneIDs: [String]
 
         init(settings: AppSettings) {
             displayPreset = settings.menuBarDisplayPreset
             customTemplate = settings.customMenuBarTemplate
+            showInternationalTimesSection = settings.showInternationalTimesSection
+            selectedInternationalTimeZoneIDs = settings.selectedInternationalTimeZoneIDs
         }
     }
 
     private static let maxCachedMonths = 24
+    private static let internationalClockLocale = Locale(identifier: "vi_VN")
 
     private let solarCalendar: Calendar
     private let lunarService: VietnameseLunarDateService
@@ -238,7 +243,8 @@ final class LunarMenuBarViewModel: ObservableObject {
             monthCells: monthCells,
             lunarPhaseIcon: phase.icon,
             lunarPhaseName: phase.name,
-            upcomingHolidays: upcomingHolidays(for: now)
+            upcomingHolidays: upcomingHolidays(for: now),
+            internationalTimes: buildInternationalTimes(now: now)
         )
     }
 
@@ -360,6 +366,89 @@ final class LunarMenuBarViewModel: ObservableObject {
         return holidays.sorted { $0.daysUntil < $1.daysUntil }
     }
 
+    private func buildInternationalTimes(now: Date) -> [InternationalTimeInfo] {
+        let localCalendar = Calendar.autoupdatingCurrent
+
+        return settings.selectedInternationalTimeZones.compactMap { preset -> InternationalTimeInfo? in
+            guard let timeZone = TimeZone(identifier: preset.id) else {
+                return nil
+            }
+
+            var targetCalendar = Calendar(identifier: .gregorian)
+            targetCalendar.timeZone = timeZone
+            let dayOffset = relativeDayOffset(at: now, localCalendar: localCalendar, targetCalendar: targetCalendar)
+
+            let timeText = formattedClockTime(now, timeZone: timeZone)
+            let weekdayText = formattedClockWeekday(now, timeZone: timeZone)
+
+            return InternationalTimeInfo(
+                id: preset.id,
+                city: preset.city,
+                timeText: timeText,
+                weekdayText: weekdayText,
+                utcOffsetText: formattedUTCOffset(for: timeZone, at: now),
+                relativeDayText: relativeDayText(for: dayOffset)
+            )
+        }
+    }
+
+    private func formattedUTCOffset(for timeZone: TimeZone, at date: Date) -> String {
+        let offsetMinutes = timeZone.secondsFromGMT(for: date) / 60
+        let sign = offsetMinutes >= 0 ? "+" : "-"
+        let absoluteMinutes = abs(offsetMinutes)
+        let hours = absoluteMinutes / 60
+        let minutes = absoluteMinutes % 60
+
+        if minutes == 0 {
+            return String(format: "UTC%@%02d", sign, hours)
+        }
+
+        return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
+    }
+
+    private func relativeDayOffset(at date: Date, localCalendar: Calendar, targetCalendar: Calendar) -> Int {
+        guard
+            let localDay = localCalendar.ordinality(of: .day, in: .era, for: date),
+            let targetDay = targetCalendar.ordinality(of: .day, in: .era, for: date)
+        else {
+            return 0
+        }
+
+        return targetDay - localDay
+    }
+
+    private func formattedClockTime(_ date: Date, timeZone: TimeZone) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Self.internationalClockLocale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func formattedClockWeekday(_ date: Date, timeZone: TimeZone) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Self.internationalClockLocale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "EEE"
+        let weekday = formatter.string(from: date)
+        return weekday.capitalized(with: Self.internationalClockLocale)
+    }
+
+    private func relativeDayText(for dayOffset: Int) -> String {
+        switch dayOffset {
+        case 0:
+            return "Hôm nay"
+        case 1:
+            return "Ngày mai"
+        case -1:
+            return "Hôm qua"
+        case let value where value > 1:
+            return "+\(value) ngày"
+        default:
+            return "\(dayOffset) ngày"
+        }
+    }
+
     private func formattedLunarDate(from lunarDate: LunarDate) -> String {
         var text = String(format: "%02d/%02d", lunarDate.day, lunarDate.month)
         if lunarDate.isLeapMonth {
@@ -421,10 +510,17 @@ final class LunarMenuBarViewModel: ObservableObject {
     private func scheduleRefresh(from now: Date) {
         refreshTask?.cancel()
 
-        let granularity = MenuBarTitleFormatter.refreshGranularity(
+        let titleGranularity = MenuBarTitleFormatter.refreshGranularity(
             preset: settings.menuBarDisplayPreset,
             customTemplate: settings.customMenuBarTemplate
         )
+        let needsWorldClockMinuteRefresh = settings.showInternationalTimesSection
+        let granularity: MenuBarTitleFormatter.RefreshGranularity
+        if needsWorldClockMinuteRefresh, titleGranularity == .daily {
+            granularity = .everyMinute
+        } else {
+            granularity = titleGranularity
+        }
 
         let delay: TimeInterval
         switch granularity {

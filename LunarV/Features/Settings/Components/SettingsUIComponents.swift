@@ -82,7 +82,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return [
                 "card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả",
                 "hero", "can chi", "con giáp", "giờ hoàng đạo", "gợi ý trong ngày",
-                "sự kiện sắp tới", "lịch tháng", "chuyển đổi nhanh", "thông tin khác"
+                "sự kiện sắp tới", "giờ quốc tế", "world clock", "timezone", "múi giờ", "thành phố", "utc", "lịch tháng",
+                "chuyển đổi nhanh", "thông tin khác"
             ]
         case .notifications:
             return [

@@ -1,4 +1,4 @@
-name: CI
+name: CodeQL
 
 on:
   push:
@@ -7,18 +7,25 @@ on:
   pull_request:
     branches:
       - main
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * 1"
 
 permissions:
+  actions: read
   contents: read
+  security-events: write
 
 jobs:
-  build:
-    name: Build & Test
+  analyze:
+    name: Analyze Swift
     runs-on: macos-26
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - swift
 
     steps:
       - name: Checkout
@@ -29,29 +36,25 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Build
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Build (manual for CodeQL)
         run: |
           xcodebuild build \
             -project LunarV.xcodeproj \
             -scheme LunarV \
             -configuration Debug \
+            -destination 'platform=macOS' \
             -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM="" \
-            | xcpretty
+            DEVELOPMENT_TEAM=""
 
-      - name: Test
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -project LunarV.xcodeproj \
-            -scheme LunarV \
-            -configuration Debug \
-            -skipPackagePluginValidation \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            DEVELOPMENT_TEAM="" \
-            | xcpretty
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

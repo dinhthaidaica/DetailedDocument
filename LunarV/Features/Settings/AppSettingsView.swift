@@ -17,6 +17,7 @@ struct AppSettingsView: View {
     @State private var searchText = ""
     @State private var isShowingFontPicker = false
     @State private var fontSearchText = ""
+    @State private var internationalTimeZoneSearchText = ""
     @State private var automaticallyChecksForUpdates: Bool
     @State private var updateCheckFrequency: UpdateCheckFrequency
 
@@ -238,7 +239,16 @@ struct AppSettingsView: View {
                 title: "Ẩn/hiện từng card",
                 subtitle: "Bật hoặc tắt thành phần trong menu",
                 icon: "eye",
-                keywords: ["ẩn", "hiện", "toggle", "visibility", "card", "thành phần"]
+                keywords: ["ẩn", "hiện", "toggle", "visibility", "card", "thành phần", "giờ quốc tế", "world clock", "timezone"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.internationalTimes",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Tuỳ chỉnh múi giờ quốc tế",
+                subtitle: "Chọn thành phố hiển thị trong card giờ quốc tế",
+                icon: "globe",
+                keywords: ["giờ quốc tế", "múi giờ", "timezone", "world clock", "city", "thành phố", "utc"]
             ),
             SettingsSearchEntry(
                 id: "panel.restoreDefaultOrder",
@@ -915,6 +925,8 @@ struct AppSettingsView: View {
                         }
                     }
                 }
+
+                internationalTimesSettingsCard
             }
             .frame(maxWidth: .infinity)
             .padding(14)
@@ -970,6 +982,256 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         }
+    }
+
+    private var internationalTimesSettingsCard: some View {
+        LunarSettingsCard(
+            title: "Giờ quốc tế",
+            subtitle: "Tuỳ chỉnh thành phố hiển thị trong card Giờ quốc tế",
+            icon: "globe"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text("Bật/tắt từng thành phố để rút gọn danh sách giờ theo nhu cầu của bạn.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+
+                    LunarSettingsStatusPill(text: "\(settings.selectedInternationalTimeZones.count) múi giờ", color: .accentColor)
+                }
+
+                if !settings.showInternationalTimesSection {
+                    Text("Card \"Giờ quốc tế\" hiện đang bị ẩn trong danh sách thành phần. Bạn có thể bật lại ở phần trên.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                }
+
+                HStack(spacing: 8) {
+                    Button("Gợi ý thông minh") {
+                        settings.applySmartInternationalTimeZones()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Chọn tất cả") {
+                        settings.selectAllInternationalTimeZones()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Mặc định") {
+                        settings.resetInternationalTimeZones()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Spacer(minLength: 0)
+                }
+
+                if !smartInternationalTimeZoneSuggestions.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Gợi ý nhanh theo múi giờ máy")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+
+                        ScrollView(.horizontal) {
+                            HStack(spacing: 8) {
+                                ForEach(smartInternationalTimeZoneSuggestions) { preset in
+                                    Button {
+                                        settings.setInternationalTimeZoneSelected(true, preset: preset)
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "plus")
+                                                .font(.system(size: 9, weight: .bold))
+                                            Text(preset.city)
+                                                .font(.system(size: 11, weight: .semibold))
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                TextField("Tìm thành phố hoặc mã múi giờ (vd: Tokyo, America/New_York)...", text: $internationalTimeZoneSearchText)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 12))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Đang hiển thị (thứ tự từ trên xuống dưới)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    if settings.selectedInternationalTimeZones.isEmpty {
+                        Text("Chưa có múi giờ nào được chọn.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(Array(settings.selectedInternationalTimeZones.enumerated()), id: \.element.id) { index, preset in
+                            selectedInternationalTimeZoneRow(
+                                for: preset,
+                                index: index,
+                                totalCount: settings.selectedInternationalTimeZones.count
+                            )
+                        }
+                    }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Thêm múi giờ")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    if filteredAvailableInternationalTimeZones.isEmpty {
+                        Text("Không còn múi giờ phù hợp với từ khóa tìm kiếm.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 6)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 8) {
+                                ForEach(filteredAvailableInternationalTimeZones) { preset in
+                                    availableInternationalTimeZoneRow(for: preset)
+                                }
+                            }
+                            .padding(1)
+                        }
+                        .frame(maxHeight: 220)
+                    }
+                }
+
+                Text("Luôn giữ ít nhất 1 múi giờ để card Giờ quốc tế luôn có dữ liệu hiển thị.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func selectedInternationalTimeZoneRow(
+        for preset: InternationalTimeZonePreset,
+        index: Int,
+        totalCount: Int
+    ) -> some View {
+        let isOnlySelection = totalCount == 1
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(preset.city)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id))")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(internationalCurrentTimeText(for: preset.id))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.accentColor)
+                Text(internationalRelativeDayText(for: preset.id))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 4) {
+                Button {
+                    moveSelectedInternationalTimeZone(id: preset.id, direction: -1)
+                } label: {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .bold))
+                        .frame(width: 20, height: 20)
+                        .background(Color.primary.opacity(0.06), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(index == 0)
+                .help("Đưa lên trên")
+
+                Button {
+                    moveSelectedInternationalTimeZone(id: preset.id, direction: 1)
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .frame(width: 20, height: 20)
+                        .background(Color.primary.opacity(0.06), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(index == totalCount - 1)
+                .help("Đưa xuống dưới")
+            }
+
+            Toggle("", isOn: internationalTimeZoneBinding(for: preset))
+                .labelsHidden()
+                .lunarSettingsSwitchToggle()
+                .frame(width: 40, alignment: .trailing)
+                .disabled(isOnlySelection)
+                .help(isOnlySelection ? "Cần giữ tối thiểu 1 múi giờ" : "Bỏ chọn múi giờ này")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private func availableInternationalTimeZoneRow(for preset: InternationalTimeZonePreset) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(preset.city)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id))")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(internationalCurrentTimeText(for: preset.id))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.accentColor)
+                Text(internationalRelativeDayText(for: preset.id))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            Button {
+                settings.setInternationalTimeZoneSelected(true, preset: preset)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .bold))
+                    .frame(width: 24, height: 24)
+                    .background(Color.accentColor.opacity(0.16), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Thêm vào danh sách hiển thị")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+        )
     }
 
     // MARK: - Notifications Pane
@@ -1404,6 +1666,129 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         )
+    }
+
+    private var internationalTimeZoneSearchQuery: String {
+        normalizedSearchValue(internationalTimeZoneSearchText)
+    }
+
+    private var filteredAvailableInternationalTimeZones: [InternationalTimeZonePreset] {
+        AppSettings.availableInternationalTimeZones.filter { preset in
+            !settings.isInternationalTimeZoneSelected(preset) && matchesInternationalTimeZoneSearch(preset)
+        }
+    }
+
+    private var smartInternationalTimeZoneSuggestions: [InternationalTimeZonePreset] {
+        settings.smartRecommendedInternationalTimeZones.filter { preset in
+            !settings.isInternationalTimeZoneSelected(preset) && matchesInternationalTimeZoneSearch(preset)
+        }
+    }
+
+    private func matchesInternationalTimeZoneSearch(_ preset: InternationalTimeZonePreset) -> Bool {
+        let query = internationalTimeZoneSearchQuery
+        guard !query.isEmpty else {
+            return true
+        }
+
+        let candidates = [
+            preset.city,
+            preset.country,
+            preset.id,
+            utcOffsetText(for: preset.id),
+        ]
+
+        return candidates.contains { normalizedSearchValue($0).contains(query) }
+    }
+
+    private func moveSelectedInternationalTimeZone(id: String, direction: Int) {
+        let currentIDs = settings.selectedInternationalTimeZoneIDs
+        guard
+            let sourceIndex = currentIDs.firstIndex(of: id)
+        else {
+            return
+        }
+
+        let targetIndex = sourceIndex + direction
+        guard targetIndex >= 0, targetIndex < currentIDs.count else {
+            return
+        }
+
+        let destination = direction > 0 ? targetIndex + 1 : targetIndex
+        settings.moveInternationalTimeZone(
+            fromOffsets: IndexSet(integer: sourceIndex),
+            toOffset: destination
+        )
+    }
+
+    private func internationalTimeZoneBinding(for preset: InternationalTimeZonePreset) -> Binding<Bool> {
+        Binding(
+            get: { settings.isInternationalTimeZoneSelected(preset) },
+            set: { isSelected in
+                settings.setInternationalTimeZoneSelected(isSelected, preset: preset)
+            }
+        )
+    }
+
+    private func utcOffsetText(for timeZoneIdentifier: String) -> String {
+        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
+            return "UTC?"
+        }
+
+        let offsetMinutes = timeZone.secondsFromGMT(for: Date()) / 60
+        let sign = offsetMinutes >= 0 ? "+" : "-"
+        let absoluteMinutes = abs(offsetMinutes)
+        let hours = absoluteMinutes / 60
+        let minutes = absoluteMinutes % 60
+
+        if minutes == 0 {
+            return String(format: "UTC%@%02d", sign, hours)
+        }
+
+        return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
+    }
+
+    private func internationalCurrentTimeText(for timeZoneIdentifier: String) -> String {
+        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
+            return "--:--"
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "vi_VN")
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: Date())
+    }
+
+    private func internationalRelativeDayText(for timeZoneIdentifier: String) -> String {
+        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
+            return ""
+        }
+
+        let now = Date()
+        let localCalendar = Calendar.autoupdatingCurrent
+        var targetCalendar = Calendar(identifier: .gregorian)
+        targetCalendar.timeZone = timeZone
+
+        guard
+            let localDay = localCalendar.ordinality(of: .day, in: .era, for: now),
+            let targetDay = targetCalendar.ordinality(of: .day, in: .era, for: now)
+        else {
+            return "Hôm nay"
+        }
+
+        let dayOffset = targetDay - localDay
+        switch dayOffset {
+        case 0:
+            return "Hôm nay"
+        case 1:
+            return "Ngày mai"
+        case -1:
+            return "Hôm qua"
+        case let value where value > 1:
+            return "+\(value) ngày"
+        default:
+            return "\(dayOffset) ngày"
+        }
     }
 
     @ViewBuilder
