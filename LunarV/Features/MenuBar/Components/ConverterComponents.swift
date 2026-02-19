@@ -55,12 +55,15 @@ struct ConverterModeSelector: View {
                     .foregroundStyle(isActive ? Color.accentColor : .primary.opacity(0.5))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
+                    .contentShape(Rectangle())
                     .background(
                         RoundedRectangle(cornerRadius: 10)
                             .fill(isActive ? Color.accentColor.opacity(0.14) : .clear)
                     )
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
             }
         }
         .padding(3)
