@@ -127,6 +127,7 @@ struct LunarVApp: App {
             AppSettingsView(updater: updaterController.updater)
                 .environmentObject(settings)
                 .environmentObject(notificationManager)
+                .environmentObject(viewModel)
         }
         .defaultSize(width: 820, height: 600)
         .windowResizability(.contentSize)

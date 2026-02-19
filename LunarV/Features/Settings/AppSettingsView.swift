@@ -11,6 +11,7 @@ struct AppSettingsView: View {
 
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var notificationManager: HolidayNotificationManager
+    @EnvironmentObject var menuBarViewModel: LunarMenuBarViewModel
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var selectedPane: SettingsPane = .appearance
     @State private var isShowingResetDialog = false
@@ -23,6 +24,7 @@ struct AppSettingsView: View {
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
+    private let panelSizeValueColumnWidth: CGFloat = 86
     private let recommendedFontFamilies = [
         "SF Pro Text",
         "Avenir Next",
@@ -143,7 +145,8 @@ struct AppSettingsView: View {
 
     private var sidebarWidth: CGFloat {
         let font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        let maxTitleWidth = SettingsPane.allCases
+        let widthSource = hasActiveSearchQuery ? filteredPanes : orderedSettingsPanes
+        let maxTitleWidth = widthSource
             .map { pane -> CGFloat in
                 (pane.title as NSString).size(withAttributes: [.font: font]).width
             }
@@ -239,16 +242,97 @@ struct AppSettingsView: View {
                 title: "Ẩn/hiện từng card",
                 subtitle: "Bật hoặc tắt thành phần trong menu",
                 icon: "eye",
-                keywords: ["ẩn", "hiện", "toggle", "visibility", "card", "thành phần", "giờ quốc tế", "world clock", "timezone"]
+                keywords: ["ẩn", "hiện", "toggle", "visibility", "card", "thành phần", "menu", "hero", "can chi", "giờ hoàng đạo", "gợi ý", "lịch tháng", "chuyển đổi"]
             ),
             SettingsSearchEntry(
-                id: "panel.internationalTimes",
+                id: "panel.visibilityBulk",
                 pane: .panel,
                 section: "Bảng điều khiển",
+                title: "Hiện tất cả hoặc ẩn tất cả card",
+                subtitle: "Thao tác nhanh toàn bộ thành phần",
+                icon: "rectangle.on.rectangle.angled",
+                keywords: ["hiện tất cả", "ẩn tất cả", "bulk", "all cards", "batch", "hàng loạt"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.windowSize",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Kích thước cửa sổ menu bar",
+                subtitle: "Điều chỉnh chiều rộng và chiều cao popup menu",
+                icon: "arrow.up.left.and.arrow.down.right",
+                keywords: ["kích thước", "size", "panel size", "popup", "chiều rộng", "chiều cao", "width", "height", "menu bar"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.windowSizePreset",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Preset kích thước cửa sổ",
+                subtitle: "Áp dụng nhanh cỡ Gọn, Tiêu chuẩn hoặc Rộng",
+                icon: "rectangle.3.group.bubble.left",
+                keywords: ["gọn", "tiêu chuẩn", "rộng", "preset size", "mặc định", "default size"]
+            ),
+            SettingsSearchEntry(
+                id: "panel.windowSizeLivePreview",
+                pane: .panel,
+                section: "Bảng điều khiển",
+                title: "Xem trước kích thước theo thời gian thực",
+                subtitle: "Xem trực tiếp giao diện menu bar ngay trong Cài đặt khi kéo slider",
+                icon: "play.rectangle.on.rectangle",
+                keywords: ["xem trước", "preview", "thời gian thực", "real time", "live preview", "slider", "inline", "trực tiếp"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.selection",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
                 title: "Tuỳ chỉnh múi giờ quốc tế",
                 subtitle: "Chọn thành phố hiển thị trong card giờ quốc tế",
                 icon: "globe",
                 keywords: ["giờ quốc tế", "múi giờ", "timezone", "world clock", "city", "thành phố", "utc"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.smart",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
+                title: "Gợi ý thông minh theo múi giờ máy",
+                subtitle: "Áp dụng nhanh danh sách múi giờ phù hợp theo khu vực hiện tại",
+                icon: "sparkles",
+                keywords: ["smart", "thông minh", "gợi ý", "timezone suggestion", "auto"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.selectAll",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
+                title: "Chọn tất cả hoặc về mặc định múi giờ",
+                subtitle: "Tác vụ nhanh cho toàn bộ danh sách thành phố",
+                icon: "checklist",
+                keywords: ["chọn tất cả", "mặc định", "reset timezone", "all cities", "default timezones"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.search",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
+                title: "Tìm thành phố hoặc mã múi giờ",
+                subtitle: "Lọc nhanh theo tên thành phố, quốc gia hoặc mã UTC",
+                icon: "magnifyingglass",
+                keywords: ["tìm thành phố", "search city", "timezone id", "utc+7", "america/new_york"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.order",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
+                title: "Sắp xếp thứ tự múi giờ hiển thị",
+                subtitle: "Đưa múi giờ lên trên hoặc xuống dưới",
+                icon: "arrow.up.and.down.text.horizontal",
+                keywords: ["thứ tự múi giờ", "đưa lên", "đưa xuống", "reorder timezone", "sort"]
+            ),
+            SettingsSearchEntry(
+                id: "worldClock.addRemove",
+                pane: .worldClock,
+                section: "Giờ quốc tế",
+                title: "Thêm hoặc bỏ múi giờ",
+                subtitle: "Bật/tắt thành phố trong danh sách hiển thị",
+                icon: "plusminus.circle",
+                keywords: ["thêm múi giờ", "xoá múi giờ", "bỏ chọn", "remove timezone", "toggle city"]
             ),
             SettingsSearchEntry(
                 id: "panel.restoreDefaultOrder",
@@ -294,6 +378,15 @@ struct AppSettingsView: View {
                 subtitle: "Tính trước các ngày lễ trong khoảng thời gian chọn",
                 icon: "calendar.badge.plus",
                 keywords: ["30 ngày", "60 ngày", "90 ngày", "180 ngày", "window days", "lập lịch"]
+            ),
+            SettingsSearchEntry(
+                id: "notifications.permissionState",
+                pane: .notifications,
+                section: "Nhắc ngày lễ",
+                title: "Trạng thái quyền thông báo",
+                subtitle: "Kiểm tra ứng dụng đã được cấp quyền gửi thông báo hay chưa",
+                icon: "checkmark.shield",
+                keywords: ["quyền thông báo", "notification permission", "authorization status", "đã cấp quyền"]
             ),
             SettingsSearchEntry(
                 id: "updates.autoCheck",
@@ -383,15 +476,19 @@ struct AppSettingsView: View {
         filteredPanes(for: searchText)
     }
 
+    private var orderedSettingsPanes: [SettingsPane] {
+        SettingsPane.defaultOrder
+    }
+
     private func filteredPanes(for query: String) -> [SettingsPane] {
         let normalizedQuery = normalizedSearchValue(query)
         guard !normalizedQuery.isEmpty else {
-            return SettingsPane.allCases
+            return orderedSettingsPanes
         }
         let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
         let resultPanes = Set(searchResults(for: query).map(\.pane))
 
-        return SettingsPane.allCases.filter { pane in
+        return orderedSettingsPanes.filter { pane in
             resultPanes.contains(pane) ||
             matchesSearchQuery(
                 normalizedQuery: normalizedQuery,
@@ -412,7 +509,7 @@ struct AppSettingsView: View {
         }
         let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
         let paneOrderMap = Dictionary(
-            uniqueKeysWithValues: SettingsPane.allCases.enumerated().map { ($1, $0) }
+            uniqueKeysWithValues: orderedSettingsPanes.enumerated().map { ($1, $0) }
         )
 
         return settingsSearchIndex
@@ -495,7 +592,10 @@ struct AppSettingsView: View {
     }
 
     private func paneSearchValues(for pane: SettingsPane) -> [String] {
-        [pane.title, pane.subtitle] + pane.searchKeywords
+        let indexedFeatureValues = settingsSearchIndex
+            .filter { $0.pane == pane }
+            .flatMap { [$0.section, $0.title, $0.subtitle] + $0.keywords }
+        return [pane.title, pane.subtitle] + pane.searchKeywords + indexedFeatureValues
     }
 
     private func normalizedSearchValue(_ value: String) -> String {
@@ -518,6 +618,8 @@ struct AppSettingsView: View {
                 appearancePane
             case .panel:
                 panelPane
+            case .worldClock:
+                worldClockPane
             case .notifications:
                 notificationsPane
             case .updates:
@@ -589,7 +691,7 @@ struct AppSettingsView: View {
     private var searchResultGroups: [SettingsSearchResultGroup] {
         let groupedResults = Dictionary(grouping: searchResults, by: \.pane)
 
-        return SettingsPane.allCases.compactMap { pane in
+        return orderedSettingsPanes.compactMap { pane in
             guard let results = groupedResults[pane], !results.isEmpty else {
                 return nil
             }
@@ -926,7 +1028,7 @@ struct AppSettingsView: View {
                     }
                 }
 
-                internationalTimesSettingsCard
+                panelWindowSizeSettingsCard
             }
             .frame(maxWidth: .infinity)
             .padding(14)
@@ -982,6 +1084,163 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         }
+    }
+
+    private var panelWindowSizeSettingsCard: some View {
+        LunarSettingsCard(
+            title: "Kích thước cửa sổ Menu Bar",
+            subtitle: "Điều chỉnh chiều rộng và chiều cao popup",
+            icon: "arrow.up.left.and.arrow.down.right"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                settingsInfoRow(
+                    title: "Kích thước hiện tại",
+                    value: "\(Int(settings.menuBarPanelWidthValue)) × \(Int(settings.menuBarPanelHeightValue))"
+                )
+
+                menuBarPanelInlinePreview
+
+                panelSizeSliderRow(
+                    title: "Chiều rộng",
+                    valueText: "\(Int(settings.menuBarPanelWidthValue)) px",
+                    value: menuBarPanelWidthBinding,
+                    range: AppSettings.menuBarPanelWidthRange
+                )
+
+                panelSizeSliderRow(
+                    title: "Chiều cao",
+                    valueText: "\(Int(settings.menuBarPanelHeightValue)) px",
+                    value: menuBarPanelHeightBinding,
+                    range: AppSettings.menuBarPanelHeightRange
+                )
+
+                HStack(spacing: 8) {
+                    Button("Gọn") {
+                        applyMenuBarPanelSizePreset(AppSettings.compactMenuBarPanelSize)
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
+
+                    Button("Tiêu chuẩn") {
+                        applyMenuBarPanelSizePreset(AppSettings.standardMenuBarPanelSize)
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
+
+                    Button("Rộng") {
+                        applyMenuBarPanelSizePreset(AppSettings.expandedMenuBarPanelSize)
+                    }
+                    .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
+
+                    Button("Mặc định") {
+                        settings.resetMenuBarPanelSize()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity)
+                }
+
+                Text("Thay đổi áp dụng ngay khi mở menu, nên ưu tiên cỡ vừa để dễ thao tác trên màn hình nhỏ.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var menuBarPanelInlinePreview: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Xem trước trực tiếp (đúng giao diện menu bar)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            GeometryReader { proxy in
+                let targetWidth = settings.menuBarPanelWidthCGFloat
+                let targetHeight = settings.menuBarPanelHeightCGFloat
+                let maxPreviewHeight: CGFloat = 300
+                let widthScale = max(proxy.size.width, 1) / max(targetWidth, 1)
+                let heightScale = maxPreviewHeight / max(targetHeight, 1)
+                let scale = min(widthScale, heightScale, 1)
+                let scaledWidth = targetWidth * scale
+                let scaledHeight = targetHeight * scale
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.primary.opacity(0.04))
+
+                    LunarMenuBarView(viewModel: menuBarViewModel)
+                        .frame(width: targetWidth, height: targetHeight, alignment: .top)
+                        .scaleEffect(scale, anchor: .center)
+                        .frame(width: scaledWidth, height: scaledHeight, alignment: .center)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                        )
+                        .allowsHitTesting(false)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            }
+            .frame(height: 300)
+
+            Text("Kéo slider để xem thay đổi theo thời gian thực ngay tại đây.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func panelSizeSliderRow(
+        title: String,
+        valueText: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+
+                Spacer(minLength: 0)
+
+                Text(valueText)
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: panelSizeValueColumnWidth, alignment: .trailing)
+            }
+
+            continuousMacSlider(
+                value: value,
+                range: range
+            )
+        }
+    }
+
+    // MARK: - World Clock Pane
+
+    private var worldClockPane: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                LunarSettingsHeader(
+                    title: "Giờ quốc tế",
+                    subtitle: "Thiết lập danh sách múi giờ hiển thị trong card World Clock.",
+                    icon: "globe.americas.fill"
+                ) {
+                    VStack(alignment: .trailing, spacing: 6) {
+                        LunarSettingsStatusPill(text: "\(settings.selectedInternationalTimeZones.count) múi giờ", color: .accentColor)
+                        LunarSettingsStatusPill(
+                            text: settings.showInternationalTimesSection ? "Card giờ quốc tế: Bật" : "Card giờ quốc tế: Tắt",
+                            color: settings.showInternationalTimesSection ? .green : .secondary
+                        )
+                    }
+                }
+
+                internationalTimesSettingsCard
+            }
+            .frame(maxWidth: .infinity)
+            .padding(14)
+        }
+        .lunarSettingsBackground()
     }
 
     private var internationalTimesSettingsCard: some View {
@@ -2012,9 +2271,30 @@ struct AppSettingsView: View {
         )
     }
 
+    private var menuBarPanelWidthBinding: Binding<Double> {
+        Binding(
+            get: { settings.menuBarPanelWidthValue },
+            set: { settings.setMenuBarPanelWidth($0) }
+        )
+    }
+
+    private var menuBarPanelHeightBinding: Binding<Double> {
+        Binding(
+            get: { settings.menuBarPanelHeightValue },
+            set: { settings.setMenuBarPanelHeight($0) }
+        )
+    }
+
     private var menuBarLeadingIconPreviewSize: CGFloat {
         let statusBarMax = max(NSStatusBar.system.thickness - 2, 10)
         return min(settings.menuBarLeadingIconSizeCGFloat, statusBarMax)
+    }
+
+    private func applyMenuBarPanelSizePreset(_ size: CGSize) {
+        settings.setMenuBarPanelSize(
+            width: size.width,
+            height: size.height
+        )
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -2022,7 +2302,10 @@ struct AppSettingsView: View {
     }
 
     @ViewBuilder
-    private func continuousMacSlider(value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+    private func continuousMacSlider(
+        value: Binding<Double>,
+        range: ClosedRange<Double>
+    ) -> some View {
         HStack(spacing: 8) {
             Text("\(Int(range.lowerBound))")
                 .font(.caption2)

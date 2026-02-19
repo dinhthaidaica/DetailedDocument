@@ -76,7 +76,11 @@ struct LunarMenuBarView: View {
             }
         }
         .tint(.accentColor)
-        .frame(width: MenuBarMetrics.panelSize.width, height: MenuBarMetrics.panelSize.height, alignment: .top)
+        .frame(
+            width: viewModel.settings.menuBarPanelWidthCGFloat,
+            height: viewModel.settings.menuBarPanelHeightCGFloat,
+            alignment: .top
+        )
         .task {
             if !hasAppeared {
                 if reduceMotion {

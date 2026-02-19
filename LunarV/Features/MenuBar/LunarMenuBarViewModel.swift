@@ -27,12 +27,16 @@ final class LunarMenuBarViewModel: ObservableObject {
         let customTemplate: String
         let showInternationalTimesSection: Bool
         let selectedInternationalTimeZoneIDs: [String]
+        let panelWidth: Double
+        let panelHeight: Double
 
         init(settings: AppSettings) {
             displayPreset = settings.menuBarDisplayPreset
             customTemplate = settings.customMenuBarTemplate
             showInternationalTimesSection = settings.showInternationalTimesSection
             selectedInternationalTimeZoneIDs = settings.selectedInternationalTimeZoneIDs
+            panelWidth = settings.menuBarPanelWidthValue
+            panelHeight = settings.menuBarPanelHeightValue
         }
     }
 

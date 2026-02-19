@@ -145,6 +145,13 @@ final class AppSettings: ObservableObject {
     static let defaultMenuBarLeadingIconSize: Double = 14
     static let menuBarLeadingIconSizeRange: ClosedRange<Double> = 10 ... 18
     static let menuBarIconTitleSpacing: CGFloat = 4
+    static let defaultMenuBarPanelWidth: Double = 360
+    static let defaultMenuBarPanelHeight: Double = 600
+    static let menuBarPanelWidthRange: ClosedRange<Double> = 320 ... 520
+    static let menuBarPanelHeightRange: ClosedRange<Double> = 500 ... 860
+    static let compactMenuBarPanelSize = CGSize(width: 340, height: 560)
+    static let standardMenuBarPanelSize = CGSize(width: defaultMenuBarPanelWidth, height: defaultMenuBarPanelHeight)
+    static let expandedMenuBarPanelSize = CGSize(width: 420, height: 700)
     static let availableInternationalTimeZones: [InternationalTimeZonePreset] = [
         InternationalTimeZonePreset(id: "Asia/Ho_Chi_Minh", city: "Hà Nội", country: "Việt Nam"),
         InternationalTimeZonePreset(id: "Asia/Bangkok", city: "Bangkok", country: "Thái Lan"),
@@ -243,6 +250,8 @@ final class AppSettings: ObservableObject {
         "settings.panel.showDayGuidanceSection": true,
         "settings.panel.showDetailSection": true,
         "settings.panel.showDateConverter": true,
+        "settings.panel.windowWidth": AppSettings.defaultMenuBarPanelWidth,
+        "settings.panel.windowHeight": AppSettings.defaultMenuBarPanelHeight,
         "settings.panel.internationalTimeZoneIDs": AppSettings.serializedInternationalTimeZoneIDs(AppSettings.defaultInternationalTimeZoneIDs),
         "settings.panel.cardOrder": PanelCardKind.serialized(PanelCardKind.defaultOrder),
         "settings.window.keepSettingsOnTop": true,
@@ -275,6 +284,8 @@ final class AppSettings: ObservableObject {
     @AppStorage("settings.panel.showDayGuidanceSection") var showDayGuidanceSection: Bool = true
     @AppStorage("settings.panel.showDetailSection") var showDetailSection: Bool = true
     @AppStorage("settings.panel.showDateConverter") var showDateConverter: Bool = true
+    @AppStorage("settings.panel.windowWidth") private var menuBarPanelWidthStorage: Double = AppSettings.defaultMenuBarPanelWidth
+    @AppStorage("settings.panel.windowHeight") private var menuBarPanelHeightStorage: Double = AppSettings.defaultMenuBarPanelHeight
     @AppStorage("settings.panel.internationalTimeZoneIDs") private var internationalTimeZoneIDsRaw: String = AppSettings.serializedInternationalTimeZoneIDs(AppSettings.defaultInternationalTimeZoneIDs)
     @AppStorage("settings.panel.cardOrder") private var panelCardOrderRaw: String = PanelCardKind.serialized(PanelCardKind.defaultOrder)
 
@@ -292,6 +303,7 @@ final class AppSettings: ObservableObject {
         normalizeMenuBarTitleFontSizeIfNeeded()
         normalizeMenuBarTitleFontFamilyIfNeeded()
         normalizeMenuBarLeadingIconSizeIfNeeded()
+        normalizeMenuBarPanelSizeIfNeeded()
         normalizeInternationalTimeZoneIDsIfNeeded()
         normalizePanelCardOrderIfNeeded()
         persistForUpdateSafety()
@@ -405,6 +417,58 @@ final class AppSettings: ObservableObject {
 
     func resetPanelCardOrder() {
         panelCardOrderRaw = PanelCardKind.serialized(PanelCardKind.defaultOrder)
+    }
+
+    var menuBarPanelWidthValue: Double {
+        Self.clampedMenuBarPanelWidth(menuBarPanelWidthStorage)
+    }
+
+    var menuBarPanelHeightValue: Double {
+        Self.clampedMenuBarPanelHeight(menuBarPanelHeightStorage)
+    }
+
+    var menuBarPanelWidthCGFloat: CGFloat {
+        CGFloat(menuBarPanelWidthValue)
+    }
+
+    var menuBarPanelHeightCGFloat: CGFloat {
+        CGFloat(menuBarPanelHeightValue)
+    }
+
+    func setMenuBarPanelWidth(_ width: Double) {
+        let clamped = Self.clampedMenuBarPanelWidth(width)
+        guard clamped != menuBarPanelWidthStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarPanelWidthStorage = clamped
+    }
+
+    func setMenuBarPanelHeight(_ height: Double) {
+        let clamped = Self.clampedMenuBarPanelHeight(height)
+        guard clamped != menuBarPanelHeightStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarPanelHeightStorage = clamped
+    }
+
+    func setMenuBarPanelSize(width: Double, height: Double) {
+        let clampedWidth = Self.clampedMenuBarPanelWidth(width)
+        let clampedHeight = Self.clampedMenuBarPanelHeight(height)
+        guard clampedWidth != menuBarPanelWidthStorage || clampedHeight != menuBarPanelHeightStorage else {
+            return
+        }
+        objectWillChange.send()
+        menuBarPanelWidthStorage = clampedWidth
+        menuBarPanelHeightStorage = clampedHeight
+    }
+
+    func resetMenuBarPanelSize() {
+        setMenuBarPanelSize(
+            width: Self.defaultMenuBarPanelWidth,
+            height: Self.defaultMenuBarPanelHeight
+        )
     }
 
     var selectedInternationalTimeZoneIDs: [String] {
@@ -544,6 +608,7 @@ final class AppSettings: ObservableObject {
         showDayGuidanceSection = true
         showDetailSection = true
         showDateConverter = true
+        resetMenuBarPanelSize()
         resetInternationalTimeZones()
         resetPanelCardOrder()
         enableHolidayNotifications = false
@@ -595,6 +660,18 @@ final class AppSettings: ObservableObject {
         internationalTimeZoneIDsRaw = normalizedRaw
     }
 
+    private func normalizeMenuBarPanelSizeIfNeeded() {
+        let normalizedWidth = Self.clampedMenuBarPanelWidth(menuBarPanelWidthStorage)
+        if normalizedWidth != menuBarPanelWidthStorage {
+            menuBarPanelWidthStorage = normalizedWidth
+        }
+
+        let normalizedHeight = Self.clampedMenuBarPanelHeight(menuBarPanelHeightStorage)
+        if normalizedHeight != menuBarPanelHeightStorage {
+            menuBarPanelHeightStorage = normalizedHeight
+        }
+    }
+
     private func normalizeMenuBarTitleFontSizeIfNeeded() {
         let normalized = Self.clampedMenuBarTitleFontSize(menuBarTitleFontSizeStorage)
         guard normalized != menuBarTitleFontSizeStorage else {
@@ -625,6 +702,14 @@ final class AppSettings: ObservableObject {
 
     private static func clampedMenuBarLeadingIconSize(_ value: Double) -> Double {
         min(max(value, menuBarLeadingIconSizeRange.lowerBound), menuBarLeadingIconSizeRange.upperBound)
+    }
+
+    private static func clampedMenuBarPanelWidth(_ value: Double) -> Double {
+        round(min(max(value, menuBarPanelWidthRange.lowerBound), menuBarPanelWidthRange.upperBound))
+    }
+
+    private static func clampedMenuBarPanelHeight(_ value: Double) -> Double {
+        round(min(max(value, menuBarPanelHeightRange.lowerBound), menuBarPanelHeightRange.upperBound))
     }
 
     private static func normalizedInternationalTimeZoneIDs(from rawValue: String) -> [String] {

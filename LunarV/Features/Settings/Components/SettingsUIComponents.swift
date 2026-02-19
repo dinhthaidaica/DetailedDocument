@@ -6,13 +6,24 @@ import AppKit
 import SwiftUI
 
 
-enum SettingsPane: String, CaseIterable, Identifiable {
+enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     case appearance
     case panel
+    case worldClock
     case notifications
     case updates
     case system
     case about
+
+    static let defaultOrder: [SettingsPane] = [
+        .appearance,
+        .panel,
+        .worldClock,
+        .notifications,
+        .updates,
+        .system,
+        .about,
+    ]
 
     var id: String { rawValue }
 
@@ -22,6 +33,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return "Giao diện"
         case .panel:
             return "Bảng điều khiển"
+        case .worldClock:
+            return "Giờ quốc tế"
         case .notifications:
             return "Thông báo"
         case .updates:
@@ -38,7 +51,9 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .appearance:
             return "Menu Bar và kiểu chữ"
         case .panel:
-            return "Sắp xếp card"
+            return "Card, thứ tự và kích thước"
+        case .worldClock:
+            return "Múi giờ và thành phố theo dõi"
         case .notifications:
             return "Nhắc ngày lễ âm lịch"
         case .updates:
@@ -56,6 +71,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return "paintbrush.fill"
         case .panel:
             return "list.bullet.indent"
+        case .worldClock:
+            return "globe.americas.fill"
         case .notifications:
             return "bell.badge.fill"
         case .updates:
@@ -82,8 +99,15 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             return [
                 "card", "thành phần", "thứ tự", "sắp xếp", "ẩn hiện", "hiển thị", "list", "kéo thả",
                 "hero", "can chi", "con giáp", "giờ hoàng đạo", "gợi ý trong ngày",
-                "sự kiện sắp tới", "giờ quốc tế", "world clock", "timezone", "múi giờ", "thành phố", "utc", "lịch tháng",
+                "sự kiện sắp tới", "lịch tháng",
+                "kích thước", "size", "panel size", "popup size", "chiều rộng", "chiều cao", "width", "height",
                 "chuyển đổi nhanh", "thông tin khác"
+            ]
+        case .worldClock:
+            return [
+                "giờ quốc tế", "world clock", "timezone", "múi giờ", "thành phố", "utc",
+                "smart", "gợi ý", "thông minh", "thêm múi giờ", "ẩn múi giờ", "so sánh giờ",
+                "tokyo", "london", "new york", "los angeles", "sydney"
             ]
         case .notifications:
             return [
