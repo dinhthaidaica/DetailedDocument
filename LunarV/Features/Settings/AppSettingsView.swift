@@ -35,8 +35,7 @@ struct AppSettingsView: View {
         "Menlo",
         "Be Vietnam Pro",
     ]
-    private let sidebarMinimumWidth: CGFloat = 230
-    private let sidebarMaximumWidth: CGFloat = 320
+    private let sidebarFixedWidth: CGFloat = 240
 
     private struct SettingsSearchEntry: Identifiable {
         let id: String
@@ -55,12 +54,11 @@ struct AppSettingsView: View {
     }
 
     var body: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             sidebar
-        } detail: {
+            Divider()
             detailPaneContainer
         }
-        .navigationSplitViewStyle(.balanced)
         .frame(width: 820, height: 600)
         .containerBackground(.thinMaterial, for: .window)
         .tint(.accentColor)
@@ -112,59 +110,67 @@ struct AppSettingsView: View {
     private var detailPaneContainer: some View {
         if #available(macOS 26.0, *) {
             detailPane
-                .frame(minWidth: 400, minHeight: 400)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .backgroundExtensionEffect()
         } else {
             detailPane
-                .frame(minWidth: 400, minHeight: 400)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        let panes = filteredPanes
-
-        return List(selection: $selectedPane) {
-            if panes.isEmpty {
-                Text("Không tìm thấy tuỳ chọn phù hợp")
-                    .font(.caption)
+        VStack(spacing: 0) {
+            // Search field
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .padding(.vertical, 8)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-            } else {
-                ForEach(panes) { pane in
-                    LunarSettingsSidebarRow(pane: pane)
-                        .tag(pane)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                TextField("Tìm tính năng...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12))
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-        }
-        .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(
-            min: sidebarMinimumWidth,
-            ideal: max(sidebarIdealWidth, sidebarMinimumWidth),
-            max: sidebarMaximumWidth
-        )
-        .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm tính năng...")
-    }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 12)
+            .padding(.top, 36)
+            .padding(.bottom, 8)
 
-    private var sidebarIdealWidth: CGFloat {
-        let titleFont = NSFont.systemFont(ofSize: 13, weight: .medium)
-        let subtitleFont = NSFont.systemFont(ofSize: 10)
-        let allPanes = orderedSettingsPanes
-
-        let maxTextWidth = allPanes
-            .map { pane -> CGFloat in
-                let titleWidth = (pane.title as NSString).size(withAttributes: [.font: titleFont]).width
-                let subtitleWidth = (pane.subtitle as NSString).size(withAttributes: [.font: subtitleFont]).width
-                return max(titleWidth, subtitleWidth)
+            // Pane list
+            List(selection: $selectedPane) {
+                let panes = filteredPanes
+                if panes.isEmpty {
+                    Text("Không tìm thấy tuỳ chọn phù hợp")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 8)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                } else {
+                    ForEach(panes) { pane in
+                        LunarSettingsSidebarRow(pane: pane)
+                            .tag(pane)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
+                    }
+                }
             }
-            .max() ?? 0
-
-        // icon(26) + spacing(10) + text + row insets(8+8) + list padding + safety.
-        return ceil(maxTextWidth + 26 + 10 + 8 + 8 + 72)
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
+        }
+        .frame(width: sidebarFixedWidth)
+        .background(.ultraThinMaterial)
     }
 
     private var hasActiveSearchQuery: Bool {
