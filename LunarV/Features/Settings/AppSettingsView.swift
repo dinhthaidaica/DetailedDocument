@@ -20,15 +20,9 @@ struct AppSettingsView: View {
     @State private var internationalTimeZoneSearchText = ""
     @State private var automaticallyChecksForUpdates: Bool
     @State private var updateCheckFrequency: UpdateCheckFrequency
-    private static let internationalClockLocale = Locale(identifier: "vi_VN")
-    private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
     private static let searchResultCacheCapacity = 32
     private static var cachedSearchResultsByQuery: [String: [SettingsSearchEntry]] = [:]
     private static var cachedSearchResultsOrder: [String] = []
-    private static var cachedUTCOffsetTextByTimeZoneID: [String: String] = [:]
-    private static var utcOffsetCacheHourBucket: Int?
-    private static var normalizedTimeZoneSearchValueByID: [String: String] = [:]
-    private static var timeZoneSearchIndexHourBucket: Int?
     private static let installedFontFamiliesStorage: [String] = NSFontManager.shared.availableFontFamilies.sorted()
 
     private let previewLunarService = VietnameseLunarDateService()
@@ -2262,7 +2256,13 @@ struct AppSettingsView: View {
             return true
         }
 
-        return Self.normalizedTimeZoneSearchValue(for: preset.id, at: now)
+        return SettingsInternationalTimeZoneService
+            .normalizedSearchValue(
+                for: preset.id,
+                at: now,
+                presets: AppSettings.availableInternationalTimeZones,
+                normalize: Self.normalizedSearchValue
+            )
             .contains(query)
     }
 
@@ -2295,82 +2295,16 @@ struct AppSettingsView: View {
         )
     }
 
-    private static func hourBucket(for date: Date) -> Int {
-        Int(date.timeIntervalSince1970 / 3600)
-    }
-
-    private static func utcOffsetTextCached(for timeZoneIdentifier: String, at date: Date) -> String {
-        let currentHourBucket = hourBucket(for: date)
-        if utcOffsetCacheHourBucket != currentHourBucket {
-            utcOffsetCacheHourBucket = currentHourBucket
-            cachedUTCOffsetTextByTimeZoneID.removeAll(keepingCapacity: true)
-        }
-
-        if let cached = cachedUTCOffsetTextByTimeZoneID[timeZoneIdentifier] {
-            return cached
-        }
-
-        let computed = InternationalTimeFormatter.utcOffsetText(for: timeZoneIdentifier, at: date)
-        cachedUTCOffsetTextByTimeZoneID[timeZoneIdentifier] = computed
-        return computed
-    }
-
-    private static func rebuildTimeZoneSearchIndexIfNeeded(at date: Date) {
-        let currentHourBucket = hourBucket(for: date)
-        guard timeZoneSearchIndexHourBucket != currentHourBucket else {
-            return
-        }
-
-        timeZoneSearchIndexHourBucket = currentHourBucket
-        normalizedTimeZoneSearchValueByID = Dictionary(
-            uniqueKeysWithValues: AppSettings.availableInternationalTimeZones.map { preset in
-                let offsetText = utcOffsetTextCached(for: preset.id, at: date)
-                let normalizedCombinedValues = [preset.city, preset.country, preset.id, offsetText]
-                    .map(normalizedSearchValue)
-                    .joined(separator: " ")
-                return (preset.id, normalizedCombinedValues)
-            }
-        )
-    }
-
-    private static func normalizedTimeZoneSearchValue(for timeZoneIdentifier: String, at date: Date) -> String {
-        rebuildTimeZoneSearchIndexIfNeeded(at: date)
-        return normalizedTimeZoneSearchValueByID[timeZoneIdentifier] ?? ""
-    }
-
     private func utcOffsetText(for timeZoneIdentifier: String) -> String {
-        Self.utcOffsetTextCached(for: timeZoneIdentifier, at: Date())
+        SettingsInternationalTimeZoneService.utcOffsetText(for: timeZoneIdentifier)
     }
 
     private func internationalCurrentTimeText(for timeZoneIdentifier: String) -> String {
-        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
-            return "--:--"
-        }
-        return Self.internationalClockTimeFormatter(for: timeZone).string(from: Date())
+        SettingsInternationalTimeZoneService.currentTimeText(for: timeZoneIdentifier)
     }
 
     private func internationalRelativeDayText(for timeZoneIdentifier: String) -> String {
-        guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
-            return ""
-        }
-
-        return InternationalTimeFormatter.relativeDayText(
-            at: Date(),
-            targetTimeZone: timeZone
-        )
-    }
-
-    private static func internationalClockTimeFormatter(for timeZone: TimeZone) -> DateFormatter {
-        if let formatter = internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] {
-            return formatter
-        }
-
-        let formatter = DateFormatter()
-        formatter.locale = internationalClockLocale
-        formatter.timeZone = timeZone
-        formatter.dateFormat = "HH:mm"
-        internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] = formatter
-        return formatter
+        SettingsInternationalTimeZoneService.relativeDayText(for: timeZoneIdentifier)
     }
 
     @ViewBuilder
