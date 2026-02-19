@@ -11,6 +11,7 @@ struct AppSettingsView: View {
 
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var notificationManager: HolidayNotificationManager
+    @EnvironmentObject var menuBarViewModel: LunarMenuBarViewModel
     @StateObject private var launchAtLoginManager = LaunchAtLoginManager()
     @State private var selectedPane: SettingsPane = .appearance
     @State private var isShowingResetDialog = false
@@ -770,7 +771,7 @@ struct AppSettingsView: View {
 
     private var menuBarPanelInlinePreview: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Xem trước bố cục panel (tối ưu hiệu năng)")
+            Text("Xem trước panel thật (đồng bộ 1:1)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
@@ -792,8 +793,9 @@ struct AppSettingsView: View {
                                 .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
                         )
 
-                    MenuBarPanelStructurePreview(
-                        visibleCards: settings.panelCardOrder.filter { settings.isPanelCardVisible($0) }
+                    LunarMenuBarView(
+                        viewModel: menuBarViewModel,
+                        updater: updater
                     )
                         .frame(width: targetWidth, height: targetHeight, alignment: .top)
                         .scaleEffect(scale, anchor: .center)
@@ -809,7 +811,7 @@ struct AppSettingsView: View {
             }
             .frame(height: 300)
 
-            Text("Kéo slider để xem thay đổi theo thời gian thực. Giao diện thật sẽ dùng khi mở menu bar.")
+            Text("Kéo slider để xem thay đổi theo thời gian thực. Đây là giao diện panel thật đã thu nhỏ.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
