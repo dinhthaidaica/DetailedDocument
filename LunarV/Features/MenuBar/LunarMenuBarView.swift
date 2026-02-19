@@ -136,34 +136,38 @@ struct LunarMenuBarView: View {
 
     private var topToolbar: some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("LunarV")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text("Lịch âm Việt Nam")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.12))
+                        .frame(width: 30, height: 30)
+                    Text("L")
+                        .font(.system(size: 15, weight: .heavy, design: .rounded))
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("LunarV")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text("Lịch âm Việt Nam")
+                        .font(.system(size: 9.5, weight: .medium, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                }
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("LunarV – Lịch âm Việt Nam")
 
             Spacer()
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 toolbarButton(icon: "doc.on.doc", help: "Sao chép ngày") {
                     copyCurrentDate()
                 }
 
-                Button {
+                toolbarButton(icon: "gearshape", help: "Cài đặt") {
                     openWindow(id: "settings")
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 13, weight: .medium))
-                        .frame(width: 28, height: 28)
-                        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
                 }
-                .buttonStyle(.plain)
-                .help("Cài đặt")
 
                 toolbarButton(icon: "power", help: "Thoát ứng dụng", color: .red) {
                     confirmExit()
@@ -177,42 +181,52 @@ struct LunarMenuBarView: View {
     private var heroCard: some View {
         let info = viewModel.info
         let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.4 : 0.2
-        return VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(info.weekdayText.uppercased())
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color.accentColor)
-                        .tracking(1.2)
+                        .tracking(1.6)
 
-                    Text("Ngày \(info.lunarDayText)")
-                        .font(.system(size: 34, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    Text(info.lunarMonthYearText)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.primary.opacity(0.85))
-
-                    Text(info.solarDateText)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(info.lunarDayText)
+                            .font(.system(size: 42, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.primary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(info.lunarMonthYearText)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary.opacity(0.85))
+                            Text(info.solarDateText)
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 8) {
-                    Image(systemName: info.lunarPhaseIcon)
-                        .font(.system(size: 40, weight: .ultraLight))
-                        .foregroundStyle(Color.accentColor)
-                        .symbolRenderingMode(.hierarchical)
+                VStack(alignment: .trailing, spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.08))
+                            .frame(width: 56, height: 56)
+                        Image(systemName: info.lunarPhaseIcon)
+                            .font(.system(size: 32, weight: .ultraLight))
+                            .foregroundStyle(Color.accentColor)
+                            .symbolRenderingMode(.hierarchical)
+                    }
 
                     Text(info.lunarPhaseName)
                         .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary.opacity(0.7))
+                        .foregroundStyle(.primary.opacity(0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.primary.opacity(0.04), in: Capsule())
                 }
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 HeroChip(icon: "sun.max.fill", title: "Tiết khí", value: info.solarTermText)
                 HeroChip(icon: "clock.fill", title: "Hoàng đạo", value: info.currentHourCanChiText)
             }
@@ -393,8 +407,26 @@ struct LunarMenuBarView: View {
         SectionCard(title: "Sự kiện sắp tới") {
             VStack(spacing: 8) {
                 ForEach(viewModel.info.upcomingHolidays.prefix(3)) { holiday in
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 2) {
+                    let isToday = holiday.daysUntil == 0
+                    HStack(alignment: .center, spacing: 10) {
+                        // Countdown circle
+                        ZStack {
+                            Circle()
+                                .fill(isToday ? Color.red.opacity(0.12) : Color.accentColor.opacity(0.1))
+                                .frame(width: 36, height: 36)
+                            if isToday {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("\(holiday.daysUntil)")
+                                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(justifiedAttributedText(
                                 holiday.name,
                                 size: 12,
@@ -402,21 +434,18 @@ struct LunarMenuBarView: View {
                             ))
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                            Text(justifiedAttributedText(
-                                holiday.dateText,
-                                size: 10,
-                                weight: .medium,
-                                color: .secondaryLabelColor
-                            ))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            HStack(spacing: 4) {
+                                Text(holiday.dateText)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Text("•")
+                                    .font(.system(size: 8))
+                                    .foregroundStyle(.quaternary)
+                                Text(isToday ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(isToday ? .red : Color.accentColor)
+                            }
                         }
-                        Spacer()
-                        Text(holiday.daysUntil == 0 ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
-                            .font(.system(size: 10, weight: .bold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(holiday.daysUntil == 0 ? .red.opacity(0.1) : Color.accentColor.opacity(0.1), in: Capsule())
-                            .foregroundStyle(holiday.daysUntil == 0 ? .red : Color.accentColor)
                     }
                     .padding(10)
                     .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
@@ -427,45 +456,67 @@ struct LunarMenuBarView: View {
 
     private var internationalTimesCard: some View {
         SectionCard(title: "Giờ quốc tế", trailingView: {
-            Button("Sao chép") {
+            Button {
                 copyInternationalTimes()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 8, weight: .bold))
+                    Text("Sao chép")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .foregroundStyle(Color.accentColor)
             }
             .buttonStyle(.plain)
-            .font(.system(size: 10, weight: .bold))
-            .foregroundStyle(Color.accentColor)
             .help("Sao chép danh sách giờ quốc tế")
         }) {
             if viewModel.info.internationalTimes.isEmpty {
-                Text("Không có dữ liệu múi giờ quốc tế.")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    Image(systemName: "globe")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.quaternary)
+                    Text("Không có dữ liệu múi giờ quốc tế.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     ForEach(viewModel.info.internationalTimes) { cityTime in
-                        HStack(alignment: .top, spacing: 10) {
-                            VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .center, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text(cityTime.city)
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundStyle(.primary)
-                                Text("\(cityTime.weekdayText) • \(cityTime.utcOffsetText)")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 4) {
+                                    Text(cityTime.weekdayText)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                    Text("•")
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.quaternary)
+                                    Text(cityTime.utcOffsetText)
+                                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                                        .monospacedDigit()
+                                        .foregroundStyle(.tertiary)
+                                }
                             }
 
                             Spacer(minLength: 0)
 
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(cityTime.timeText)
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
                                     .monospacedDigit()
                                     .foregroundStyle(Color.accentColor)
                                 Text(cityTime.relativeDayText)
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 9, weight: .semibold))
+                                    .foregroundStyle(.tertiary)
                             }
                         }
-                        .padding(10)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
                         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(cityTime.city), \(cityTime.timeText), \(cityTime.weekdayText), \(cityTime.relativeDayText), \(cityTime.utcOffsetText)")
@@ -512,18 +563,23 @@ struct LunarMenuBarView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
+                    Image(systemName: hoveredCalendarHolidayText != nil ? "calendar.badge.exclamationmark" : "sparkles")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(hoveredCalendarHolidayText != nil ? .red : Color.accentColor)
 
                     Text(hoveredCalendarHolidayText ?? "Rê chuột vào ô có chấm đỏ để xem tên ngày lễ.")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 10, weight: hoveredCalendarHolidayText != nil ? .semibold : .medium))
                         .foregroundStyle(hoveredCalendarHolidayText == nil ? .secondary : .primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .animation(.easeInOut(duration: 0.15), value: hoveredCalendarHolidayText)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(
+                    hoveredCalendarHolidayText != nil ? Color.red.opacity(0.04) : Color.primary.opacity(0.03),
+                    in: RoundedRectangle(cornerRadius: 10)
+                )
+                .animation(.easeInOut(duration: 0.15), value: hoveredCalendarHolidayText != nil)
             }
         }
     }
@@ -639,12 +695,12 @@ struct LunarMenuBarView: View {
     private func toolbarButton(icon: String, help: String, color: Color = .primary, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(color.opacity(0.8))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(color.opacity(0.7))
                 .frame(width: 28, height: 28)
-                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ToolbarHoverButtonStyle())
         .help(help)
     }
 
@@ -653,10 +709,11 @@ struct LunarMenuBarView: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 9, weight: .bold))
-                .frame(width: 20, height: 20)
-                .background(Color.primary.opacity(0.05), in: Circle())
+                .foregroundStyle(.secondary)
+                .frame(width: 22, height: 22)
+                .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ToolbarHoverButtonStyle())
     }
 
     private func confirmExit() {

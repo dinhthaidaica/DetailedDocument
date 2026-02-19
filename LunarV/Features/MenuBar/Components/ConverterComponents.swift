@@ -37,7 +37,7 @@ struct ConverterModeSelector: View {
     @Binding var mode: DateConverterMode
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 0) {
             ForEach(DateConverterMode.allCases) { modeItem in
                 let isActive = modeItem == mode
 
@@ -52,24 +52,19 @@ struct ConverterModeSelector: View {
                         Text(modeItem.title)
                             .font(.system(size: 11, weight: .semibold))
                     }
-                    .foregroundStyle(isActive ? Color.accentColor : .primary.opacity(0.75))
+                    .foregroundStyle(isActive ? Color.accentColor : .primary.opacity(0.5))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 9)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(isActive ? Color.accentColor.opacity(0.16) : Color.primary.opacity(0.04))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isActive ? Color.accentColor.opacity(0.35) : Color.primary.opacity(0.08),
-                                lineWidth: 1
-                            )
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(isActive ? Color.accentColor.opacity(0.14) : .clear)
                     )
                 }
                 .buttonStyle(.plain)
             }
         }
+        .padding(3)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -141,36 +136,52 @@ struct ConverterResultCard: View {
     let onCopy: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased())
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(Color.accentColor.opacity(0.9))
-                .tracking(0.6)
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+            }
 
-            Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title.uppercased())
+                    .font(.system(size: 8, weight: .heavy))
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
+                    .tracking(0.8)
+
+                Text(value)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                Text(justifiedAttributedText(
+                    detail,
+                    size: 10,
+                    weight: .medium,
+                    color: .secondaryLabelColor
+                ))
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
-            Text(justifiedAttributedText(
-                detail,
-                size: 10,
-                weight: .medium,
-                color: .secondaryLabelColor
-            ))
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
 
-            Button(copyTitle, action: onCopy)
-                .buttonStyle(.plain)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(Color.accentColor)
-                .padding(.top, 2)
+            Button(action: onCopy) {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 28, height: 28)
+                    .background(Color.accentColor.opacity(0.1), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help(copyTitle)
         }
-        .padding(10)
-        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .padding(12)
+        .background(Color.accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.accentColor.opacity(0.24), lineWidth: 1)
+                .stroke(Color.accentColor.opacity(0.18), lineWidth: 0.5)
         )
     }
 }
@@ -181,18 +192,23 @@ struct ConverterErrorCard: View {
     let message: String
 
     var body: some View {
-        Text(justifiedAttributedText(
-            message,
-            size: 10,
-            weight: .medium,
-            color: .secondaryLabelColor
-        ))
-        .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(.orange)
+            Text(justifiedAttributedText(
+                message,
+                size: 10,
+                weight: .medium,
+                color: .secondaryLabelColor
+            ))
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
         .padding(10)
-        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .background(Color.orange.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.orange.opacity(0.24), lineWidth: 1)
+                .stroke(Color.orange.opacity(0.18), lineWidth: 0.5)
         )
     }
 }
@@ -207,11 +223,11 @@ struct ConverterStepperField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title.uppercased())
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.primary.opacity(0.55))
-                .tracking(0.6)
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(0.8)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 stepButton(
                     icon: "minus",
                     isDisabled: value <= range.lowerBound
@@ -220,8 +236,9 @@ struct ConverterStepperField: View {
                 }
 
                 Text("\(value)")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
 
                 stepButton(
@@ -245,13 +262,13 @@ struct ConverterStepperField: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .bold))
-                .frame(width: 22, height: 22)
-                .background(Color.primary.opacity(0.08), in: Circle())
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundStyle(isDisabled ? Color.primary.opacity(0.25) : Color.accentColor)
+                .frame(width: 24, height: 24)
+                .background(isDisabled ? Color.primary.opacity(0.04) : Color.accentColor.opacity(0.1), in: Circle())
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
-        .opacity(isDisabled ? 0.45 : 1)
     }
 }
 
@@ -266,26 +283,22 @@ struct ConverterActionField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.primary.opacity(0.55))
-                .tracking(0.6)
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(0.8)
 
             Button(action: action) {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Image(systemName: systemImage)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 9, weight: .bold))
                     Text(buttonTitle)
                         .font(.system(size: 10, weight: .semibold))
                         .lineLimit(1)
                 }
                 .foregroundStyle(Color.accentColor)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.accentColor.opacity(0.28), lineWidth: 1)
-                )
+                .padding(.vertical, 7)
+                .background(Color.accentColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
             }
             .buttonStyle(.plain)
         }
@@ -303,11 +316,14 @@ struct ConverterLeapMonthField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("THÁNG NHUẬN")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.primary.opacity(0.55))
-                .tracking(0.6)
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(0.8)
 
             HStack(spacing: 8) {
+                Circle()
+                    .fill(isOn ? Color.accentColor : Color.primary.opacity(0.15))
+                    .frame(width: 6, height: 6)
                 Text(isOn ? "Đang bật" : "Đang tắt")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(isOn ? Color.accentColor : .secondary)

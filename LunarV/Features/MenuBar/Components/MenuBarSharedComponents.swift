@@ -21,8 +21,14 @@ struct SectionCard<Content: View, Trailing: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(title.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(.primary.opacity(0.6)).tracking(1)
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.accentColor)
+                    .frame(width: 3, height: 12)
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundStyle(.primary.opacity(0.55))
+                    .tracking(1.2)
                 Spacer()
                 trailingView?()
             }
@@ -40,13 +46,19 @@ struct InfoRow: View {
     let label: String
     let value: String
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: icon).font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
-                .frame(width: 24, height: 24).background(Color.accentColor.opacity(0.1), in: Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
+        HStack(alignment: .center, spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.1))
+                    .frame(width: 26, height: 26)
+                Image(systemName: icon)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.primary.opacity(0.65))
+                    .foregroundStyle(Color.accentColor)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(.secondary)
                     .tracking(0.3)
                 Text(justifiedAttributedText(
                     value,
@@ -67,11 +79,18 @@ struct StatTile: View {
     let title: String
     let value: String
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.5))
-            Text(value).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(0.5)
+            Text(value)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading).padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
         .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -82,12 +101,27 @@ struct CanChiPill: View {
     let title: String
     let value: String
     var body: some View {
-        VStack(spacing: 4) {
-            Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.5))
-            Text(value).font(.system(size: 12, weight: .bold)).foregroundStyle(.primary)
+        VStack(spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(0.8)
+            Text(value)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 10)
-        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.primary.opacity(0.03))
+        )
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(Color.accentColor.opacity(0.6))
+                .frame(width: 20, height: 2.5)
+                .padding(.top, 4)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Can chi \(title): \(value)")
     }
@@ -101,10 +135,23 @@ struct HeroChip: View {
     let value: String
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 9, weight: .bold)).foregroundStyle(.primary.opacity(0.6))
-                Text(value).font(.system(size: 11, weight: .bold)).foregroundStyle(.primary).lineLimit(1)
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 26, height: 26)
+                Image(systemName: icon)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title.uppercased())
+                    .font(.system(size: 8, weight: .heavy))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+                Text(value)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
             }
             Spacer(minLength: 0)
         }
@@ -121,20 +168,27 @@ struct HourPeriodPill: View {
     let hour: VietnameseHourPeriod
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(hour.canChi)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(.primary)
-            Text(hour.timeRange)
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            Circle()
+                .fill(Color.accentColor.opacity(0.2))
+                .frame(width: 6, height: 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(hour.canChi)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.primary)
+                Text(hour.timeRange)
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
-        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.accentColor.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
+                .stroke(Color.accentColor.opacity(0.18), lineWidth: 0.5)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Giờ hoàng đạo \(hour.canChi), \(hour.timeRange)")
@@ -147,20 +201,35 @@ struct GuidanceScoreView: View {
     let score: Int
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text("\(score)")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundStyle(scoreColor)
-            Text("/100")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(.secondary)
+        ZStack {
+            // Background track
+            Circle()
+                .stroke(scoreColor.opacity(0.15), lineWidth: 4)
+
+            // Progress arc
+            Circle()
+                .trim(from: 0, to: CGFloat(score) / 100)
+                .stroke(
+                    AngularGradient(
+                        colors: [scoreColor.opacity(0.6), scoreColor],
+                        center: .center,
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(360 * Double(score) / 100)
+                    ),
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            VStack(spacing: 0) {
+                Text("\(score)")
+                    .font(.system(size: 17, weight: .heavy, design: .rounded))
+                    .foregroundStyle(scoreColor)
+                Text("điểm")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .frame(width: 52, height: 52)
-        .background(scoreColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(scoreColor.opacity(0.35), lineWidth: 1)
-        )
+        .frame(width: 54, height: 54)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Điểm ngày: \(score) trên 100")
     }
@@ -185,43 +254,49 @@ struct DayOfficerPanel: View {
     let officer: LunarDayOfficerInfo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("Trực \(officer.name)")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(levelColor)
-                Spacer()
-                Text(levelTitle)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(levelColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(levelColor.opacity(0.14), in: Capsule())
+        HStack(alignment: .top, spacing: 10) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(levelColor)
+                .frame(width: 3)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("Trực \(officer.name)")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(levelColor)
+                    Spacer()
+                    Text(levelTitle)
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundStyle(levelColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(levelColor.opacity(0.12), in: Capsule())
+                }
+
+                Text(justifiedAttributedText(
+                    officer.calculationNote,
+                    size: 9,
+                    weight: .semibold,
+                    color: .secondaryLabelColor
+                ))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Text(justifiedAttributedText(
+                    officer.summary,
+                    size: 10,
+                    weight: .medium
+                ))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
             }
-
-            Text(justifiedAttributedText(
-                officer.calculationNote,
-                size: 9,
-                weight: .semibold,
-                color: .secondaryLabelColor
-            ))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
-
-            Text(justifiedAttributedText(
-                officer.summary,
-                size: 10,
-                weight: .medium
-            ))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(levelColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .background(levelColor.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(levelColor.opacity(0.22), lineWidth: 1)
+                .stroke(levelColor.opacity(0.15), lineWidth: 0.5)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Trực \(officer.name), \(levelTitle). \(officer.summary)")
@@ -297,17 +372,22 @@ struct GuidanceBlock: View {
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(tint.opacity(0.9))
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(tint)
+                    .frame(width: 3, height: 10)
+                Text(title)
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundStyle(tint.opacity(0.9))
+            }
+            VStack(alignment: .leading, spacing: 5) {
                 ForEach(items, id: \.self) { item in
-                    HStack(alignment: .top, spacing: 6) {
+                    HStack(alignment: .top, spacing: 8) {
                         Circle()
-                            .fill(tint.opacity(0.8))
-                            .frame(width: 5, height: 5)
-                            .padding(.top, 5)
+                            .fill(tint.opacity(0.6))
+                            .frame(width: 4, height: 4)
+                            .padding(.top, 5.5)
                         Text(justifiedAttributedText(item, size: 11, weight: .medium))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
@@ -316,6 +396,7 @@ struct GuidanceBlock: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 9)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -330,20 +411,36 @@ struct MonthDayCellView: View {
     @State private var isHovered = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 1) {
             if let solar = cell.solarDay, let lunar = cell.lunarDay {
-                Text("\(solar)").font(.system(size: 13, weight: cell.isToday ? .bold : .semibold))
-                    .foregroundStyle(cell.isToday ? Color.accentColor : (cell.holiday != nil || weekdayIndex >= 5 ? .red.opacity(0.9) : .primary))
-                Text("\(lunar)").font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(cell.isToday ? Color.accentColor.opacity(0.8) : .primary.opacity(0.5))
+                Text("\(solar)")
+                    .font(.system(size: 13, weight: cell.isToday ? .heavy : .semibold, design: cell.isToday ? .rounded : .default))
+                    .foregroundStyle(cell.isToday ? .white : (cell.holiday != nil || weekdayIndex >= 5 ? .red.opacity(0.9) : .primary))
+                Text("\(lunar)")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(cell.isToday ? .white.opacity(0.85) : .primary.opacity(0.5))
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 38)
-        .background(cell.isToday ? Color.accentColor.opacity(0.15) : (isHovered ? Color.primary.opacity(0.05) : .clear), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(cell.isToday ? Color.accentColor.opacity(0.5) : .clear, lineWidth: 1.5))
+        .frame(maxWidth: .infinity, minHeight: 40)
+        .background {
+            if cell.isToday {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: Color.accentColor.opacity(0.3), radius: 4, y: 2)
+            } else if isHovered {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.primary.opacity(0.06))
+            }
+        }
         .overlay(alignment: .topTrailing) {
-            if cell.holiday != nil { Circle().fill(.red).frame(width: 4).padding(4) }
-            else if cell.isFirstLunarDay { Circle().fill(.orange).frame(width: 4).padding(4) }
+            if cell.holiday != nil { Circle().fill(.red).frame(width: 5).padding(3) }
+            else if cell.isFirstLunarDay { Circle().fill(.orange).frame(width: 5).padding(3) }
         }
         .onHover { h in
             withAnimation(.snappy(duration: 0.1)) { isHovered = h }
@@ -380,6 +477,24 @@ struct MonthDayCellView: View {
         if cell.isToday { label += ", hôm nay" }
         if let holiday = cell.holiday { label += ", \(holiday)" }
         return label
+    }
+}
+
+// MARK: - Toolbar Hover Button Style
+
+struct ToolbarHoverButtonStyle: ButtonStyle {
+    @State private var isHovered = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.primary.opacity(isHovered ? 0.1 : 0.04))
+            )
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(.snappy(duration: 0.15), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
+            .onHover { isHovered = $0 }
     }
 }
 
