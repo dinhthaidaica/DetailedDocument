@@ -44,6 +44,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
     private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
     private static var internationalClockWeekdayFormatterByTimeZoneID: [String: DateFormatter] = [:]
+    private static var internationalCalendarByTimeZoneID: [String: Calendar] = [:]
 
     private let solarCalendar: Calendar
     private let lunarService: VietnameseLunarDateService
@@ -387,15 +388,19 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private func buildInternationalTimes(now: Date) -> [InternationalTimeInfo] {
         let localCalendar = Calendar.autoupdatingCurrent
+        let localDayOrdinal = localCalendar.ordinality(of: .day, in: .era, for: now)
 
         return settings.selectedInternationalTimeZones.compactMap { preset -> InternationalTimeInfo? in
             guard let timeZone = TimeZone(identifier: preset.id) else {
                 return nil
             }
 
-            var targetCalendar = Calendar(identifier: .gregorian)
-            targetCalendar.timeZone = timeZone
-            let dayOffset = relativeDayOffset(at: now, localCalendar: localCalendar, targetCalendar: targetCalendar)
+            let targetCalendar = Self.internationalCalendar(for: timeZone)
+            let dayOffset = relativeDayOffset(
+                at: now,
+                localDayOrdinal: localDayOrdinal,
+                targetCalendar: targetCalendar
+            )
 
             let timeText = formattedClockTime(now, timeZone: timeZone)
             let weekdayText = formattedClockWeekday(now, timeZone: timeZone)
@@ -425,9 +430,9 @@ final class LunarMenuBarViewModel: ObservableObject {
         return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
     }
 
-    private func relativeDayOffset(at date: Date, localCalendar: Calendar, targetCalendar: Calendar) -> Int {
+    private func relativeDayOffset(at date: Date, localDayOrdinal: Int?, targetCalendar: Calendar) -> Int {
         guard
-            let localDay = localCalendar.ordinality(of: .day, in: .era, for: date),
+            let localDay = localDayOrdinal,
             let targetDay = targetCalendar.ordinality(of: .day, in: .era, for: date)
         else {
             return 0
@@ -469,6 +474,17 @@ final class LunarMenuBarViewModel: ObservableObject {
         formatter.dateFormat = "EEE"
         internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] = formatter
         return formatter
+    }
+
+    private static func internationalCalendar(for timeZone: TimeZone) -> Calendar {
+        if let cachedCalendar = internationalCalendarByTimeZoneID[timeZone.identifier] {
+            return cachedCalendar
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        internationalCalendarByTimeZoneID[timeZone.identifier] = calendar
+        return calendar
     }
 
     private func relativeDayText(for dayOffset: Int) -> String {

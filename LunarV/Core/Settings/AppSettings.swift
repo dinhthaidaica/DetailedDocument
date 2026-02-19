@@ -263,6 +263,14 @@ final class AppSettings: ObservableObject {
     private var defaultsChangeCancellables: Set<AnyCancellable> = []
     private var isApplyingRecoveredSettings = false
     private var lastPersistedSettingsSnapshotData: Data?
+    private var cachedPanelCardOrderRaw: String?
+    private var cachedPanelCardOrder: [PanelCardKind] = PanelCardKind.defaultOrder
+    private var cachedInternationalTimeZoneIDsRaw: String?
+    private var cachedInternationalTimeZoneIDs: [String] = AppSettings.defaultInternationalTimeZoneIDs
+    private var cachedSelectedInternationalTimeZonesIDs: [String] = AppSettings.defaultInternationalTimeZoneIDs
+    private var cachedSelectedInternationalTimeZones: [InternationalTimeZonePreset] = AppSettings.defaultInternationalTimeZoneIDs.compactMap {
+        AppSettings.internationalTimeZoneByID[$0]
+    }
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
@@ -407,17 +415,30 @@ final class AppSettings: ObservableObject {
     }
 
     var panelCardOrder: [PanelCardKind] {
-        PanelCardKind.normalizedOrder(from: panelCardOrderRaw)
+        if panelCardOrderRaw == cachedPanelCardOrderRaw {
+            return cachedPanelCardOrder
+        }
+
+        let normalized = PanelCardKind.normalizedOrder(from: panelCardOrderRaw)
+        cachedPanelCardOrderRaw = panelCardOrderRaw
+        cachedPanelCardOrder = normalized
+        return normalized
     }
 
     func movePanelCard(fromOffsets: IndexSet, toOffset: Int) {
         var nextOrder = panelCardOrder
         nextOrder.move(fromOffsets: fromOffsets, toOffset: toOffset)
-        panelCardOrderRaw = PanelCardKind.serialized(nextOrder)
+        let nextRaw = PanelCardKind.serialized(nextOrder)
+        panelCardOrderRaw = nextRaw
+        cachedPanelCardOrderRaw = nextRaw
+        cachedPanelCardOrder = nextOrder
     }
 
     func resetPanelCardOrder() {
-        panelCardOrderRaw = PanelCardKind.serialized(PanelCardKind.defaultOrder)
+        let defaultRaw = PanelCardKind.serialized(PanelCardKind.defaultOrder)
+        panelCardOrderRaw = defaultRaw
+        cachedPanelCardOrderRaw = defaultRaw
+        cachedPanelCardOrder = PanelCardKind.defaultOrder
     }
 
     var menuBarPanelWidthValue: Double {
@@ -473,11 +494,26 @@ final class AppSettings: ObservableObject {
     }
 
     var selectedInternationalTimeZoneIDs: [String] {
-        Self.normalizedInternationalTimeZoneIDs(from: internationalTimeZoneIDsRaw)
+        if internationalTimeZoneIDsRaw == cachedInternationalTimeZoneIDsRaw {
+            return cachedInternationalTimeZoneIDs
+        }
+
+        let normalized = Self.normalizedInternationalTimeZoneIDs(from: internationalTimeZoneIDsRaw)
+        cachedInternationalTimeZoneIDsRaw = internationalTimeZoneIDsRaw
+        cachedInternationalTimeZoneIDs = normalized
+        return normalized
     }
 
     var selectedInternationalTimeZones: [InternationalTimeZonePreset] {
-        selectedInternationalTimeZoneIDs.compactMap { Self.internationalTimeZoneByID[$0] }
+        let ids = selectedInternationalTimeZoneIDs
+        if ids == cachedSelectedInternationalTimeZonesIDs {
+            return cachedSelectedInternationalTimeZones
+        }
+
+        let mapped = ids.compactMap { Self.internationalTimeZoneByID[$0] }
+        cachedSelectedInternationalTimeZonesIDs = ids
+        cachedSelectedInternationalTimeZones = mapped
+        return mapped
     }
 
     var smartRecommendedInternationalTimeZones: [InternationalTimeZonePreset] {
@@ -571,6 +607,10 @@ final class AppSettings: ObservableObject {
 
         objectWillChange.send()
         internationalTimeZoneIDsRaw = nextRaw
+        cachedInternationalTimeZoneIDsRaw = nextRaw
+        cachedInternationalTimeZoneIDs = normalizedIDs
+        cachedSelectedInternationalTimeZonesIDs = normalizedIDs
+        cachedSelectedInternationalTimeZones = normalizedIDs.compactMap { Self.internationalTimeZoneByID[$0] }
     }
 
     func isPanelCardVisible(_ card: PanelCardKind) -> Bool {
@@ -688,6 +728,8 @@ final class AppSettings: ObservableObject {
             return
         }
         panelCardOrderRaw = normalized
+        cachedPanelCardOrderRaw = normalized
+        cachedPanelCardOrder = PanelCardKind.normalizedOrder(from: normalized)
     }
 
     private func normalizeInternationalTimeZoneIDsIfNeeded() {
@@ -697,6 +739,10 @@ final class AppSettings: ObservableObject {
             return
         }
         internationalTimeZoneIDsRaw = normalizedRaw
+        cachedInternationalTimeZoneIDsRaw = normalizedRaw
+        cachedInternationalTimeZoneIDs = normalizedIDs
+        cachedSelectedInternationalTimeZonesIDs = normalizedIDs
+        cachedSelectedInternationalTimeZones = normalizedIDs.compactMap { Self.internationalTimeZoneByID[$0] }
     }
 
     private func normalizeMenuBarPanelSizeIfNeeded() {

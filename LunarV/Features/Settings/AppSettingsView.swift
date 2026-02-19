@@ -23,6 +23,7 @@ struct AppSettingsView: View {
     @State private var updateCheckFrequency: UpdateCheckFrequency
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
     private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
+    private static let installedFontFamiliesStorage: [String] = NSFontManager.shared.availableFontFamilies.sorted()
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
@@ -2224,7 +2225,7 @@ struct AppSettingsView: View {
     }
 
     private var installedFontFamilies: [String] {
-        NSFontManager.shared.availableFontFamilies.sorted()
+        Self.installedFontFamiliesStorage
     }
 
     private var recommendedFontPickerOptions: [String] {
