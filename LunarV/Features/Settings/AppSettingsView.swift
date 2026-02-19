@@ -142,22 +142,29 @@ struct AppSettingsView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: sidebarWidth, ideal: sidebarWidth, max: sidebarWidth)
+        .navigationSplitViewColumnWidth(
+            min: sidebarMinimumWidth,
+            ideal: max(sidebarIdealWidth, sidebarMinimumWidth),
+            max: sidebarMaximumWidth
+        )
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm tính năng...")
     }
 
-    private var sidebarWidth: CGFloat {
-        let font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        let widthSource = hasActiveSearchQuery ? filteredPanes : orderedSettingsPanes
-        let maxTitleWidth = widthSource
+    private var sidebarIdealWidth: CGFloat {
+        let titleFont = NSFont.systemFont(ofSize: 13, weight: .medium)
+        let subtitleFont = NSFont.systemFont(ofSize: 10)
+        let allPanes = orderedSettingsPanes
+
+        let maxTextWidth = allPanes
             .map { pane -> CGFloat in
-                (pane.title as NSString).size(withAttributes: [.font: font]).width
+                let titleWidth = (pane.title as NSString).size(withAttributes: [.font: titleFont]).width
+                let subtitleWidth = (pane.subtitle as NSString).size(withAttributes: [.font: subtitleFont]).width
+                return max(titleWidth, subtitleWidth)
             }
             .max() ?? 0
 
-        // icon + spacing + text + row/list paddings + safety padding.
-        let requiredWidth = ceil(maxTitleWidth + 24 + 10 + 8 + 8 + 72)
-        return min(max(requiredWidth, sidebarMinimumWidth), sidebarMaximumWidth)
+        // icon(26) + spacing(10) + text + row insets(8+8) + list padding + safety.
+        return ceil(maxTextWidth + 26 + 10 + 8 + 8 + 72)
     }
 
     private var hasActiveSearchQuery: Bool {
@@ -717,8 +724,17 @@ struct AppSettingsView: View {
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 24, height: 24)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.accentColor.opacity(0.16),
+                                    Color.accentColor.opacity(0.08),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 26, height: 26)
                     Image(systemName: result.icon)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
@@ -729,23 +745,23 @@ struct AppSettingsView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text("\(result.section) • \(result.subtitle)")
-                        .font(.caption)
+                        .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
 
                 Spacer(minLength: 0)
 
-                Image(systemName: "arrow.forward.circle.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 9))
+            .padding(.vertical, 8)
+            .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 10))
             .overlay(
-                RoundedRectangle(cornerRadius: 9)
-                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -1135,27 +1151,24 @@ struct AppSettingsView: View {
                     range: AppSettings.menuBarPanelHeightRange
                 )
 
-                HStack(spacing: 8) {
-                    Button("Gọn") {
+                HStack(spacing: 6) {
+                    panelSizePresetButton(title: "Gọn", icon: "rectangle.compress.vertical") {
                         applyMenuBarPanelSizePreset(AppSettings.compactMenuBarPanelSize)
                     }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
 
-                    Button("Tiêu chuẩn") {
+                    panelSizePresetButton(title: "Tiêu chuẩn", icon: "rectangle") {
                         applyMenuBarPanelSizePreset(AppSettings.standardMenuBarPanelSize)
                     }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
 
-                    Button("Rộng") {
+                    panelSizePresetButton(title: "Rộng", icon: "rectangle.expand.vertical") {
                         applyMenuBarPanelSizePreset(AppSettings.expandedMenuBarPanelSize)
                     }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
 
-                    Button("Mặc định") {
+                    Button {
                         settings.resetMenuBarPanelSize()
+                    } label: {
+                        Label("Mặc định", systemImage: "arrow.counterclockwise")
+                            .font(.system(size: 11, weight: .semibold))
                     }
                     .buttonStyle(.borderedProminent)
                     .frame(maxWidth: .infinity)
@@ -1763,17 +1776,27 @@ struct AppSettingsView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Trạng thái quyền thông báo")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(notificationManager.authorizationDescription)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.accentColor)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Trạng thái quyền thông báo")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.primary)
+                        Text(notificationManager.authorizationDescription)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
+                .padding(12)
+                .background(Color.accentColor.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.accentColor.opacity(0.1), lineWidth: 0.5)
+                )
             }
         }
     }
@@ -1835,7 +1858,7 @@ struct AppSettingsView: View {
         ) {
             VStack(spacing: 10) {
                 settingsInfoRow(title: "Múi giờ tính toán", value: "Asia/Ho_Chi_Minh (GMT+7)")
-                Divider()
+                Divider().opacity(0.5)
                 settingsInfoRow(title: "Thuật toán", value: "Vietnamese Lunar Calendar 2.0")
             }
         }
@@ -1847,15 +1870,21 @@ struct AppSettingsView: View {
             subtitle: "Đưa toàn bộ tuỳ chỉnh về mặc định",
             icon: "arrow.counterclockwise"
         ) {
-            HStack {
-                Text("Bạn có thể đặt lại nhanh tất cả cấu hình giao diện, hiển thị và thông báo.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Đặt lại nhanh tất cả cấu hình")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.primary)
+                    Text("Giao diện, hiển thị và thông báo sẽ quay về giá trị ban đầu.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
                 Spacer(minLength: 0)
                 Button(role: .destructive) {
                     isShowingResetDialog = true
                 } label: {
                     Label("Khôi phục", systemImage: "arrow.counterclockwise")
+                        .font(.system(size: 12, weight: .semibold))
                 }
                 .buttonStyle(.bordered)
             }
@@ -1875,14 +1904,17 @@ struct AppSettingsView: View {
 
     @ViewBuilder
     private func settingsInfoRow(title: String, value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .center) {
             Text(title)
-                .font(.system(size: 13))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
             Spacer(minLength: 0)
             Text(value)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
         }
     }
 
@@ -1904,29 +1936,34 @@ struct AppSettingsView: View {
                     subtitle: "Lịch Âm Việt Nam cho macOS",
                     icon: "moon.stars.fill"
                 ) {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 20) {
                         Image(nsImage: NSApp.applicationIconImage)
                             .resizable()
-                            .frame(width: 72, height: 72)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
 
-                        VStack(spacing: 4) {
+                        VStack(spacing: 6) {
                             Text("LunarV")
-                                .font(.title3.bold())
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
                             Text("Phiên bản \(appVersionText)")
-                                .font(.caption.monospaced())
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
                                 .foregroundStyle(.secondary)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 3)
+                                .background(Color.primary.opacity(0.05), in: Capsule())
                         }
 
                         Text("Phát triển bởi Phạm Hùng Tiến, mang tinh hoa lịch cổ truyền lên hệ điều hành macOS hiện đại.")
-                            .font(.callout)
+                            .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                            .frame(maxWidth: 540)
+                            .frame(maxWidth: 480)
 
                         donationQRCodeCard
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
                 }
 
             }
@@ -1936,33 +1973,51 @@ struct AppSettingsView: View {
         .lunarSettingsBackground()
     }
 
+    @Environment(\.colorScheme) private var aboutColorScheme
+
     private var donationQRCodeCard: some View {
-        VStack(spacing: 10) {
-            Text("Ủng hộ phát triển LunarV")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
+        VStack(spacing: 14) {
+            HStack(spacing: 6) {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.pink)
+                Text("Ủng hộ phát triển LunarV")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.primary)
+            }
 
             Image("QRDonate")
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
                 .frame(width: 180, height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
 
             Text("Quét mã QR để ủng hộ dự án.")
-                .font(.caption)
+                .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 18)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.primary.opacity(aboutColorScheme == .dark ? 0.04 : 0.02))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+        )
     }
 
     // MARK: - Helpers
 
     private var previewCard: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("XEM TRƯỚC")
-                .font(.system(size: 9, weight: .heavy))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.secondary)
+                .tracking(1.2)
 
             HStack {
                 HStack(spacing: AppSettings.menuBarIconTitleSpacing) {
@@ -1984,15 +2039,35 @@ struct AppSettingsView: View {
                             .underline(settings.menuBarTitleUnderlineValue)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.accentColor.opacity(0.12), in: Capsule())
-                .overlay(Capsule().stroke(Color.accentColor.opacity(0.3), lineWidth: 1))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color(NSColor.windowBackgroundColor))
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
+                .overlay(Capsule().stroke(Color.primary.opacity(0.12), lineWidth: 0.5))
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 16))
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.primary.opacity(0.03),
+                            Color.primary.opacity(0.015),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 0.5)
+        )
     }
 
     private func insertToken(_ code: String) {
@@ -2174,6 +2249,7 @@ struct AppSettingsView: View {
                 .lunarSettingsSwitchToggle()
                 .frame(width: trailingControlColumnWidth, alignment: .trailing)
         }
+        .padding(.vertical, 2)
     }
 
     @ViewBuilder
@@ -2398,6 +2474,16 @@ struct AppSettingsView: View {
     private var menuBarLeadingIconPreviewSize: CGFloat {
         let statusBarMax = max(NSStatusBar.system.thickness - 2, 10)
         return min(settings.menuBarLeadingIconSizeCGFloat, statusBarMax)
+    }
+
+    @ViewBuilder
+    private func panelSizePresetButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 11, weight: .medium))
+        }
+        .buttonStyle(.bordered)
+        .frame(maxWidth: .infinity)
     }
 
     private func applyMenuBarPanelSizePreset(_ size: CGSize) {

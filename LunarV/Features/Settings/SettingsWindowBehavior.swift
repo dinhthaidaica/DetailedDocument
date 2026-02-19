@@ -62,5 +62,35 @@ struct SettingsWindowBehavior: NSViewRepresentable {
             window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
         }
+
+        constrainSplitViewSidebar(in: window.contentView)
+    }
+
+    private static let sidebarMinThickness: CGFloat = 230
+    private static let sidebarMaxThickness: CGFloat = 320
+    private static let detailMinThickness: CGFloat = 400
+
+    /// Tìm NSSplitView và đặt hard constraint cho sidebar + detail để tránh layout vỡ khi kéo.
+    private static func constrainSplitViewSidebar(in view: NSView?) {
+        guard let view else { return }
+
+        if let splitView = view as? NSSplitView,
+           let splitController = splitView.delegate as? NSSplitViewController {
+            let items = splitController.splitViewItems
+            if let sidebarItem = items.first {
+                sidebarItem.canCollapse = false
+                sidebarItem.minimumThickness = sidebarMinThickness
+                sidebarItem.maximumThickness = sidebarMaxThickness
+            }
+            if items.count > 1 {
+                items[1].canCollapse = false
+                items[1].minimumThickness = detailMinThickness
+            }
+            return
+        }
+
+        for subview in view.subviews {
+            constrainSplitViewSidebar(in: subview)
+        }
     }
 }

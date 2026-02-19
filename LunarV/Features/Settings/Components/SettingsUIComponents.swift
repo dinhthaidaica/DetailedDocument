@@ -146,27 +146,39 @@ struct LunarSettingsSidebarRow: View {
     var body: some View {
         HStack(spacing: 10) {
             ZStack {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .stroke(Color.primary.opacity(colorScheme == .dark ? 0.18 : 0.1), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(colorScheme == .dark ? 0.28 : 0.18),
+                                Color.accentColor.opacity(colorScheme == .dark ? 0.14 : 0.08),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
 
                 Image(systemName: pane.icon)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
             }
-            .frame(width: 24, height: 24)
+            .frame(width: 26, height: 26)
 
-            Text(pane.title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(pane.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(pane.subtitle)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 3)
         .help(pane.subtitle)
     }
 }
@@ -177,21 +189,22 @@ struct LunarSettingsStatusPill: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Text(text)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .lineLimit(1)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(
-                Capsule()
-                    .fill(color.opacity(colorScheme == .dark ? 0.24 : 0.12))
-            )
-            .overlay(
-                Capsule()
-                    .stroke(color.opacity(colorScheme == .dark ? 0.45 : 0.3), lineWidth: 1)
-            )
-            .foregroundStyle(color)
+        HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 5, height: 5)
+
+            Text(text)
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(
+            Capsule()
+                .fill(color.opacity(colorScheme == .dark ? 0.18 : 0.1))
+        )
+        .foregroundStyle(color)
     }
 }
 
@@ -219,24 +232,29 @@ struct LunarSettingsHeader<Trailing: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                accent.opacity(colorScheme == .dark ? 0.32 : 0.2),
+                                accent.opacity(colorScheme == .dark ? 0.16 : 0.08),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
 
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(accent)
             }
-            .frame(width: 36, height: 36)
+            .frame(width: 40, height: 40)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.primary)
 
                 Text(subtitle)
@@ -250,18 +268,18 @@ struct LunarSettingsHeader<Trailing: View>: View {
 
             trailing
         }
-        .padding(12)
+        .padding(14)
         .frame(maxWidth: 760)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.78 : 0.95))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    accent.opacity(colorScheme == .light ? 0.14 : 0.2),
-                                    accent.opacity(0.04),
+                                    accent.opacity(colorScheme == .light ? 0.12 : 0.18),
+                                    accent.opacity(0.02),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -270,10 +288,10 @@ struct LunarSettingsHeader<Trailing: View>: View {
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.22 : 0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(accent.opacity(colorScheme == .dark ? 0.2 : 0.12), lineWidth: 0.5)
         )
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.28 : 0.12), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.22 : 0.08), radius: 10, x: 0, y: 4)
     }
 }
 
@@ -304,9 +322,18 @@ struct LunarSettingsCard<Content: View, Trailing: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 24, height: 24)
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.16),
+                                    Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.06),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 26, height: 26)
 
                     Image(systemName: icon)
                         .font(.system(size: 12, weight: .semibold))
@@ -315,12 +342,12 @@ struct LunarSettingsCard<Content: View, Trailing: View>: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(.primary)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(.system(size: 11))
+                            .font(.system(size: 10))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -331,26 +358,26 @@ struct LunarSettingsCard<Content: View, Trailing: View>: View {
                 trailing
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color.primary.opacity(colorScheme == .dark ? 0.06 : 0.03))
+            .padding(.vertical, 11)
+            .background(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.025))
 
             Divider()
-                .opacity(0.5)
+                .opacity(0.4)
 
             content
-                .padding(12)
+                .padding(14)
         }
         .frame(maxWidth: 760)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.78 : 0.95))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.22 : 0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.18 : 0.1), lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.1), radius: 8, x: 0, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.06), radius: 8, x: 0, y: 3)
     }
 }
 
@@ -432,17 +459,18 @@ struct PanelCardOrderRow: View {
     }
 
     private var orderIndicator: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 3) {
             Text("\(index + 1)")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(.system(size: 10, weight: .heavy, design: .rounded))
                 .foregroundStyle(.secondary)
-                .frame(minWidth: 20)
+                .frame(width: 22, height: 22)
+                .background(Color.primary.opacity(0.06), in: Circle())
 
             Image(systemName: "line.3.horizontal")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary.opacity(0.6))
         }
-        .frame(width: 24)
+        .frame(width: 26)
         .help("Kéo để đổi vị trí")
     }
 
@@ -519,16 +547,16 @@ struct PanelCardHintChip: View {
     let text: String
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 9, weight: .bold))
             Text(text)
-                .font(.caption2.weight(.medium))
+                .font(.system(size: 10, weight: .medium))
         }
         .foregroundStyle(.secondary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.primary.opacity(0.06), in: Capsule())
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.primary.opacity(0.05), in: Capsule())
     }
 }
 
@@ -683,18 +711,20 @@ struct TokenFlowLayout: View {
         FlowLayout(alignment: .leading, spacing: 6) {
             ForEach(tokens) { token in
                 Button(action: { action(token) }) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Text(token.code)
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundStyle(token.color)
                         Text(token.label)
-                            .font(.system(size: 9))
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(.primary.opacity(0.7))
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(token.color.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(token.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 7))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(token.color.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(token.color.opacity(0.15), lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
