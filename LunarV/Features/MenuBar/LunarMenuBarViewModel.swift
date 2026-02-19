@@ -22,6 +22,14 @@ final class LunarMenuBarViewModel: ObservableObject {
         let month: Int
     }
 
+    private struct CachedMenuBarTitleComponents {
+        let dayStart: Date
+        let solar: SolarDateComponents
+        let lunar: LunarDate
+        let canChiYear: String
+        let zodiac: String
+    }
+
     private struct RefreshSettings: Equatable {
         let displayPreset: MenuBarDisplayPreset
         let customTemplate: String
@@ -56,6 +64,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private var monthCellsCacheOrder: [YearMonth] = []
     private var cachedUpcomingHolidays: [LunarHoliday] = []
     private var cachedUpcomingHolidaysAnchor: Date?
+    private var cachedMenuBarTitleComponents: CachedMenuBarTitleComponents?
     private var lastInfoRefreshMinuteBucket: Int?
     private var lastObservedRefreshSettings: RefreshSettings
 
@@ -92,10 +101,17 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     func refresh(forceInfo: Bool = false) {
         let now = Date()
-        updateMenuBarTitle(now: now)
         if forceInfo || shouldRefreshInfo(at: now) {
-            updateInfo(now: now, viewingDate: viewingDate)
+            guard let snapshot = lunarService.snapshot(for: now) else {
+                AppLogger.calendar.warning("Không thể tạo snapshot cho refresh tại \(now)")
+                scheduleRefresh(from: now)
+                return
+            }
+            updateMenuBarTitle(now: now, snapshot: snapshot)
+            updateInfo(now: now, viewingDate: viewingDate, snapshot: snapshot)
             markInfoRefreshed(at: now)
+        } else {
+            updateMenuBarTitle(now: now)
         }
         scheduleRefresh(from: now)
     }
@@ -104,32 +120,27 @@ final class LunarMenuBarViewModel: ObservableObject {
         monthCellsCache.removeAll()
         monthCellsCacheOrder.removeAll()
         cachedUpcomingHolidaysAnchor = nil
+        cachedMenuBarTitleComponents = nil
         lastInfoRefreshMinuteBucket = nil
     }
 
     func nextMonth() {
         if let next = solarCalendar.date(byAdding: .month, value: 1, to: viewingDate) {
             viewingDate = next
-            let now = Date()
-            updateInfo(now: now, viewingDate: viewingDate)
-            markInfoRefreshed(at: now)
+            refresh(forceInfo: true)
         }
     }
 
     func previousMonth() {
         if let prev = solarCalendar.date(byAdding: .month, value: -1, to: viewingDate) {
             viewingDate = prev
-            let now = Date()
-            updateInfo(now: now, viewingDate: viewingDate)
-            markInfoRefreshed(at: now)
+            refresh(forceInfo: true)
         }
     }
 
     func goToToday() {
-        let now = Date()
-        viewingDate = now
-        updateInfo(now: now, viewingDate: viewingDate)
-        markInfoRefreshed(at: now)
+        viewingDate = Date()
+        refresh(forceInfo: true)
     }
 
     func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
@@ -145,31 +156,70 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     private func updateMenuBarTitle(now: Date) {
-        guard let snapshot = lunarService.snapshot(for: now) else {
+        guard let titleComponents = resolveMenuBarTitleComponents(for: now) else {
             AppLogger.calendar.warning("Không thể tạo snapshot cho menu bar title tại \(now)")
             return
         }
+
+        let titleContext = buildMenuBarTitleContext(
+            now: now,
+            solar: titleComponents.solar,
+            lunar: titleComponents.lunar,
+            canChiYear: titleComponents.canChiYear,
+            zodiac: titleComponents.zodiac
+        )
+        applyMenuBarTitle(context: titleContext)
+    }
+
+    private func updateMenuBarTitle(now: Date, snapshot: VietnameseLunarSnapshot) {
+        cachedMenuBarTitleComponents = CachedMenuBarTitleComponents(
+            dayStart: solarCalendar.startOfDay(for: now),
+            solar: snapshot.solar,
+            lunar: snapshot.lunar,
+            canChiYear: snapshot.canChiYear,
+            zodiac: snapshot.zodiac
+        )
+
+        let titleContext = buildMenuBarTitleContext(
+            now: now,
+            solar: snapshot.solar,
+            lunar: snapshot.lunar,
+            canChiYear: snapshot.canChiYear,
+            zodiac: snapshot.zodiac
+        )
+        applyMenuBarTitle(context: titleContext)
+    }
+
+    private func buildMenuBarTitleContext(
+        now: Date,
+        solar: SolarDateComponents,
+        lunar: LunarDate,
+        canChiYear: String,
+        zodiac: String
+    ) -> MenuBarTitleContext {
         let timeComponents = solarCalendar.dateComponents([.hour, .minute, .second], from: now)
 
-        let titleContext = MenuBarTitleContext(
-            lunarDay: snapshot.lunar.day,
-            lunarMonth: snapshot.lunar.month,
-            lunarYear: snapshot.lunar.year,
-            isLeapMonth: snapshot.lunar.isLeapMonth,
-            canChiYear: snapshot.canChiYear,
-            zodiac: snapshot.zodiac,
-            solarDay: snapshot.solar.day,
-            solarMonth: snapshot.solar.month,
-            solarYear: snapshot.solar.year,
-            solarWeekdayName: lunarService.weekdayName(from: snapshot.solar.weekday),
-            solarWeekdayShortName: lunarService.weekdayShortName(from: snapshot.solar.weekday),
-            solarWeekdayNumeric: lunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .oneToSeven),
-            solarWeekdayNumericTwoToEight: lunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .twoToEight),
+        return MenuBarTitleContext(
+            lunarDay: lunar.day,
+            lunarMonth: lunar.month,
+            lunarYear: lunar.year,
+            isLeapMonth: lunar.isLeapMonth,
+            canChiYear: canChiYear,
+            zodiac: zodiac,
+            solarDay: solar.day,
+            solarMonth: solar.month,
+            solarYear: solar.year,
+            solarWeekdayName: lunarService.weekdayName(from: solar.weekday),
+            solarWeekdayShortName: lunarService.weekdayShortName(from: solar.weekday),
+            solarWeekdayNumeric: lunarService.weekdayNumberString(from: solar.weekday, style: .oneToSeven),
+            solarWeekdayNumericTwoToEight: lunarService.weekdayNumberString(from: solar.weekday, style: .twoToEight),
             hour: timeComponents.hour ?? 0,
             minute: timeComponents.minute ?? 0,
             second: timeComponents.second ?? 0
         )
+    }
 
+    private func applyMenuBarTitle(context titleContext: MenuBarTitleContext) {
         let preset = settings.menuBarDisplayPreset
         let customTemplate = settings.customMenuBarTemplate
 
@@ -185,12 +235,37 @@ final class LunarMenuBarViewModel: ObservableObject {
         )
     }
 
-    private func updateInfo(now: Date, viewingDate: Date) {
+    private func resolveMenuBarTitleComponents(for now: Date) -> (solar: SolarDateComponents, lunar: LunarDate, canChiYear: String, zodiac: String)? {
+        let dayStart = solarCalendar.startOfDay(for: now)
+
+        if let cached = cachedMenuBarTitleComponents, solarCalendar.isDate(cached.dayStart, inSameDayAs: dayStart) {
+            return (
+                solar: cached.solar,
+                lunar: cached.lunar,
+                canChiYear: cached.canChiYear,
+                zodiac: cached.zodiac
+            )
+        }
+
+        guard let computed = lunarService.menuBarTitleComponents(for: now) else {
+            return nil
+        }
+
+        cachedMenuBarTitleComponents = CachedMenuBarTitleComponents(
+            dayStart: dayStart,
+            solar: computed.solar,
+            lunar: computed.lunar,
+            canChiYear: computed.canChiYear,
+            zodiac: computed.zodiac
+        )
+        return computed
+    }
+
+    private func updateInfo(now: Date, viewingDate: Date, snapshot: VietnameseLunarSnapshot) {
         guard
-            let snapshot = lunarService.snapshot(for: now),
             let viewingComponents = lunarService.solarComponents(from: viewingDate)
         else {
-            AppLogger.calendar.warning("Không thể tạo snapshot hoặc solar components cho info update")
+            AppLogger.calendar.warning("Không thể tạo solar components cho info update")
             return
         }
 

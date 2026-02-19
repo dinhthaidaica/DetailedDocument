@@ -7,16 +7,34 @@ import SwiftUI
 
 // MARK: - Section Card
 
+enum MenuBarCardStyle {
+    case standard
+    case glassEmphasis
+}
+
 struct SectionCard<Content: View, Trailing: View>: View {
     let title: String
+    let style: MenuBarCardStyle
     var trailingView: (() -> Trailing)? = nil
     @ViewBuilder var content: Content
 
-    init(title: String, @ViewBuilder trailingView: @escaping () -> Trailing, @ViewBuilder content: () -> Content) {
-        self.title = title; self.trailingView = trailingView; self.content = content()
+    init(
+        title: String,
+        style: MenuBarCardStyle = .standard,
+        @ViewBuilder trailingView: @escaping () -> Trailing,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.style = style
+        self.trailingView = trailingView
+        self.content = content()
     }
-    init(title: String, @ViewBuilder content: () -> Content) where Trailing == EmptyView {
-        self.title = title; self.trailingView = nil; self.content = content()
+
+    init(title: String, style: MenuBarCardStyle = .standard, @ViewBuilder content: () -> Content) where Trailing == EmptyView {
+        self.title = title
+        self.style = style
+        self.trailingView = nil
+        self.content = content()
     }
 
     var body: some View {
@@ -35,7 +53,7 @@ struct SectionCard<Content: View, Trailing: View>: View {
             content
         }
         .padding(16)
-        .glassEffect(Material.regular, in: RoundedRectangle(cornerRadius: 20))
+        .menuBarCardStyle(style, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 
@@ -536,6 +554,37 @@ func justifiedAttributedText(
 // MARK: - Glass Effect
 
 extension View {
+    @ViewBuilder
+    func menuBarCardStyle<S: Shape>(_ style: MenuBarCardStyle, in shape: S) -> some View {
+        switch style {
+        case .standard:
+            self
+                .background(
+                    Color(nsColor: .controlBackgroundColor).opacity(0.7),
+                    in: shape
+                )
+                .overlay(
+                    shape
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(0.2),
+                                    .white.opacity(0.06),
+                                    .black.opacity(0.08),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                        .blendMode(.overlay)
+                )
+                .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 1)
+        case .glassEmphasis:
+            self.glassEffect(Material.regular, in: shape)
+        }
+    }
+
     func glassEffect<S: Shape>(_ material: Material = .regular, tint: Color = .clear, in shape: S) -> some View {
         self.background(material, in: shape)
             .background(tint, in: shape)

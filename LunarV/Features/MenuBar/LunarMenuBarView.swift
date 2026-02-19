@@ -47,7 +47,13 @@ struct LunarMenuBarView: View {
         controlActiveState != .inactive
     }
 
+    private var visiblePanelCards: [PanelCardKind] {
+        viewModel.settings.panelCardOrder.filter(isPanelCardVisible)
+    }
+
     var body: some View {
+        let cards = visiblePanelCards
+
         ZStack(alignment: .top) {
             Rectangle()
                 .fill(Color(nsColor: .windowBackgroundColor).opacity(isControlEffectivelyActive ? 0.96 : 0.92))
@@ -77,8 +83,11 @@ struct LunarMenuBarView: View {
 
                 ScrollView {
                     VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
-                        ForEach(viewModel.settings.panelCardOrder) { card in
-                            panelCard(for: card)
+                        ForEach(Array(cards.enumerated()), id: \.element) { index, card in
+                            panelCard(
+                                for: card,
+                                style: styleForVisibleCard(at: index, totalCards: cards.count)
+                            )
                         }
                     }
                     .padding(MenuBarMetrics.panelPadding)
@@ -191,7 +200,7 @@ struct LunarMenuBarView: View {
 
     // MARK: - Hero Card
 
-    private var heroCard: some View {
+    private func heroCard(style: MenuBarCardStyle) -> some View {
         let info = viewModel.info
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
@@ -242,59 +251,55 @@ struct LunarMenuBarView: View {
             }
         }
         .padding(20)
-        .glassEffect(Material.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .menuBarCardStyle(style, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ngày âm lịch: \(info.weekdayText), ngày \(info.lunarDayText), \(info.lunarMonthYearText). Dương lịch: \(info.solarDateText). Pha trăng: \(info.lunarPhaseName). Tiết khí: \(info.solarTermText)")
     }
 
     // MARK: - Panel Card Router
 
+    private func isPanelCardVisible(_ card: PanelCardKind) -> Bool {
+        if card == .holidays {
+            return viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty
+        }
+        return viewModel.settings.isPanelCardVisible(card)
+    }
+
+    private func styleForVisibleCard(at index: Int, totalCards: Int) -> MenuBarCardStyle {
+        guard totalCards > 0 else {
+            return .standard
+        }
+        return index == totalCards - 1 ? .glassEmphasis : .standard
+    }
+
     @ViewBuilder
-    private func panelCard(for card: PanelCardKind) -> some View {
+    private func panelCard(for card: PanelCardKind, style: MenuBarCardStyle) -> some View {
         switch card {
         case .hero:
-            if viewModel.settings.showHeroCard {
-                heroCard
-            }
+            heroCard(style: style)
         case .canChi:
-            if viewModel.settings.showCanChiSection {
-                canChiCard
-            }
+            canChiCard(style: style)
         case .auspiciousHours:
-            if viewModel.settings.showAuspiciousHoursSection {
-                auspiciousHoursCard
-            }
+            auspiciousHoursCard(style: style)
         case .dayGuidance:
-            if viewModel.settings.showDayGuidanceSection {
-                guidanceCard
-            }
+            guidanceCard(style: style)
         case .holidays:
-            if viewModel.settings.showHolidaySection && !viewModel.info.upcomingHolidays.isEmpty {
-                holidaysCard
-            }
+            holidaysCard(style: style)
         case .internationalTimes:
-            if viewModel.settings.showInternationalTimesSection {
-                internationalTimesCard
-            }
+            internationalTimesCard(style: style)
         case .monthCalendar:
-            if viewModel.settings.showMonthCalendar {
-                monthCalendarCard
-            }
+            monthCalendarCard(style: style)
         case .dateConverter:
-            if viewModel.settings.showDateConverter {
-                converterCard
-            }
+            converterCard(style: style)
         case .detail:
-            if viewModel.settings.showDetailSection {
-                detailCard
-            }
+            detailCard(style: style)
         }
     }
 
     // MARK: - Cards
 
-    private var canChiCard: some View {
-        SectionCard(title: "Can chi & Con giáp") {
+    private func canChiCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Can chi & Con giáp", style: style) {
             HStack(spacing: 10) {
                 CanChiPill(title: "Ngày", value: viewModel.info.canChiDayText)
                 CanChiPill(title: "Tháng", value: viewModel.info.canChiMonthText)
@@ -303,8 +308,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var auspiciousHoursCard: some View {
-        SectionCard(title: "Giờ hoàng đạo") {
+    private func auspiciousHoursCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Giờ hoàng đạo", style: style) {
             VStack(alignment: .leading, spacing: 10) {
                 InfoRow(icon: "leaf.fill", label: "Ngũ hành ngày", value: viewModel.info.dayElementText)
                 InfoRow(icon: "arrow.left.and.right.circle", label: "Tuổi xung", value: viewModel.info.oppositeZodiacText)
@@ -342,8 +347,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var guidanceCard: some View {
-        SectionCard(title: "Gợi ý trong ngày") {
+    private func guidanceCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Gợi ý trong ngày", style: style) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -412,8 +417,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var holidaysCard: some View {
-        SectionCard(title: "Sự kiện sắp tới") {
+    private func holidaysCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Sự kiện sắp tới", style: style) {
             VStack(spacing: 8) {
                 ForEach(viewModel.info.upcomingHolidays.prefix(3)) { holiday in
                     let isToday = holiday.daysUntil == 0
@@ -463,8 +468,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var internationalTimesCard: some View {
-        SectionCard(title: "Giờ quốc tế", trailingView: {
+    private func internationalTimesCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Giờ quốc tế", style: style, trailingView: {
             Button {
                 copyInternationalTimes()
             } label: {
@@ -535,8 +540,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var monthCalendarCard: some View {
-        SectionCard(title: "Lịch tháng", trailingView: {
+    private func monthCalendarCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Lịch tháng", style: style, trailingView: {
             HStack(spacing: 10) {
                 Button("Nay") { viewModel.goToToday() }.buttonStyle(.plain)
                     .font(.system(size: 10, weight: .bold)).foregroundStyle(Color.accentColor)
@@ -593,8 +598,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var detailCard: some View {
-        SectionCard(title: "Thông tin khác") {
+    private func detailCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Thông tin khác", style: style) {
             VStack(spacing: 10) {
                 InfoRow(icon: "calendar.badge.clock", label: "Ngày âm lịch", value: viewModel.info.lunarDateText)
                 InfoRow(icon: "clock.arrow.circlepath", label: "Giờ Can Chi hiện tại", value: viewModel.info.currentHourCanChiText)
@@ -606,8 +611,8 @@ struct LunarMenuBarView: View {
         }
     }
 
-    private var converterCard: some View {
-        SectionCard(title: "Chuyển đổi nhanh") {
+    private func converterCard(style: MenuBarCardStyle) -> some View {
+        SectionCard(title: "Chuyển đổi nhanh", style: style) {
             VStack(alignment: .leading, spacing: 12) {
                 ConverterModeSelector(mode: $converterMode)
 

@@ -23,6 +23,13 @@ struct AppSettingsView: View {
     @State private var updateCheckFrequency: UpdateCheckFrequency
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
     private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
+    private static let searchResultCacheCapacity = 32
+    private static var cachedSearchResultsByQuery: [String: [SettingsSearchEntry]] = [:]
+    private static var cachedSearchResultsOrder: [String] = []
+    private static var cachedUTCOffsetTextByTimeZoneID: [String: String] = [:]
+    private static var utcOffsetCacheHourBucket: Int?
+    private static var normalizedTimeZoneSearchValueByID: [String: String] = [:]
+    private static var timeZoneSearchIndexHourBucket: Int?
     private static let installedFontFamiliesStorage: [String] = NSFontManager.shared.availableFontFamilies.sorted()
 
     private let previewLunarService = VietnameseLunarDateService()
@@ -46,6 +53,15 @@ struct AppSettingsView: View {
         let subtitle: String
         let icon: String
         let keywords: [String]
+    }
+
+    private struct IndexedSettingsSearchEntry {
+        let entry: SettingsSearchEntry
+        let normalizedSection: String
+        let normalizedTitle: String
+        let normalizedSubtitle: String
+        let normalizedKeywords: [String]
+        let normalizedCombinedValues: String
     }
 
     init(updater: SPUUpdater) {
@@ -480,15 +496,36 @@ struct AppSettingsView: View {
             ),
     ]
 
-    private static let searchIndexedFeatureValuesByPane: [SettingsPane: [String]] = {
-        Dictionary(grouping: settingsSearchIndexStorage, by: \.pane).mapValues { entries in
-            entries.flatMap { [$0.section, $0.title, $0.subtitle] + $0.keywords }
-        }
-    }()
+    private static let indexedSettingsSearchStorage: [IndexedSettingsSearchEntry] = settingsSearchIndexStorage.map { entry in
+        let normalizedSection = normalizedSearchValue(entry.section)
+        let normalizedTitle = normalizedSearchValue(entry.title)
+        let normalizedSubtitle = normalizedSearchValue(entry.subtitle)
+        let normalizedKeywords = entry.keywords.map(normalizedSearchValue)
+        let normalizedCombinedValues = ([normalizedTitle, normalizedSection, normalizedSubtitle] + normalizedKeywords)
+            .joined(separator: " ")
 
-    private var settingsSearchIndex: [SettingsSearchEntry] {
-        Self.settingsSearchIndexStorage
+        return IndexedSettingsSearchEntry(
+            entry: entry,
+            normalizedSection: normalizedSection,
+            normalizedTitle: normalizedTitle,
+            normalizedSubtitle: normalizedSubtitle,
+            normalizedKeywords: normalizedKeywords,
+            normalizedCombinedValues: normalizedCombinedValues
+        )
     }
+
+    private static let normalizedPaneSearchValuesByPane: [SettingsPane: String] = {
+        let groupedEntries = Dictionary(grouping: settingsSearchIndexStorage, by: \.pane)
+
+        return Dictionary(uniqueKeysWithValues: SettingsPane.defaultOrder.map { pane in
+            let indexedFeatureValues = groupedEntries[pane]?.flatMap {
+                [$0.section, $0.title, $0.subtitle] + $0.keywords
+            } ?? []
+            let combinedValues = [pane.title, pane.subtitle] + pane.searchKeywords + indexedFeatureValues
+            let normalizedValues = combinedValues.map(normalizedSearchValue)
+            return (pane, normalizedValues.joined(separator: " "))
+        })
+    }()
 
     private var filteredPanes: [SettingsPane] {
         filteredPanes(for: searchText)
@@ -496,6 +533,32 @@ struct AppSettingsView: View {
 
     private var orderedSettingsPanes: [SettingsPane] {
         SettingsPane.defaultOrder
+    }
+
+    private static func cachedSearchResults(for normalizedQuery: String) -> [SettingsSearchEntry]? {
+        guard let cachedResults = cachedSearchResultsByQuery[normalizedQuery] else {
+            return nil
+        }
+
+        if let index = cachedSearchResultsOrder.firstIndex(of: normalizedQuery) {
+            cachedSearchResultsOrder.remove(at: index)
+        }
+        cachedSearchResultsOrder.append(normalizedQuery)
+        return cachedResults
+    }
+
+    private static func storeSearchResults(_ results: [SettingsSearchEntry], for normalizedQuery: String) {
+        cachedSearchResultsByQuery[normalizedQuery] = results
+
+        if let index = cachedSearchResultsOrder.firstIndex(of: normalizedQuery) {
+            cachedSearchResultsOrder.remove(at: index)
+        }
+        cachedSearchResultsOrder.append(normalizedQuery)
+
+        while cachedSearchResultsOrder.count > searchResultCacheCapacity {
+            let evictedQuery = cachedSearchResultsOrder.removeFirst()
+            cachedSearchResultsByQuery.removeValue(forKey: evictedQuery)
+        }
     }
 
     private func filteredPanes(for query: String) -> [SettingsPane] {
@@ -511,7 +574,7 @@ struct AppSettingsView: View {
             matchesSearchQuery(
                 normalizedQuery: normalizedQuery,
                 queryTokens: queryTokens,
-                values: paneSearchValues(for: pane)
+                combinedValues: Self.normalizedPaneSearchValuesByPane[pane] ?? ""
             )
         }
     }
@@ -525,22 +588,26 @@ struct AppSettingsView: View {
         guard !normalizedQuery.isEmpty else {
             return []
         }
+        if let cached = Self.cachedSearchResults(for: normalizedQuery) {
+            return cached
+        }
+
         let queryTokens = normalizedQuery.split(separator: " ").map(String.init)
         let paneOrderMap = Dictionary(
             uniqueKeysWithValues: orderedSettingsPanes.enumerated().map { ($1, $0) }
         )
 
-        return settingsSearchIndex
-            .compactMap { entry -> (SettingsSearchEntry, Int)? in
+        let results = Self.indexedSettingsSearchStorage
+            .compactMap { indexedEntry -> (SettingsSearchEntry, Int)? in
                 let score = searchScore(
-                    for: entry,
+                    for: indexedEntry,
                     normalizedQuery: normalizedQuery,
                     queryTokens: queryTokens
                 )
                 guard score > 0 else {
                     return nil
                 }
-                return (entry, score)
+                return (indexedEntry.entry, score)
             }
             .sorted { lhs, rhs in
                 if lhs.1 != rhs.1 {
@@ -556,18 +623,21 @@ struct AppSettingsView: View {
                 return lhs.0.title.localizedCaseInsensitiveCompare(rhs.0.title) == .orderedAscending
             }
             .map(\.0)
+
+        Self.storeSearchResults(results, for: normalizedQuery)
+        return results
     }
 
     private func searchScore(
-        for entry: SettingsSearchEntry,
+        for indexedEntry: IndexedSettingsSearchEntry,
         normalizedQuery: String,
         queryTokens: [String]
     ) -> Int {
-        let title = normalizedSearchValue(entry.title)
-        let section = normalizedSearchValue(entry.section)
-        let subtitle = normalizedSearchValue(entry.subtitle)
-        let keywords = entry.keywords.map(normalizedSearchValue)
-        let combinedValues = ([title, section, subtitle] + keywords).joined(separator: " ")
+        let title = indexedEntry.normalizedTitle
+        let section = indexedEntry.normalizedSection
+        let subtitle = indexedEntry.normalizedSubtitle
+        let keywords = indexedEntry.normalizedKeywords
+        let combinedValues = indexedEntry.normalizedCombinedValues
 
         guard
             combinedValues.contains(normalizedQuery) ||
@@ -595,11 +665,8 @@ struct AppSettingsView: View {
     private func matchesSearchQuery(
         normalizedQuery: String,
         queryTokens: [String],
-        values: [String]
+        combinedValues: String
     ) -> Bool {
-        let normalizedValues = values.map(normalizedSearchValue)
-        let combinedValues = normalizedValues.joined(separator: " ")
-
         if combinedValues.contains(normalizedQuery) {
             return true
         }
@@ -609,12 +676,11 @@ struct AppSettingsView: View {
         }
     }
 
-    private func paneSearchValues(for pane: SettingsPane) -> [String] {
-        let indexedFeatureValues = Self.searchIndexedFeatureValuesByPane[pane] ?? []
-        return [pane.title, pane.subtitle] + pane.searchKeywords + indexedFeatureValues
+    private func normalizedSearchValue(_ value: String) -> String {
+        Self.normalizedSearchValue(value)
     }
 
-    private func normalizedSearchValue(_ value: String) -> String {
+    nonisolated private static func normalizedSearchValue(_ value: String) -> String {
         value
             .folding(options: [.diacriticInsensitive, .caseInsensitive, .widthInsensitive], locale: .current)
             .replacingOccurrences(of: "[\\p{P}\\p{S}]+", with: " ", options: .regularExpression)
@@ -651,17 +717,20 @@ struct AppSettingsView: View {
     // MARK: - Search Results Pane
 
     private var searchResultsPane: some View {
-        ScrollView {
+        let results = searchResults
+        let groups = searchResultGroups(for: results)
+
+        return ScrollView {
             LazyVStack(spacing: 12) {
                 LunarSettingsHeader(
                     title: "Kết quả tìm kiếm",
                     subtitle: "Hiển thị theo từng chức năng giống cách Apple tổ chức trong Settings.",
                     icon: "magnifyingglass"
                 ) {
-                    LunarSettingsStatusPill(text: "\(searchResults.count) kết quả", color: .accentColor)
+                    LunarSettingsStatusPill(text: "\(results.count) kết quả", color: .accentColor)
                 }
 
-                if searchResults.isEmpty {
+                if results.isEmpty {
                     LunarSettingsCard(
                         title: "Không tìm thấy kết quả",
                         subtitle: "Thử từ khóa ngắn hơn hoặc đổi cách diễn đạt",
@@ -677,7 +746,7 @@ struct AppSettingsView: View {
                         }
                     }
                 } else {
-                    ForEach(searchResultGroups) { group in
+                    ForEach(groups) { group in
                         LunarSettingsCard(
                             title: group.pane.title,
                             subtitle: group.pane.subtitle,
@@ -704,8 +773,8 @@ struct AppSettingsView: View {
         var id: String { pane.id }
     }
 
-    private var searchResultGroups: [SettingsSearchResultGroup] {
-        let groupedResults = Dictionary(grouping: searchResults, by: \.pane)
+    private func searchResultGroups(for results: [SettingsSearchEntry]) -> [SettingsSearchResultGroup] {
+        let groupedResults = Dictionary(grouping: results, by: \.pane)
 
         return orderedSettingsPanes.compactMap { pane in
             guard let results = groupedResults[pane], !results.isEmpty else {
@@ -1016,7 +1085,7 @@ struct AppSettingsView: View {
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text("Kéo-thả để đổi thứ tự, dùng công tắc để ẩn/hiện card trong menu.")
+                            Text("Kéo-thả hoặc dùng nút lên/xuống để đổi thứ tự, bật/tắt để quản lý hiển thị card.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1083,9 +1152,16 @@ struct AppSettingsView: View {
     private var panelOrderList: some View {
         List {
             ForEach(Array(settings.panelCardOrder.enumerated()), id: \.element.id) { index, card in
+                let isOnlyVisibleCard = visiblePanelCardCount == 1 && settings.isPanelCardVisible(card)
+
                 PanelCardOrderRow(
                     index: index,
                     card: card,
+                    canMoveUp: index > 0,
+                    canMoveDown: index < settings.panelCardOrder.count - 1,
+                    canToggleVisibility: !isOnlyVisibleCard,
+                    onMoveUp: { movePanelCard(card, direction: -1) },
+                    onMoveDown: { movePanelCard(card, direction: 1) },
                     isVisible: panelCardVisibilityBinding(for: card)
                 )
                 .listRowInsets(EdgeInsets(top: 2, leading: 10, bottom: 2, trailing: 10))
@@ -1121,6 +1197,26 @@ struct AppSettingsView: View {
                 settings.setPanelCardVisible(isVisible, for: card)
             }
         }
+    }
+
+    private func movePanelCard(_ card: PanelCardKind, direction: Int) {
+        let currentOrder = settings.panelCardOrder
+        guard
+            let sourceIndex = currentOrder.firstIndex(of: card)
+        else {
+            return
+        }
+
+        let targetIndex = sourceIndex + direction
+        guard targetIndex >= 0, targetIndex < currentOrder.count else {
+            return
+        }
+
+        let destination = direction > 0 ? targetIndex + 1 : targetIndex
+        settings.movePanelCard(
+            fromOffsets: IndexSet(integer: sourceIndex),
+            toOffset: destination
+        )
     }
 
     private var panelWindowSizeSettingsCard: some View {
@@ -2132,31 +2228,44 @@ struct AppSettingsView: View {
     }
 
     private var filteredAvailableInternationalTimeZones: [InternationalTimeZonePreset] {
-        AppSettings.availableInternationalTimeZones.filter { preset in
-            !settings.isInternationalTimeZoneSelected(preset) && matchesInternationalTimeZoneSearch(preset)
+        let query = internationalTimeZoneSearchQuery
+        let now = Date()
+
+        return AppSettings.availableInternationalTimeZones.filter { preset in
+            !settings.isInternationalTimeZoneSelected(preset) &&
+            matchesInternationalTimeZoneSearch(
+                preset,
+                normalizedQuery: query,
+                now: now
+            )
         }
     }
 
     private var smartInternationalTimeZoneSuggestions: [InternationalTimeZonePreset] {
-        settings.smartRecommendedInternationalTimeZones.filter { preset in
-            !settings.isInternationalTimeZoneSelected(preset) && matchesInternationalTimeZoneSearch(preset)
+        let query = internationalTimeZoneSearchQuery
+        let now = Date()
+
+        return settings.smartRecommendedInternationalTimeZones.filter { preset in
+            !settings.isInternationalTimeZoneSelected(preset) &&
+            matchesInternationalTimeZoneSearch(
+                preset,
+                normalizedQuery: query,
+                now: now
+            )
         }
     }
 
-    private func matchesInternationalTimeZoneSearch(_ preset: InternationalTimeZonePreset) -> Bool {
-        let query = internationalTimeZoneSearchQuery
+    private func matchesInternationalTimeZoneSearch(
+        _ preset: InternationalTimeZonePreset,
+        normalizedQuery query: String,
+        now: Date
+    ) -> Bool {
         guard !query.isEmpty else {
             return true
         }
 
-        let candidates = [
-            preset.city,
-            preset.country,
-            preset.id,
-            utcOffsetText(for: preset.id),
-        ]
-
-        return candidates.contains { normalizedSearchValue($0).contains(query) }
+        return Self.normalizedTimeZoneSearchValue(for: preset.id, at: now)
+            .contains(query)
     }
 
     private func moveSelectedInternationalTimeZone(id: String, direction: Int) {
@@ -2188,12 +2297,12 @@ struct AppSettingsView: View {
         )
     }
 
-    private func utcOffsetText(for timeZoneIdentifier: String) -> String {
+    private static func utcOffsetTextRaw(for timeZoneIdentifier: String, at date: Date) -> String {
         guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
             return "UTC?"
         }
 
-        let offsetMinutes = timeZone.secondsFromGMT(for: Date()) / 60
+        let offsetMinutes = timeZone.secondsFromGMT(for: date) / 60
         let sign = offsetMinutes >= 0 ? "+" : "-"
         let absoluteMinutes = abs(offsetMinutes)
         let hours = absoluteMinutes / 60
@@ -2204,6 +2313,53 @@ struct AppSettingsView: View {
         }
 
         return String(format: "UTC%@%02d:%02d", sign, hours, minutes)
+    }
+
+    private static func hourBucket(for date: Date) -> Int {
+        Int(date.timeIntervalSince1970 / 3600)
+    }
+
+    private static func utcOffsetTextCached(for timeZoneIdentifier: String, at date: Date) -> String {
+        let currentHourBucket = hourBucket(for: date)
+        if utcOffsetCacheHourBucket != currentHourBucket {
+            utcOffsetCacheHourBucket = currentHourBucket
+            cachedUTCOffsetTextByTimeZoneID.removeAll(keepingCapacity: true)
+        }
+
+        if let cached = cachedUTCOffsetTextByTimeZoneID[timeZoneIdentifier] {
+            return cached
+        }
+
+        let computed = utcOffsetTextRaw(for: timeZoneIdentifier, at: date)
+        cachedUTCOffsetTextByTimeZoneID[timeZoneIdentifier] = computed
+        return computed
+    }
+
+    private static func rebuildTimeZoneSearchIndexIfNeeded(at date: Date) {
+        let currentHourBucket = hourBucket(for: date)
+        guard timeZoneSearchIndexHourBucket != currentHourBucket else {
+            return
+        }
+
+        timeZoneSearchIndexHourBucket = currentHourBucket
+        normalizedTimeZoneSearchValueByID = Dictionary(
+            uniqueKeysWithValues: AppSettings.availableInternationalTimeZones.map { preset in
+                let offsetText = utcOffsetTextCached(for: preset.id, at: date)
+                let normalizedCombinedValues = [preset.city, preset.country, preset.id, offsetText]
+                    .map(normalizedSearchValue)
+                    .joined(separator: " ")
+                return (preset.id, normalizedCombinedValues)
+            }
+        )
+    }
+
+    private static func normalizedTimeZoneSearchValue(for timeZoneIdentifier: String, at date: Date) -> String {
+        rebuildTimeZoneSearchIndexIfNeeded(at: date)
+        return normalizedTimeZoneSearchValueByID[timeZoneIdentifier] ?? ""
+    }
+
+    private func utcOffsetText(for timeZoneIdentifier: String) -> String {
+        Self.utcOffsetTextCached(for: timeZoneIdentifier, at: Date())
     }
 
     private func internationalCurrentTimeText(for timeZoneIdentifier: String) -> String {
@@ -2614,24 +2770,24 @@ struct AppSettingsView: View {
 
 
     private func previewMenuBarTitle(at now: Date) -> String {
-        guard let snapshot = previewLunarService.snapshot(for: now) else {
+        guard let titleComponents = previewLunarService.menuBarTitleComponents(for: now) else {
             return "--"
         }
         let timeComponents = previewLunarService.calendar.dateComponents([.hour, .minute, .second], from: now)
         let context = MenuBarTitleContext(
-            lunarDay: snapshot.lunar.day,
-            lunarMonth: snapshot.lunar.month,
-            lunarYear: snapshot.lunar.year,
-            isLeapMonth: snapshot.lunar.isLeapMonth,
-            canChiYear: snapshot.canChiYear,
-            zodiac: snapshot.zodiac,
-            solarDay: snapshot.solar.day,
-            solarMonth: snapshot.solar.month,
-            solarYear: snapshot.solar.year,
-            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday),
-            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday),
-            solarWeekdayNumeric: previewLunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .oneToSeven),
-            solarWeekdayNumericTwoToEight: previewLunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .twoToEight),
+            lunarDay: titleComponents.lunar.day,
+            lunarMonth: titleComponents.lunar.month,
+            lunarYear: titleComponents.lunar.year,
+            isLeapMonth: titleComponents.lunar.isLeapMonth,
+            canChiYear: titleComponents.canChiYear,
+            zodiac: titleComponents.zodiac,
+            solarDay: titleComponents.solar.day,
+            solarMonth: titleComponents.solar.month,
+            solarYear: titleComponents.solar.year,
+            solarWeekdayName: previewLunarService.weekdayName(from: titleComponents.solar.weekday),
+            solarWeekdayShortName: previewLunarService.weekdayShortName(from: titleComponents.solar.weekday),
+            solarWeekdayNumeric: previewLunarService.weekdayNumberString(from: titleComponents.solar.weekday, style: .oneToSeven),
+            solarWeekdayNumericTwoToEight: previewLunarService.weekdayNumberString(from: titleComponents.solar.weekday, style: .twoToEight),
             hour: timeComponents.hour ?? 0,
             minute: timeComponents.minute ?? 0,
             second: timeComponents.second ?? 0

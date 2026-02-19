@@ -428,117 +428,103 @@ extension View {
 struct PanelCardOrderRow: View {
     let index: Int
     let card: PanelCardKind
+    let canMoveUp: Bool
+    let canMoveDown: Bool
+    let canToggleVisibility: Bool
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
     @Binding var isVisible: Bool
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            orderIndicator
-            cardTextBlock
+            VStack(spacing: 4) {
+                Text("\(index + 1)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 20)
+
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 24)
+
+            cardInfoBlock
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(0)
-            visibilityStatusBlock
+
+            statusBlock
                 .frame(width: 68, alignment: .trailing)
                 .layoutPriority(1)
-            trailingVisibilityControl
-                .frame(width: 48, alignment: .trailing)
-                .layoutPriority(1)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(rowBackgroundColor)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(rowBorderColor, lineWidth: 1)
-        )
-        .opacity(isVisible ? 1 : 0.88)
-        .help("Kéo-thả để đổi thứ tự. Thứ tự này sẽ hiển thị đúng trong menu bar.")
-    }
 
-    private var orderIndicator: some View {
-        VStack(spacing: 3) {
-            Text("\(index + 1)")
-                .font(.system(size: 10, weight: .heavy, design: .rounded))
-                .foregroundStyle(.secondary)
-                .frame(width: 22, height: 22)
-                .background(Color.primary.opacity(0.06), in: Circle())
+            HStack(spacing: 6) {
+                Button(action: onMoveUp) {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 10, weight: .bold))
+                        .frame(width: 20, height: 20)
+                        .background(Color.primary.opacity(0.06), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canMoveUp)
+                .help("Đưa lên trên")
 
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.secondary.opacity(0.6))
-        }
-        .frame(width: 26)
-        .help("Kéo để đổi vị trí")
-    }
-
-    private var cardTextBlock: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
-                    .frame(width: 22, height: 22)
-
-                Image(systemName: card.icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                Button(action: onMoveDown) {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .frame(width: 20, height: 20)
+                        .background(Color.primary.opacity(0.06), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canMoveDown)
+                .help("Đưa xuống dưới")
             }
+            .frame(width: 52, alignment: .trailing)
+            .layoutPriority(1)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(card.title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
-
-                Text(card.subtitle)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-        }
-    }
-
-    private var visibilityStatusBlock: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text(isVisible ? "Đang bật" : "Đang ẩn")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(visibilityStatusColor)
-            Text("Thành phần")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var trailingVisibilityControl: some View {
-        VStack(alignment: .trailing, spacing: 0) {
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
                 .lunarSettingsSwitchToggle()
                 .controlSize(.small)
                 .frame(width: 48, alignment: .trailing)
                 .fixedSize(horizontal: true, vertical: false)
-                .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
+                .layoutPriority(1)
+                .disabled(!canToggleVisibility)
+                .help(canToggleVisibility ? (isVisible ? "Đang hiển thị" : "Đang ẩn") : "Cần giữ tối thiểu 1 thành phần hiển thị")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.primary.opacity(isVisible ? 0.04 : 0.03), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(isVisible ? Color.primary.opacity(0.1) : Color.orange.opacity(0.22), lineWidth: 1)
+        )
+        .help("Kéo-thả để đổi thứ tự. Thứ tự này sẽ hiển thị đúng trong menu bar.")
+    }
+
+    private var cardInfoBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(card.title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.primary)
+
+            Text(card.subtitle)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
     }
 
-    private var visibilityStatusColor: Color {
-        isVisible ? .secondary : .orange
-    }
+    private var statusBlock: some View {
+        VStack(alignment: .trailing, spacing: 3) {
+            Text(isVisible ? "Đang bật" : "Đang ẩn")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(isVisible ? Color.secondary : Color.orange)
 
-    private var rowBackgroundColor: Color {
-        if isVisible {
-            return Color(NSColor.controlBackgroundColor).opacity(colorScheme == .dark ? 0.72 : 0.96)
+            Text("Thành phần")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
         }
-        return Color.orange.opacity(colorScheme == .dark ? 0.1 : 0.06)
-    }
-
-    private var rowBorderColor: Color {
-        if isVisible {
-            return Color.primary.opacity(colorScheme == .dark ? 0.2 : 0.08)
-        }
-        return Color.orange.opacity(colorScheme == .dark ? 0.4 : 0.25)
     }
 }
 

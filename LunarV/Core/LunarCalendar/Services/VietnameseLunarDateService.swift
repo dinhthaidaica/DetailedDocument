@@ -280,6 +280,20 @@ struct VietnameseLunarDateService {
         return nil
     }
 
+    func menuBarTitleComponents(for date: Date) -> (solar: SolarDateComponents, lunar: LunarDate, canChiYear: String, zodiac: String)? {
+        guard
+            let solar = solarComponents(from: date),
+            let vietnamSolar = vietnamSolarComponents(from: date)
+        else {
+            return nil
+        }
+
+        let lunar = lunarDate(day: vietnamSolar.day, month: vietnamSolar.month, year: vietnamSolar.year)
+        let canChiYear = VietnameseCalendarMetadata.canChiYear(lunarYear: lunar.year)
+        let zodiac = VietnameseCalendarMetadata.zodiac(lunarYear: lunar.year)
+        return (solar, lunar, canChiYear, zodiac)
+    }
+
     func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
         guard
             let solar = solarComponents(from: date),
