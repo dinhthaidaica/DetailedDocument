@@ -405,7 +405,7 @@ struct PanelCardOrderRow: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 10) {
             orderIndicator
             cardTextBlock
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -418,7 +418,7 @@ struct PanelCardOrderRow: View {
                 .layoutPriority(1)
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(rowBackgroundColor)
@@ -447,7 +447,7 @@ struct PanelCardOrderRow: View {
     }
 
     private var cardTextBlock: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ZStack {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
                     .fill(Color.accentColor.opacity(0.12))

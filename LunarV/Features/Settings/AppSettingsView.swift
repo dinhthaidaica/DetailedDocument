@@ -1016,22 +1016,33 @@ struct AppSettingsView: View {
                         panelOrderList
 
                         HStack(spacing: 8) {
-                            Button("Hiện tất cả") {
+                            Button {
                                 setAllPanelCardsVisible(true)
+                            } label: {
+                                Label("Hiện tất cả", systemImage: "eye")
                             }
                             .buttonStyle(.bordered)
 
-                            Button("Ẩn tất cả") {
-                                setAllPanelCardsVisible(false)
-                            }
-                            .buttonStyle(.bordered)
+                            Menu {
+                                Button {
+                                    setAllPanelCardsVisible(false)
+                                } label: {
+                                    Label("Ẩn bớt (giữ tối thiểu 1)", systemImage: "eye.slash")
+                                }
 
-                            Spacer(minLength: 0)
+                                Divider()
 
-                            Button("Khôi phục thứ tự mặc định") {
-                                settings.resetPanelCardOrder()
+                                Button {
+                                    settings.resetPanelCardOrder()
+                                } label: {
+                                    Label("Khôi phục thứ tự mặc định", systemImage: "arrow.counterclockwise")
+                                }
+                            } label: {
+                                Label("Tác vụ nhanh", systemImage: "ellipsis.circle")
                             }
                             .buttonStyle(.borderedProminent)
+
+                            Spacer(minLength: 0)
                         }
                     }
                 }
@@ -1060,7 +1071,7 @@ struct AppSettingsView: View {
                     card: card,
                     isVisible: panelCardVisibilityBinding(for: card)
                 )
-                .listRowInsets(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
+                .listRowInsets(EdgeInsets(top: 2, leading: 10, bottom: 2, trailing: 10))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
@@ -1068,7 +1079,7 @@ struct AppSettingsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .environment(\.defaultMinListRowHeight, 74)
+        .environment(\.defaultMinListRowHeight, 66)
         .frame(height: panelOrderListHeight)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -1082,7 +1093,7 @@ struct AppSettingsView: View {
     }
 
     private var panelOrderListHeight: CGFloat {
-        let rowHeight: CGFloat = 74
+        let rowHeight: CGFloat = 66
         let visibleRows = min(max(settings.panelCardOrder.count, 4), 8)
         return CGFloat(visibleRows) * rowHeight
     }
@@ -1220,8 +1231,7 @@ struct AppSettingsView: View {
 
             continuousMacSlider(
                 value: value,
-                range: range,
-                step: 1
+                range: range
             )
         }
     }
@@ -1281,41 +1291,50 @@ struct AppSettingsView: View {
                 }
 
                 HStack(spacing: 8) {
-                    Button("Gợi ý thông minh") {
+                    Button {
                         settings.applySmartInternationalTimeZones()
+                    } label: {
+                        Label("Gợi ý thông minh", systemImage: "sparkles")
                     }
                     .buttonStyle(.borderedProminent)
 
-                    Button("Chọn tất cả") {
-                        settings.selectAllInternationalTimeZones()
+                    Menu {
+                        Button {
+                            settings.selectAllInternationalTimeZones()
+                        } label: {
+                            Label("Chọn tất cả", systemImage: "checkmark.circle")
+                        }
+
+                        Button {
+                            settings.resetInternationalTimeZones()
+                        } label: {
+                            Label("Về mặc định", systemImage: "arrow.counterclockwise")
+                        }
+                    } label: {
+                        Label("Chọn nhanh", systemImage: "checklist")
                     }
                     .buttonStyle(.bordered)
 
-                    Button("Mặc định") {
-                        settings.resetInternationalTimeZones()
-                    }
-                    .buttonStyle(.bordered)
+                    Menu {
+                        Button {
+                            settings.sortInternationalTimeZonesByCity(ascending: true)
+                        } label: {
+                            Label("A-Z", systemImage: "textformat.abc")
+                        }
 
-                    Spacer(minLength: 0)
-                }
+                        Button {
+                            settings.sortInternationalTimeZonesByUTCOffset(ascending: true)
+                        } label: {
+                            Label("UTC tăng", systemImage: "arrow.up")
+                        }
 
-                HStack(spacing: 8) {
-                    Text("Sắp xếp nhanh:")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-
-                    Button("A-Z") {
-                        settings.sortInternationalTimeZonesByCity(ascending: true)
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button("UTC tăng") {
-                        settings.sortInternationalTimeZonesByUTCOffset(ascending: true)
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button("UTC giảm") {
-                        settings.sortInternationalTimeZonesByUTCOffset(ascending: false)
+                        Button {
+                            settings.sortInternationalTimeZonesByUTCOffset(ascending: false)
+                        } label: {
+                            Label("UTC giảm", systemImage: "arrow.down")
+                        }
+                    } label: {
+                        Label("Sắp xếp", systemImage: "arrow.up.arrow.down")
                     }
                     .buttonStyle(.bordered)
 
@@ -1408,7 +1427,7 @@ struct AppSettingsView: View {
         totalCount: Int
     ) -> some View {
         let isOnlySelection = totalCount == 1
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 10) {
             VStack(spacing: 4) {
                 Text("\(index + 1)")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -1485,7 +1504,7 @@ struct AppSettingsView: View {
                 .help(isOnlySelection ? "Cần giữ tối thiểu 1 múi giờ" : "Bỏ chọn múi giờ này")
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -1502,7 +1521,7 @@ struct AppSettingsView: View {
                     index: index,
                     totalCount: settings.selectedInternationalTimeZones.count
                 )
-                .listRowInsets(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
+                .listRowInsets(EdgeInsets(top: 2, leading: 10, bottom: 2, trailing: 10))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
@@ -1510,7 +1529,7 @@ struct AppSettingsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .environment(\.defaultMinListRowHeight, 74)
+        .environment(\.defaultMinListRowHeight, 66)
         .frame(height: selectedInternationalTimeZoneOrderListHeight)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -1524,7 +1543,7 @@ struct AppSettingsView: View {
     }
 
     private var selectedInternationalTimeZoneOrderListHeight: CGFloat {
-        let rowHeight: CGFloat = 74
+        let rowHeight: CGFloat = 66
         let visibleRows = min(max(settings.selectedInternationalTimeZones.count, 3), 6)
         return CGFloat(visibleRows) * rowHeight
     }
@@ -2394,8 +2413,7 @@ struct AppSettingsView: View {
     @ViewBuilder
     private func continuousMacSlider(
         value: Binding<Double>,
-        range: ClosedRange<Double>,
-        step: Double = 0
+        range: ClosedRange<Double>
     ) -> some View {
         HStack(spacing: 8) {
             Text("\(Int(range.lowerBound))")
@@ -2403,15 +2421,9 @@ struct AppSettingsView: View {
                 .foregroundStyle(.secondary)
                 .frame(minWidth: 16, alignment: .trailing)
 
-            Group {
-                if step > 0 {
-                    Slider(value: value, in: range, step: step)
-                } else {
-                    Slider(value: value, in: range)
-                }
-            }
-            .controlSize(.small)
-            .tint(Color(nsColor: .controlAccentColor))
+            Slider(value: value, in: range)
+                .controlSize(.small)
+                .tint(Color(nsColor: .controlAccentColor))
 
             Text("\(Int(range.upperBound))")
                 .font(.caption2)
