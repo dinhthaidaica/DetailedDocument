@@ -1241,6 +1241,11 @@ struct AppSettingsView: View {
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .frame(width: panelSizeValueColumnWidth, alignment: .trailing)
+
+                Stepper("", value: value, in: range, step: 1)
+                    .labelsHidden()
+                    .controlSize(.small)
+                    .help("Tinh chỉnh từng 1 px")
             }
 
             continuousMacSlider(
@@ -2506,16 +2511,16 @@ struct AppSettingsView: View {
             Text("\(Int(range.lowerBound))")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-                .frame(minWidth: 16, alignment: .trailing)
+                .frame(minWidth: 28, alignment: .trailing)
 
-            Slider(value: value, in: range)
+            Slider(value: value, in: range, step: 1)
                 .controlSize(.small)
                 .tint(Color(nsColor: .controlAccentColor))
 
             Text("\(Int(range.upperBound))")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-                .frame(minWidth: 16, alignment: .leading)
+                .frame(minWidth: 36, alignment: .leading)
         }
     }
 

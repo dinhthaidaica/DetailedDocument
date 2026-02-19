@@ -147,11 +147,11 @@ final class AppSettings: ObservableObject {
     static let menuBarIconTitleSpacing: CGFloat = 4
     static let defaultMenuBarPanelWidth: Double = 360
     static let defaultMenuBarPanelHeight: Double = 600
-    static let menuBarPanelWidthRange: ClosedRange<Double> = 320 ... 520
-    static let menuBarPanelHeightRange: ClosedRange<Double> = 500 ... 860
+    static let menuBarPanelWidthRange: ClosedRange<Double> = 220 ... 760
+    static let menuBarPanelHeightRange: ClosedRange<Double> = 320 ... 1200
     static let compactMenuBarPanelSize = CGSize(width: 340, height: 560)
     static let standardMenuBarPanelSize = CGSize(width: defaultMenuBarPanelWidth, height: defaultMenuBarPanelHeight)
-    static let expandedMenuBarPanelSize = CGSize(width: 420, height: 700)
+    static let expandedMenuBarPanelSize = CGSize(width: 520, height: 860)
     static let availableInternationalTimeZones: [InternationalTimeZonePreset] = [
         InternationalTimeZonePreset(id: "Asia/Ho_Chi_Minh", city: "Hà Nội", country: "Việt Nam"),
         InternationalTimeZonePreset(id: "Asia/Bangkok", city: "Bangkok", country: "Thái Lan"),
