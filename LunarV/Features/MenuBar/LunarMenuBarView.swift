@@ -63,18 +63,7 @@ struct LunarMenuBarView: View {
         let cards = visiblePanelCards
 
         ZStack(alignment: .top) {
-            Rectangle()
-                .fill(Color(nsColor: .windowBackgroundColor).opacity(isControlEffectivelyActive ? 0.96 : 0.92))
-                .overlay(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(isControlEffectivelyActive ? 0.08 : 0.03),
-                            Color.clear,
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            panelBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -171,6 +160,31 @@ struct LunarMenuBarView: View {
         .onChange(of: viewModel.info.monthTitleText) { _, _ in
             hoveredCalendarHolidayText = nil
         }
+    }
+
+    @ViewBuilder
+    private var panelBackground: some View {
+        if #available(macOS 26.0, *) {
+            Rectangle()
+                .fill(.clear)
+                .glassEffect(Glass.regular, in: Rectangle())
+                .overlay(liquidAccentOverlay)
+        } else {
+            Rectangle()
+                .fill(Color(nsColor: .windowBackgroundColor).opacity(isControlEffectivelyActive ? 0.96 : 0.92))
+                .overlay(liquidAccentOverlay)
+        }
+    }
+
+    private var liquidAccentOverlay: some View {
+        LinearGradient(
+            colors: [
+                Color.accentColor.opacity(isControlEffectivelyActive ? 0.08 : 0.03),
+                Color.clear,
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     // MARK: - Top Toolbar
