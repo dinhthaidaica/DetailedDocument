@@ -137,14 +137,11 @@ struct LunarMenuBarView: View {
     private var topToolbar: some View {
         HStack(spacing: 12) {
             HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 30, height: 30)
-                    Text("L")
-                        .font(.system(size: 15, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Color.accentColor)
-                }
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 28, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text("LunarV")
@@ -181,27 +178,25 @@ struct LunarMenuBarView: View {
     private var heroCard: some View {
         let info = viewModel.info
         let tintOpacity = isHeroHovered && controlActiveState == .active ? 0.4 : 0.2
-        return VStack(alignment: .leading, spacing: 16) {
+        return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(info.weekdayText.uppercased())
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color.accentColor)
                         .tracking(1.6)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(info.lunarDayText)
-                            .font(.system(size: 42, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.primary)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(info.lunarMonthYearText)
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary.opacity(0.85))
-                            Text(info.solarDateText)
-                                .font(.system(size: 11, weight: .medium, design: .rounded))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    Text("Ngày \(info.lunarDayText)")
+                        .font(.system(size: 34, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    Text(info.lunarMonthYearText)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary.opacity(0.85))
+
+                    Text(info.solarDateText)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -440,7 +435,7 @@ struct LunarMenuBarView: View {
                                     .foregroundStyle(.secondary)
                                 Text("•")
                                     .font(.system(size: 8))
-                                    .foregroundStyle(.quaternary)
+                                    .foregroundStyle(.secondary.opacity(0.5))
                                 Text(isToday ? "Hôm nay" : "\(holiday.daysUntil) ngày nữa")
                                     .font(.system(size: 10, weight: .bold))
                                     .foregroundStyle(isToday ? .red : Color.accentColor)
@@ -474,7 +469,7 @@ struct LunarMenuBarView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "globe")
                         .font(.system(size: 16))
-                        .foregroundStyle(.quaternary)
+                        .foregroundStyle(.secondary.opacity(0.5))
                     Text("Không có dữ liệu múi giờ quốc tế.")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -495,11 +490,11 @@ struct LunarMenuBarView: View {
                                         .foregroundStyle(.secondary)
                                     Text("•")
                                         .font(.system(size: 8))
-                                        .foregroundStyle(.quaternary)
+                                        .foregroundStyle(.secondary.opacity(0.5))
                                     Text(cityTime.utcOffsetText)
                                         .font(.system(size: 10, weight: .medium, design: .rounded))
                                         .monospacedDigit()
-                                        .foregroundStyle(.tertiary)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
 
@@ -512,7 +507,7 @@ struct LunarMenuBarView: View {
                                     .foregroundStyle(Color.accentColor)
                                 Text(cityTime.relativeDayText)
                                     .font(.system(size: 9, weight: .semibold))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         .padding(.horizontal, 10)

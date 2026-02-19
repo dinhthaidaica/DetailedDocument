@@ -112,16 +112,7 @@ struct CanChiPill: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
-        )
-        .overlay(alignment: .top) {
-            Capsule()
-                .fill(Color.accentColor.opacity(0.6))
-                .frame(width: 20, height: 2.5)
-                .padding(.top, 4)
-        }
+        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Can chi \(title): \(value)")
     }
