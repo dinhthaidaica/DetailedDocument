@@ -262,6 +262,7 @@ final class AppSettings: ObservableObject {
     ]
     private var defaultsChangeCancellables: Set<AnyCancellable> = []
     private var isApplyingRecoveredSettings = false
+    private var lastPersistedSettingsSnapshotData: Data?
 
     // MARK: - Menu Bar Display
     @AppStorage("settings.menuBar.displayPreset") var menuBarDisplayPreset: MenuBarDisplayPreset = .compact
@@ -514,6 +515,39 @@ final class AppSettings: ObservableObject {
         setInternationalTimeZoneIDs(nextIDs)
     }
 
+    func sortInternationalTimeZonesByCity(ascending: Bool = true) {
+        let orderedIDs = selectedInternationalTimeZones
+            .sorted { lhs, rhs in
+                let comparison = lhs.city.localizedCaseInsensitiveCompare(rhs.city)
+                if comparison == .orderedSame {
+                    return ascending ? lhs.id < rhs.id : lhs.id > rhs.id
+                }
+                return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
+            }
+            .map(\.id)
+        setInternationalTimeZoneIDs(orderedIDs)
+    }
+
+    func sortInternationalTimeZonesByUTCOffset(ascending: Bool = true, at date: Date = Date()) {
+        let orderedIDs = selectedInternationalTimeZones
+            .sorted { lhs, rhs in
+                let lhsOffset = TimeZone(identifier: lhs.id)?.secondsFromGMT(for: date) ?? 0
+                let rhsOffset = TimeZone(identifier: rhs.id)?.secondsFromGMT(for: date) ?? 0
+
+                if lhsOffset == rhsOffset {
+                    let comparison = lhs.city.localizedCaseInsensitiveCompare(rhs.city)
+                    if comparison == .orderedSame {
+                        return ascending ? lhs.id < rhs.id : lhs.id > rhs.id
+                    }
+                    return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
+                }
+
+                return ascending ? lhsOffset < rhsOffset : lhsOffset > rhsOffset
+            }
+            .map(\.id)
+        setInternationalTimeZoneIDs(orderedIDs)
+    }
+
     func applySmartInternationalTimeZones() {
         let recommendedIDs = Self.smartRecommendedInternationalTimeZoneIDs(for: TimeZone.autoupdatingCurrent.identifier)
         setInternationalTimeZoneIDs(recommendedIDs)
@@ -626,17 +660,22 @@ final class AppSettings: ObservableObject {
         }
 
         do {
-            let backupURL = try Self.settingsBackupURL()
-            try FileManager.default.createDirectory(
-                at: backupURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
             let data = try PropertyListSerialization.data(
                 fromPropertyList: snapshot,
                 format: .xml,
                 options: 0
             )
+            guard data != lastPersistedSettingsSnapshotData else {
+                return
+            }
+
+            let backupURL = try Self.settingsBackupURL()
+            try FileManager.default.createDirectory(
+                at: backupURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
             try data.write(to: backupURL, options: .atomic)
+            lastPersistedSettingsSnapshotData = data
             _ = CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication)
         } catch {
             AppLogger.system.error("Failed to backup settings before update: \(error.localizedDescription)")
@@ -795,7 +834,7 @@ final class AppSettings: ObservableObject {
 
     private func observeDefaultsChangesForUpdateSafety() {
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: UserDefaults.standard)
-            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .debounce(for: .seconds(2), scheduler: RunLoop.main)
             .sink { [weak self] _ in
                 guard let self, !self.isApplyingRecoveredSettings else {
                     return

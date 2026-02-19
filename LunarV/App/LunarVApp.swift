@@ -10,6 +10,11 @@ import Sparkle
 struct LunarVApp: App {
     private static let sparkleUserDriverDelegate = SparkleUserDriverDelegate()
     private static let sparkleUpdaterDelegate = SparkleUpdaterDelegate(settings: AppSettings.shared)
+    private static let menuBarLabelImageCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 64
+        return cache
+    }()
     @StateObject private var settings = AppSettings.shared
     @StateObject private var viewModel = LunarMenuBarViewModel(settings: AppSettings.shared)
     @StateObject private var notificationManager = HolidayNotificationManager(settings: AppSettings.shared)
@@ -51,6 +56,20 @@ struct LunarVApp: App {
     }
 
     private var menuBarLabelImage: NSImage? {
+        let cacheKey = menuBarLabelIdentity as NSString
+        if let cachedImage = Self.menuBarLabelImageCache.object(forKey: cacheKey) {
+            return cachedImage
+        }
+
+        guard let renderedImage = makeMenuBarLabelImage() else {
+            return nil
+        }
+
+        Self.menuBarLabelImageCache.setObject(renderedImage, forKey: cacheKey)
+        return renderedImage
+    }
+
+    private func makeMenuBarLabelImage() -> NSImage? {
         let text = viewModel.menuBarTitle
         let sizingText = viewModel.menuBarTitleSizingText
         guard !text.isEmpty else {

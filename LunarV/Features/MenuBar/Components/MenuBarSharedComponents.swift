@@ -385,23 +385,43 @@ struct MonthDayCellView: View {
 
 // MARK: - Justified Attributed Text
 
+private let justifiedParagraphStyle: NSParagraphStyle = {
+    let style = NSMutableParagraphStyle()
+    style.alignment = .justified
+    style.hyphenationFactor = 0.8
+    style.lineBreakMode = .byWordWrapping
+    return style.copy() as? NSParagraphStyle ?? NSParagraphStyle.default
+}()
+
+private let justifiedFontCache: NSCache<NSString, NSFont> = {
+    let cache = NSCache<NSString, NSFont>()
+    cache.countLimit = 32
+    return cache
+}()
+
+private func justifiedFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
+    let key = "\(size)-\(weight.rawValue)" as NSString
+    if let cachedFont = justifiedFontCache.object(forKey: key) {
+        return cachedFont
+    }
+
+    let font = NSFont.systemFont(ofSize: size, weight: weight)
+    justifiedFontCache.setObject(font, forKey: key)
+    return font
+}
+
 func justifiedAttributedText(
     _ text: String,
     size: CGFloat,
     weight: NSFont.Weight = .regular,
     color: NSColor = .labelColor
 ) -> AttributedString {
-    let paragraphStyle = NSMutableParagraphStyle()
-    paragraphStyle.alignment = .justified
-    paragraphStyle.hyphenationFactor = 0.8
-    paragraphStyle.lineBreakMode = .byWordWrapping
-
     let attributed = NSAttributedString(
         string: text,
         attributes: [
-            .font: NSFont.systemFont(ofSize: size, weight: weight),
+            .font: justifiedFont(size: size, weight: weight),
             .foregroundColor: color,
-            .paragraphStyle: paragraphStyle,
+            .paragraphStyle: justifiedParagraphStyle,
         ]
     )
     return AttributedString(attributed)

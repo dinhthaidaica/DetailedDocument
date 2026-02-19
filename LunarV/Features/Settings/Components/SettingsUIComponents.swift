@@ -399,17 +399,23 @@ extension View {
 // MARK: - Token Components
 
 struct PanelCardOrderRow: View {
+    let index: Int
     let card: PanelCardKind
     @Binding var isVisible: Bool
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 10) {
-            dragIndicator
-            cardIcon
+        HStack(alignment: .center, spacing: 12) {
+            orderIndicator
             cardTextBlock
-            Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(0)
+            visibilityStatusBlock
+                .frame(width: 68, alignment: .trailing)
+                .layoutPriority(1)
             trailingVisibilityControl
+                .frame(width: 48, alignment: .trailing)
+                .layoutPriority(1)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -422,56 +428,71 @@ struct PanelCardOrderRow: View {
                 .stroke(rowBorderColor, lineWidth: 1)
         )
         .opacity(isVisible ? 1 : 0.88)
+        .help("Kéo-thả để đổi thứ tự. Thứ tự này sẽ hiển thị đúng trong menu bar.")
     }
 
-    private var dragIndicator: some View {
-        Image(systemName: "line.3.horizontal")
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.tertiary)
-            .frame(width: 12, alignment: .center)
-            .help("Kéo để đổi vị trí")
-    }
+    private var orderIndicator: some View {
+        VStack(spacing: 4) {
+            Text("\(index + 1)")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 20)
 
-    private var cardIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(Color.accentColor.opacity(0.12))
-                .frame(width: 22, height: 22)
-
-            Image(systemName: card.icon)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
         }
+        .frame(width: 24)
+        .help("Kéo để đổi vị trí")
     }
 
     private var cardTextBlock: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(card.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.primary)
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 22, height: 22)
 
-            Text(card.subtitle)
-                .font(.system(size: 11))
+                Image(systemName: card.icon)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(card.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                Text(card.subtitle)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+    }
+
+    private var visibilityStatusBlock: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text(isVisible ? "Đang bật" : "Đang ẩn")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(visibilityStatusColor)
+            Text("Thành phần")
+                .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
         }
     }
 
     private var trailingVisibilityControl: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            Text(visibilityStatusText)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(visibilityStatusColor)
-
+        VStack(alignment: .trailing, spacing: 0) {
             Toggle("", isOn: $isVisible)
                 .labelsHidden()
                 .lunarSettingsSwitchToggle()
-                .frame(width: 40, alignment: .trailing)
+                .controlSize(.small)
+                .frame(width: 48, alignment: .trailing)
+                .fixedSize(horizontal: true, vertical: false)
                 .help(isVisible ? "Đang hiển thị" : "Đang ẩn")
         }
-    }
-
-    private var visibilityStatusText: String {
-        isVisible ? "Hiển thị" : "Đang ẩn"
     }
 
     private var visibilityStatusColor: Color {

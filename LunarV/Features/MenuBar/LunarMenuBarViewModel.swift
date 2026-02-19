@@ -55,6 +55,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private var monthCellsCacheOrder: [YearMonth] = []
     private var cachedUpcomingHolidays: [LunarHoliday] = []
     private var cachedUpcomingHolidaysAnchor: Date?
+    private var lastInfoRefreshMinuteBucket: Int?
     private var lastObservedRefreshSettings: RefreshSettings
 
     init(
@@ -72,7 +73,7 @@ final class LunarMenuBarViewModel: ObservableObject {
 
         startObservingSettings()
         startObservingSystemChanges()
-        refresh()
+        refresh(forceInfo: true)
     }
 
     deinit {
@@ -88,10 +89,13 @@ final class LunarMenuBarViewModel: ObservableObject {
         }
     }
 
-    func refresh() {
+    func refresh(forceInfo: Bool = false) {
         let now = Date()
         updateMenuBarTitle(now: now)
-        updateInfo(now: now, viewingDate: viewingDate)
+        if forceInfo || shouldRefreshInfo(at: now) {
+            updateInfo(now: now, viewingDate: viewingDate)
+            markInfoRefreshed(at: now)
+        }
         scheduleRefresh(from: now)
     }
 
@@ -99,25 +103,32 @@ final class LunarMenuBarViewModel: ObservableObject {
         monthCellsCache.removeAll()
         monthCellsCacheOrder.removeAll()
         cachedUpcomingHolidaysAnchor = nil
+        lastInfoRefreshMinuteBucket = nil
     }
 
     func nextMonth() {
         if let next = solarCalendar.date(byAdding: .month, value: 1, to: viewingDate) {
             viewingDate = next
-            updateInfo(now: Date(), viewingDate: viewingDate)
+            let now = Date()
+            updateInfo(now: now, viewingDate: viewingDate)
+            markInfoRefreshed(at: now)
         }
     }
 
     func previousMonth() {
         if let prev = solarCalendar.date(byAdding: .month, value: -1, to: viewingDate) {
             viewingDate = prev
-            updateInfo(now: Date(), viewingDate: viewingDate)
+            let now = Date()
+            updateInfo(now: now, viewingDate: viewingDate)
+            markInfoRefreshed(at: now)
         }
     }
 
     func goToToday() {
-        viewingDate = Date()
-        updateInfo(now: viewingDate, viewingDate: viewingDate)
+        let now = Date()
+        viewingDate = now
+        updateInfo(now: now, viewingDate: viewingDate)
+        markInfoRefreshed(at: now)
     }
 
     func snapshot(for date: Date) -> VietnameseLunarSnapshot? {
@@ -221,6 +232,8 @@ final class LunarMenuBarViewModel: ObservableObject {
             recommendedActivities: snapshot.dayOfficer.recommendedActivities,
             avoidActivities: snapshot.dayOfficer.avoidActivities
         )
+        let upcomingHolidays = settings.showHolidaySection ? upcomingHolidays(for: now) : []
+        let internationalTimes = settings.showInternationalTimesSection ? buildInternationalTimes(now: now) : []
 
         return LunarMenuBarInfo(
             weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday),
@@ -249,8 +262,8 @@ final class LunarMenuBarViewModel: ObservableObject {
             monthCells: monthCells,
             lunarPhaseIcon: phase.icon,
             lunarPhaseName: phase.name,
-            upcomingHolidays: upcomingHolidays(for: now),
-            internationalTimes: buildInternationalTimes(now: now)
+            upcomingHolidays: upcomingHolidays,
+            internationalTimes: internationalTimes
         )
     }
 
@@ -531,6 +544,18 @@ final class LunarMenuBarViewModel: ObservableObject {
         }
     }
 
+    private func shouldRefreshInfo(at now: Date) -> Bool {
+        minuteBucket(for: now) != lastInfoRefreshMinuteBucket
+    }
+
+    private func markInfoRefreshed(at date: Date) {
+        lastInfoRefreshMinuteBucket = minuteBucket(for: date)
+    }
+
+    private func minuteBucket(for date: Date) -> Int {
+        Int(date.timeIntervalSince1970 / 60)
+    }
+
     private func scheduleRefresh(from now: Date) {
         refreshTask?.cancel()
 
@@ -580,7 +605,7 @@ final class LunarMenuBarViewModel: ObservableObject {
             defaultCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 Task { @MainActor [weak self] in
                     self?.invalidateCaches()
-                    self?.refresh()
+                    self?.refresh(forceInfo: true)
                 }
             }
         }
@@ -593,7 +618,7 @@ final class LunarMenuBarViewModel: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.invalidateCaches()
-                self?.refresh()
+                self?.refresh(forceInfo: true)
             }
         }
         workspaceNotificationObservers = [wakeObserver]
@@ -614,7 +639,7 @@ final class LunarMenuBarViewModel: ObservableObject {
                 self.lastObservedRefreshSettings = currentSettings
 
                 Task { @MainActor [weak self] in
-                    self?.refresh()
+                    self?.refresh(forceInfo: true)
                 }
             }
             .store(in: &settingsCancellables)
