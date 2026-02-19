@@ -1039,6 +1039,7 @@ struct AppSettingsView: View {
         totalCount: Int
     ) -> some View {
         let isOnlySelection = totalCount == 1
+        let now = Date()
         HStack(alignment: .center, spacing: 10) {
             VStack(spacing: 4) {
                 Text("\(index + 1)")
@@ -1056,7 +1057,7 @@ struct AppSettingsView: View {
                 Text(preset.city)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id))")
+                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id, at: now))")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -1066,11 +1067,11 @@ struct AppSettingsView: View {
             .layoutPriority(0)
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text(internationalCurrentTimeText(for: preset.id))
+                Text(internationalCurrentTimeText(for: preset.id, at: now))
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.accentColor)
-                Text(internationalRelativeDayText(for: preset.id))
+                Text(internationalRelativeDayText(for: preset.id, at: now))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -1162,12 +1163,13 @@ struct AppSettingsView: View {
 
     @ViewBuilder
     private func availableInternationalTimeZoneRow(for preset: InternationalTimeZonePreset) -> some View {
+        let now = Date()
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(preset.city)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id))")
+                Text("\(preset.country) • \(preset.id) • \(utcOffsetText(for: preset.id, at: now))")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -1177,11 +1179,11 @@ struct AppSettingsView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 3) {
-                Text(internationalCurrentTimeText(for: preset.id))
+                Text(internationalCurrentTimeText(for: preset.id, at: now))
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.accentColor)
-                Text(internationalRelativeDayText(for: preset.id))
+                Text(internationalRelativeDayText(for: preset.id, at: now))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -1792,16 +1794,16 @@ struct AppSettingsView: View {
         )
     }
 
-    private func utcOffsetText(for timeZoneIdentifier: String) -> String {
-        SettingsInternationalTimeZoneService.utcOffsetText(for: timeZoneIdentifier)
+    private func utcOffsetText(for timeZoneIdentifier: String, at date: Date = Date()) -> String {
+        SettingsInternationalTimeZoneService.utcOffsetText(for: timeZoneIdentifier, at: date)
     }
 
-    private func internationalCurrentTimeText(for timeZoneIdentifier: String) -> String {
-        SettingsInternationalTimeZoneService.currentTimeText(for: timeZoneIdentifier)
+    private func internationalCurrentTimeText(for timeZoneIdentifier: String, at date: Date = Date()) -> String {
+        SettingsInternationalTimeZoneService.currentTimeText(for: timeZoneIdentifier, at: date)
     }
 
-    private func internationalRelativeDayText(for timeZoneIdentifier: String) -> String {
-        SettingsInternationalTimeZoneService.relativeDayText(for: timeZoneIdentifier)
+    private func internationalRelativeDayText(for timeZoneIdentifier: String, at date: Date = Date()) -> String {
+        SettingsInternationalTimeZoneService.relativeDayText(for: timeZoneIdentifier, at: date)
     }
 
     @ViewBuilder
