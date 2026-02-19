@@ -11,7 +11,7 @@ enum LunarGuidanceLevelInfo: Hashable {
 }
 
 struct LunarActivityInsightInfo: Identifiable {
-    let id = UUID()
+    var id: String { categoryText }
     let categoryText: String
     let level: LunarGuidanceLevelInfo
     let reason: String
@@ -65,7 +65,7 @@ struct LunarMonthDayCell: Identifiable {
 }
 
 struct LunarHoliday: Identifiable {
-    let id = UUID()
+    var id: String { "\(daysUntil)-\(isLunar ? "L" : "S")-\(name)" }
     let name: String
     let dateText: String
     let isLunar: Bool

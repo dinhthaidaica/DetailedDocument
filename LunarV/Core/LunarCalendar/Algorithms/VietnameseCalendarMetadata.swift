@@ -131,26 +131,10 @@ enum VietnameseCalendarMetadata {
         let timeOffsetHours = Double(timeZone.secondsFromGMT(for: date)) / 3600.0
         let fractionalDay = (hour + minute / 60.0) / 24.0
         let utcJdn = jdn - 0.5 - timeOffsetHours / 24.0 + fractionalDay
-        let longitude = sunLongitude(jdn: utcJdn)
+        let longitude = JulianDay.sunLongitude(jdn: utcJdn)
         let longitudeDegrees = longitude * 180.0 / Double.pi
         let index = positiveMod(Int(floor((longitudeDegrees + 45.0) / 15.0)), 24)
         return solarTerms[index]
-    }
-
-    private static func sunLongitude(jdn: Double) -> Double {
-        let t = (jdn - 2_451_545.0) / 36525
-        let t2 = t * t
-        let dr = Double.pi / 180
-        let m = 357.52910 + 35999.05030 * t - 0.0001559 * t2 - 0.00000048 * t * t2
-        let l0 = 280.46645 + 36000.76983 * t + 0.0003032 * t2
-
-        var dl = (1.914600 - 0.004817 * t - 0.000014 * t2) * sin(dr * m)
-        dl += (0.019993 - 0.000101 * t) * sin(2 * dr * m) + 0.000290 * sin(3 * dr * m)
-
-        var longitude = l0 + dl
-        longitude *= dr
-        longitude -= Double.pi * 2 * floor(longitude / (Double.pi * 2))
-        return longitude
     }
 
     private static func dayStemIndex(day: Int, month: Int, year: Int) -> Int {

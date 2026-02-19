@@ -6,9 +6,9 @@ import Foundation
 import WidgetKit
 
 struct LunarTimelineProvider: TimelineProvider {
-    // Avoid sharing Foundation calendar/state across concurrent timeline callbacks.
-    private static let realTimeWindowMinutes = 180
-    private static let timelineStepMinutes = 5
+    // Widget shows day-level info (no hours/minutes), so hourly steps suffice.
+    private static let realTimeWindowMinutes = 360
+    private static let timelineStepMinutes = 60
 
     func placeholder(in context: Context) -> LunarEntry {
         LunarEntry(date: Date(), info: .placeholder)

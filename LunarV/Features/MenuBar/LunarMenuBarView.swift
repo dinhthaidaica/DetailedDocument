@@ -13,13 +13,13 @@ struct LunarMenuBarView: View {
     @State private var hasAppeared = false
     @State private var converterMode: DateConverterMode = .solarToLunar
     @State private var solarConversionDate = Date()
-    @State private var solarInputDay = Calendar(identifier: .gregorian).component(.day, from: Date())
-    @State private var solarInputMonth = Calendar(identifier: .gregorian).component(.month, from: Date())
-    @State private var solarInputYear = Calendar(identifier: .gregorian).component(.year, from: Date())
+    @State private var solarInputDay = LunarMenuBarView.vietnamGregorianCalendar.component(.day, from: Date())
+    @State private var solarInputMonth = LunarMenuBarView.vietnamGregorianCalendar.component(.month, from: Date())
+    @State private var solarInputYear = LunarMenuBarView.vietnamGregorianCalendar.component(.year, from: Date())
     @State private var solarToLunarSnapshot: VietnameseLunarSnapshot?
     @State private var lunarInputDay = 1
     @State private var lunarInputMonth = 1
-    @State private var lunarInputYear = Calendar(identifier: .gregorian).component(.year, from: Date())
+    @State private var lunarInputYear = LunarMenuBarView.vietnamGregorianCalendar.component(.year, from: Date())
     @State private var lunarInputIsLeapMonth = false
     @State private var lunarToSolarResult: SolarDateComponents?
     @State private var hoveredCalendarHolidayText: String?
@@ -33,6 +33,11 @@ struct LunarMenuBarView: View {
         repeating: GridItem(.flexible(minimum: 130), spacing: 8),
         count: 2
     )
+    private static let vietnamGregorianCalendar: Calendar = {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = VietnameseLunarDateService.defaultTimeZone
+        return cal
+    }()
     private let weekdayHeaders = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
     private var solarInputDayRange: ClosedRange<Int> {
         1 ... solarDaysInMonth(month: solarInputMonth, year: solarInputYear)
@@ -765,8 +770,7 @@ struct LunarMenuBarView: View {
             return
         }
 
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+        let calendar = Self.vietnamGregorianCalendar
 
         guard let resolvedDate = calendar.date(from: DateComponents(year: solarInputYear, month: month, day: day, hour: 12)) else {
             return
@@ -778,8 +782,7 @@ struct LunarMenuBarView: View {
     }
 
     private func syncSolarInput(from date: Date) {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+        let calendar = Self.vietnamGregorianCalendar
         let components = calendar.dateComponents([.day, .month, .year], from: date)
 
         let resolvedDay = components.day ?? solarInputDay
@@ -792,8 +795,7 @@ struct LunarMenuBarView: View {
     }
 
     private func solarDaysInMonth(month: Int, year: Int) -> Int {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = VietnameseLunarDateService.defaultTimeZone
+        let calendar = Self.vietnamGregorianCalendar
 
         guard
             let monthDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
