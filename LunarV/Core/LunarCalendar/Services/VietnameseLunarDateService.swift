@@ -100,6 +100,44 @@ enum WeekdayDisplayStyle: String, CaseIterable, Identifiable {
     }
 }
 
+enum WeekdayNumericStyle: String, CaseIterable, Identifiable {
+    case oneToSeven
+    case twoToEight
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .oneToSeven:
+            return "Chuẩn 1-7"
+        case .twoToEight:
+            return "Mở rộng 2-8"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .oneToSeven:
+            return "T2 = 1, ... CN = 7"
+        case .twoToEight:
+            return "T2 = 2, ... CN = 8"
+        }
+    }
+
+    func value(from weekday: Int?) -> String {
+        guard let weekday, (1 ... 7).contains(weekday) else {
+            return fallbackValue
+        }
+        let isoWeekday = weekday == 1 ? 7 : weekday - 1
+        let displayValue = self == .twoToEight ? isoWeekday + 1 : isoWeekday
+        return "\(displayValue)"
+    }
+
+    private var fallbackValue: String {
+        self == .twoToEight ? "8" : "7"
+    }
+}
+
 struct VietnameseLunarDateService {
     static let defaultTimeZone = TimeZone(identifier: "Asia/Ho_Chi_Minh")
         ?? TimeZone(secondsFromGMT: 7 * 3600)
@@ -307,6 +345,10 @@ struct VietnameseLunarDateService {
             return Self.weekdayShortNames[0]
         }
         return Self.weekdayShortNames[weekday - 1]
+    }
+
+    func weekdayNumberString(from weekday: Int?, style: WeekdayNumericStyle = .oneToSeven) -> String {
+        style.value(from: weekday)
     }
 
     func weekdayName(from weekday: Int?, style: WeekdayDisplayStyle) -> String {

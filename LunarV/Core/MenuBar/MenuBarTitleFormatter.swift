@@ -92,6 +92,8 @@ struct MenuBarTitleContext {
     let solarYear: Int
     let solarWeekdayName: String
     let solarWeekdayShortName: String
+    let solarWeekdayNumeric: String
+    let solarWeekdayNumericTwoToEight: String
     let hour: Int
     let minute: Int
     let second: Int
@@ -137,10 +139,20 @@ enum MenuBarTitleFormatter {
     /// Xác định tần suất refresh phù hợp dựa trên template đang dùng
     static func refreshGranularity(preset: MenuBarDisplayPreset, customTemplate: String) -> RefreshGranularity {
         let template = resolvedTemplate(preset: preset, customTemplate: customTemplate)
-        if template.contains("{ss}") || template.contains("{time}") {
+        if template.contains("{ss}") || template.contains("{time}") || template.contains("{time12}") || template.contains("{:}") {
             return .everySecond
         }
-        if template.contains("{hh}") || template.contains("{min}") {
+        if
+            template.contains("{hh}") ||
+            template.contains("{min}") ||
+            template.contains("{hh12}") ||
+            template.contains("{h12}") ||
+            template.contains("{time12m}") ||
+            template.contains("{ampm}") ||
+            template.contains("{ampml}") ||
+            template.contains("{ampmvn}") ||
+            template.contains("{ap}")
+        {
             return .everyMinute
         }
         return .daily
@@ -162,6 +174,17 @@ enum MenuBarTitleFormatter {
         let tokens: [(String, String)] = [
             ("{wds}", context.solarWeekdayShortName),
             ("{wd}", context.solarWeekdayName),
+            ("{wdn}", context.solarWeekdayNumeric),
+            ("{wdn2}", context.solarWeekdayNumericTwoToEight),
+            ("{:}", blinkingColon(second: context.second, mode: timeValueMode)),
+            ("{h12}", oneOrTwoDigitsTwelveHour(context.hour, mode: timeValueMode)),
+            ("{hh12}", twoDigitsTwelveHour(context.hour, mode: timeValueMode)),
+            ("{ampm}", ampmUppercase(from: context.hour)),
+            ("{ampml}", ampmLowercase(from: context.hour)),
+            ("{ampmvn}", ampmVietnameseAbbrev(from: context.hour)),
+            ("{ap}", ampmInitial(from: context.hour)),
+            ("{time12}", "\(twoDigitsTwelveHour(context.hour, mode: timeValueMode)):\(twoDigits(context.minute, mode: timeValueMode)):\(twoDigits(context.second, mode: timeValueMode)) \(ampmUppercase(from: context.hour))"),
+            ("{time12m}", "\(twoDigitsTwelveHour(context.hour, mode: timeValueMode)):\(twoDigits(context.minute, mode: timeValueMode)) \(ampmUppercase(from: context.hour))"),
             ("{time}", "\(twoDigits(context.hour, mode: timeValueMode)):\(twoDigits(context.minute, mode: timeValueMode)):\(twoDigits(context.second, mode: timeValueMode))"),
             ("{hh}", twoDigits(context.hour, mode: timeValueMode)),
             ("{min}", twoDigits(context.minute, mode: timeValueMode)),
@@ -200,6 +223,61 @@ enum MenuBarTitleFormatter {
             // "88" thường là cặp số rộng nhất với hầu hết font, giúp cố định bề ngang cho token thời gian.
             return "88"
         }
+    }
+
+    private static func blinkingColon(second: Int, mode: TimeValueMode) -> String {
+        switch mode {
+        case .live:
+            return second.isMultiple(of: 2) ? ":" : " "
+        case .widthProbe:
+            return ":"
+        }
+    }
+
+    private static func twoDigitsTwelveHour(_ hour24: Int, mode: TimeValueMode) -> String {
+        switch mode {
+        case .live:
+            return twoDigits(twelveHour(from: hour24))
+        case .widthProbe:
+            return "88"
+        }
+    }
+
+    private static func oneOrTwoDigitsTwelveHour(_ hour24: Int, mode: TimeValueMode) -> String {
+        switch mode {
+        case .live:
+            return "\(twelveHour(from: hour24))"
+        case .widthProbe:
+            // Dự phòng bề ngang cho trường hợp giờ hai chữ số (10-12).
+            return "88"
+        }
+    }
+
+    private static func twelveHour(from hour24: Int) -> Int {
+        let normalizedHour = ((hour24 % 24) + 24) % 24
+        let hour = normalizedHour % 12
+        return hour == 0 ? 12 : hour
+    }
+
+    private static func ampmUppercase(from hour24: Int) -> String {
+        isMorning(hour24) ? "AM" : "PM"
+    }
+
+    private static func ampmLowercase(from hour24: Int) -> String {
+        isMorning(hour24) ? "am" : "pm"
+    }
+
+    private static func ampmVietnameseAbbrev(from hour24: Int) -> String {
+        isMorning(hour24) ? "SA" : "CH"
+    }
+
+    private static func ampmInitial(from hour24: Int) -> String {
+        isMorning(hour24) ? "A" : "P"
+    }
+
+    private static func isMorning(_ hour24: Int) -> Bool {
+        let normalizedHour = ((hour24 % 24) + 24) % 24
+        return normalizedHour < 12
     }
 
     private static func twoDigits(_ value: Int) -> String {

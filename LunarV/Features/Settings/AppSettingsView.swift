@@ -182,22 +182,13 @@ struct AppSettingsView: View {
                 keywords: ["preset", "chế độ", "compact", "full", "custom", "template", "mẫu tùy chỉnh"]
             ),
             SettingsSearchEntry(
-                id: "appearance.weekdayStyle",
-                pane: .appearance,
-                section: "Menu Bar",
-                title: "Kiểu hiển thị thứ trong tuần",
-                subtitle: "Đổi giữa dạng đầy đủ, viết tắt hoặc số 1-7",
-                icon: "calendar",
-                keywords: ["thứ", "trong tuần", "weekday", "t2", "chủ nhật", "1 2 3 4 5 6 7", "số đếm"]
-            ),
-            SettingsSearchEntry(
                 id: "appearance.customTemplate",
                 pane: .appearance,
                 section: "Menu Bar",
                 title: "Mẫu tùy chỉnh",
                 subtitle: "Tự tạo format hiển thị bằng token",
                 icon: "textformat.alt",
-                keywords: ["token", "template", "mẫu", "{dd}", "{mm}", "{hh}", "format"]
+                keywords: ["token", "template", "mẫu", "{dd}", "{mm}", "{hh}", "{h12}", "{hh12}", "{ampm}", "{ampml}", "{ampmvn}", "{ap}", "{time12}", "{time12m}", "{wdn}", "{wdn2}", "{:}", "format", "thứ số", "1-7", "2-8", "am pm", "12h", "sáng chiều", "nhấp nháy", "dấu hai chấm"]
             ),
             SettingsSearchEntry(
                 id: "appearance.fontSize",
@@ -817,8 +808,6 @@ struct AppSettingsView: View {
                             .controlSize(.regular)
                         }
 
-                        weekdayDisplayStyleControl
-
                         if settings.menuBarDisplayPreset == .custom {
                             customTemplateEditor
                         } else {
@@ -848,13 +837,25 @@ struct AppSettingsView: View {
                 Text("Mẫu tuỳ chỉnh")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
-                TextField("Ví dụ: {dd}/{mm} {al} • {wds} • {hh}:{min}:{ss}", text: $settings.customMenuBarTemplate)
+                TextField("Ví dụ: {dd}/{mm} {al} • {wds} • {hh12}{:}{min} {ampm}", text: $settings.customMenuBarTemplate)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(.body, design: .monospaced))
             }
 
             Text("Chạm để chèn nhanh mã hiển thị:")
                 .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text("{wdn}: Chuẩn 1-7 (T2=1, CN=7) • {wdn2}: Mở rộng 2-8 (T2=2, CN=8)")
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+
+            Text("{:}: dấu hai chấm nhấp nháy theo từng giây (ví dụ: {hh}{:}{min})")
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+
+            Text("AM/PM: {hh12}{:}{min} {ampm} • Việt: {h12}:{min} {ampmvn} • Nhanh: {time12m}/{time12}")
+                .font(.caption2.monospaced())
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -888,25 +889,6 @@ struct AppSettingsView: View {
             }
             .padding(10)
             .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
-        }
-    }
-
-    private var weekdayDisplayStyleControl: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            settingsPickerRow(title: "Kiểu thứ trong tuần", isEnabled: true) {
-                Picker("Kiểu thứ trong tuần", selection: menuBarWeekdayDisplayStyleBinding) {
-                    ForEach(WeekdayDisplayStyle.allCases) { style in
-                        Text(style.title).tag(style)
-                    }
-                }
-                .pickerStyle(.menu)
-                .controlSize(.regular)
-            }
-
-            Text(settings.menuBarWeekdayDisplayStyleValue.subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
         }
     }
 
@@ -2507,13 +2489,6 @@ struct AppSettingsView: View {
         )
     }
 
-    private var menuBarWeekdayDisplayStyleBinding: Binding<WeekdayDisplayStyle> {
-        Binding(
-            get: { settings.menuBarWeekdayDisplayStyleValue },
-            set: { settings.setMenuBarWeekdayDisplayStyle($0) }
-        )
-    }
-
     private var menuBarPanelWidthBinding: Binding<Double> {
         Binding(
             get: { settings.menuBarPanelWidthValue },
@@ -2652,7 +2627,6 @@ struct AppSettingsView: View {
             return "--"
         }
         let timeComponents = previewLunarService.calendar.dateComponents([.hour, .minute, .second], from: now)
-        let weekdayStyle = settings.menuBarWeekdayDisplayStyleValue
         let context = MenuBarTitleContext(
             lunarDay: snapshot.lunar.day,
             lunarMonth: snapshot.lunar.month,
@@ -2663,8 +2637,10 @@ struct AppSettingsView: View {
             solarDay: snapshot.solar.day,
             solarMonth: snapshot.solar.month,
             solarYear: snapshot.solar.year,
-            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday, style: weekdayStyle),
-            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday, style: weekdayStyle),
+            solarWeekdayName: previewLunarService.weekdayName(from: snapshot.solar.weekday),
+            solarWeekdayShortName: previewLunarService.weekdayShortName(from: snapshot.solar.weekday),
+            solarWeekdayNumeric: previewLunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .oneToSeven),
+            solarWeekdayNumericTwoToEight: previewLunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .twoToEight),
             hour: timeComponents.hour ?? 0,
             minute: timeComponents.minute ?? 0,
             second: timeComponents.second ?? 0

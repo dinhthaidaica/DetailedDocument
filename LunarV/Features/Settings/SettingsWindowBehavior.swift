@@ -20,6 +20,8 @@ struct SettingsWindowBehavior: NSViewRepresentable {
 
     final class Coordinator {
         weak var trackedWindow: NSWindow?
+        var hasAppliedBaseConfiguration = false
+        var lastAppliedKeepOnTop: Bool?
     }
 
     func makeCoordinator() -> Coordinator {
@@ -44,19 +46,24 @@ struct SettingsWindowBehavior: NSViewRepresentable {
     private static func configure(_ window: NSWindow?, keepOnTop: Bool, coordinator: Coordinator) {
         guard let window else { return }
 
-        window.minSize = fixedWindowSize
-        window.maxSize = fixedWindowSize
-        window.styleMask.remove(.resizable)
-        window.collectionBehavior.remove(.fullScreenPrimary)
-        window.collectionBehavior.remove(.fullScreenAuxiliary)
-        window.standardWindowButton(.zoomButton)?.isEnabled = false
-        window.level = keepOnTop ? .floating : .normal
-
         if coordinator.trackedWindow !== window {
             coordinator.trackedWindow = window
+            coordinator.hasAppliedBaseConfiguration = false
+            coordinator.lastAppliedKeepOnTop = nil
+        }
+
+        if !coordinator.hasAppliedBaseConfiguration {
+            window.minSize = fixedWindowSize
+            window.maxSize = fixedWindowSize
+            window.styleMask.remove(.resizable)
+            window.collectionBehavior.remove(.fullScreenPrimary)
+            window.collectionBehavior.remove(.fullScreenAuxiliary)
+            window.standardWindowButton(.zoomButton)?.isEnabled = false
+
             window.identifier = NSUserInterfaceItemIdentifier("settings.lunarv")
             window.isMovableByWindowBackground = true
             window.collectionBehavior.insert(.moveToActiveSpace)
+            coordinator.hasAppliedBaseConfiguration = true
 
             // Defer bring-to-front until current layout pass is done to avoid
             // reentrant NSHostingView layout warnings.
@@ -66,5 +73,9 @@ struct SettingsWindowBehavior: NSViewRepresentable {
             }
         }
 
+        if coordinator.lastAppliedKeepOnTop != keepOnTop {
+            window.level = keepOnTop ? .floating : .normal
+            coordinator.lastAppliedKeepOnTop = keepOnTop
+        }
     }
 }

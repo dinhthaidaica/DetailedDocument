@@ -24,7 +24,6 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private struct RefreshSettings: Equatable {
         let displayPreset: MenuBarDisplayPreset
-        let weekdayDisplayStyle: WeekdayDisplayStyle
         let customTemplate: String
         let showInternationalTimesSection: Bool
         let selectedInternationalTimeZoneIDs: [String]
@@ -33,7 +32,6 @@ final class LunarMenuBarViewModel: ObservableObject {
 
         init(settings: AppSettings) {
             displayPreset = settings.menuBarDisplayPreset
-            weekdayDisplayStyle = settings.menuBarWeekdayDisplayStyleValue
             customTemplate = settings.customMenuBarTemplate
             showInternationalTimesSection = settings.showInternationalTimesSection
             selectedInternationalTimeZoneIDs = settings.selectedInternationalTimeZoneIDs
@@ -45,6 +43,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     private static let maxCachedMonths = 24
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
     private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
+    private static var internationalClockWeekdayFormatterByTimeZoneID: [String: DateFormatter] = [:]
     private static var internationalCalendarByTimeZoneID: [String: Calendar] = [:]
 
     private let solarCalendar: Calendar
@@ -142,7 +141,7 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     var monthWeekdayHeaders: [String] {
-        settings.menuBarWeekdayDisplayStyleValue.monthHeaderSymbols
+        ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
     }
 
     private func updateMenuBarTitle(now: Date) {
@@ -151,7 +150,6 @@ final class LunarMenuBarViewModel: ObservableObject {
             return
         }
         let timeComponents = solarCalendar.dateComponents([.hour, .minute, .second], from: now)
-        let weekdayStyle = settings.menuBarWeekdayDisplayStyleValue
 
         let titleContext = MenuBarTitleContext(
             lunarDay: snapshot.lunar.day,
@@ -163,8 +161,10 @@ final class LunarMenuBarViewModel: ObservableObject {
             solarDay: snapshot.solar.day,
             solarMonth: snapshot.solar.month,
             solarYear: snapshot.solar.year,
-            solarWeekdayName: lunarService.weekdayName(from: snapshot.solar.weekday, style: weekdayStyle),
-            solarWeekdayShortName: lunarService.weekdayShortName(from: snapshot.solar.weekday, style: weekdayStyle),
+            solarWeekdayName: lunarService.weekdayName(from: snapshot.solar.weekday),
+            solarWeekdayShortName: lunarService.weekdayShortName(from: snapshot.solar.weekday),
+            solarWeekdayNumeric: lunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .oneToSeven),
+            solarWeekdayNumericTwoToEight: lunarService.weekdayNumberString(from: snapshot.solar.weekday, style: .twoToEight),
             hour: timeComponents.hour ?? 0,
             minute: timeComponents.minute ?? 0,
             second: timeComponents.second ?? 0
@@ -241,10 +241,9 @@ final class LunarMenuBarViewModel: ObservableObject {
         )
         let upcomingHolidays = settings.showHolidaySection ? upcomingHolidays(for: now) : []
         let internationalTimes = settings.showInternationalTimesSection ? buildInternationalTimes(now: now) : []
-        let weekdayStyle = settings.menuBarWeekdayDisplayStyleValue
 
         return LunarMenuBarInfo(
-            weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday, style: weekdayStyle),
+            weekdayText: lunarService.weekdayName(from: snapshot.solar.weekday),
             solarDateText: snapshot.solar.formattedDate,
             lunarDateText: formattedLunarDate(from: snapshot.lunar),
             lunarDayText: "\(snapshot.lunar.day)",
@@ -410,11 +409,7 @@ final class LunarMenuBarViewModel: ObservableObject {
             )
 
             let timeText = formattedClockTime(now, timeZone: timeZone)
-            let weekdayText = formattedClockWeekday(
-                now,
-                timeZone: timeZone,
-                style: settings.menuBarWeekdayDisplayStyleValue
-            )
+            let weekdayText = formattedClockWeekday(now, timeZone: timeZone)
 
             return InternationalTimeInfo(
                 id: preset.id,
@@ -456,10 +451,9 @@ final class LunarMenuBarViewModel: ObservableObject {
         Self.internationalClockTimeFormatter(for: timeZone).string(from: date)
     }
 
-    private func formattedClockWeekday(_ date: Date, timeZone: TimeZone, style: WeekdayDisplayStyle) -> String {
-        let targetCalendar = Self.internationalCalendar(for: timeZone)
-        let weekday = targetCalendar.component(.weekday, from: date)
-        return style.weekdayShortName(from: weekday)
+    private func formattedClockWeekday(_ date: Date, timeZone: TimeZone) -> String {
+        let weekday = Self.internationalClockWeekdayFormatter(for: timeZone).string(from: date)
+        return weekday.capitalized(with: Self.internationalClockLocale)
     }
 
     private static func internationalClockTimeFormatter(for timeZone: TimeZone) -> DateFormatter {
@@ -472,6 +466,19 @@ final class LunarMenuBarViewModel: ObservableObject {
         formatter.timeZone = timeZone
         formatter.dateFormat = "HH:mm"
         internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] = formatter
+        return formatter
+    }
+
+    private static func internationalClockWeekdayFormatter(for timeZone: TimeZone) -> DateFormatter {
+        if let formatter = internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] {
+            return formatter
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = internationalClockLocale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "EEE"
+        internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] = formatter
         return formatter
     }
 

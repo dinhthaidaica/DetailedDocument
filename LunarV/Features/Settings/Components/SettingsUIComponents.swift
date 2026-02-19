@@ -686,8 +686,18 @@ struct DisplayToken: Identifiable {
     ]
 
     static let timeTokens = [
-        DisplayToken(code: "{wd}", label: "Thứ đầy đủ", color: .mint),
-        DisplayToken(code: "{wds}", label: "Thứ ngắn", color: .mint),
+        DisplayToken(code: "{wd}", label: "Thứ đầy đủ (Thứ Hai)", color: .mint),
+        DisplayToken(code: "{wds}", label: "Thứ ngắn (T2)", color: .mint),
+        DisplayToken(code: "{wdn}", label: "Thứ số chuẩn (1-7)", color: .mint),
+        DisplayToken(code: "{wdn2}", label: "Thứ số mở rộng (2-8)", color: .mint),
+        DisplayToken(code: "{h12}", label: "Giờ 12h (1-12)", color: .mint),
+        DisplayToken(code: "{hh12}", label: "Giờ 12h (01-12)", color: .mint),
+        DisplayToken(code: "{ampm}", label: "AM/PM (in hoa)", color: .mint),
+        DisplayToken(code: "{ampml}", label: "am/pm (in thường)", color: .mint),
+        DisplayToken(code: "{ampmvn}", label: "SA/CH (tiếng Việt)", color: .mint),
+        DisplayToken(code: "{ap}", label: "A/P (1 ký tự)", color: .mint),
+        DisplayToken(code: "{time12m}", label: "Giờ 12h (không giây)", color: .mint),
+        DisplayToken(code: "{time12}", label: "Giờ 12h (đầy đủ)", color: .mint),
         DisplayToken(code: "{hh}", label: "Giờ (00-23)", color: .mint),
         DisplayToken(code: "{min}", label: "Phút (00)", color: .mint),
         DisplayToken(code: "{ss}", label: "Giây (00)", color: .mint),
@@ -696,6 +706,7 @@ struct DisplayToken: Identifiable {
 
     static let otherTokens = [
         DisplayToken(code: "{al}", label: "Chữ 'ÂL'", color: .secondary),
+        DisplayToken(code: "{:}", label: "Dấu : nhấp nháy mỗi giây", color: .secondary),
         DisplayToken(code: "•", label: "Dấu chấm", color: .secondary),
         DisplayToken(code: ":", label: "Dấu hai chấm", color: .secondary),
         DisplayToken(code: "/", label: "Gạch chéo", color: .secondary),
