@@ -51,6 +51,14 @@ struct LunarMenuBarView: View {
         viewModel.settings.panelCardOrder.filter(isPanelCardVisible)
     }
 
+    private var shouldEnableHorizontalPanelScrolling: Bool {
+        viewModel.settings.menuBarPanelWidthCGFloat < MenuBarMetrics.minimumReadablePanelContentWidth
+    }
+
+    private var panelScrollAxes: Axis.Set {
+        shouldEnableHorizontalPanelScrolling ? [.horizontal, .vertical] : .vertical
+    }
+
     var body: some View {
         let cards = visiblePanelCards
 
@@ -70,18 +78,27 @@ struct LunarMenuBarView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                topToolbar
-                    .padding(.horizontal, MenuBarMetrics.panelPadding)
-                    .padding(.vertical, 14)
-                    .background(
-                        Color(nsColor: .controlBackgroundColor)
-                            .opacity(isControlEffectivelyActive ? 0.52 : 0.44)
-                    )
-                    .overlay(alignment: .bottom) {
-                        Divider().opacity(0.1)
+                Group {
+                    if shouldEnableHorizontalPanelScrolling {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            topToolbar
+                                .frame(minWidth: MenuBarMetrics.minimumReadablePanelContentWidth, alignment: .leading)
+                        }
+                    } else {
+                        topToolbar
                     }
+                }
+                .padding(.horizontal, MenuBarMetrics.panelPadding)
+                .padding(.vertical, 14)
+                .background(
+                    Color(nsColor: .controlBackgroundColor)
+                        .opacity(isControlEffectivelyActive ? 0.52 : 0.44)
+                )
+                .overlay(alignment: .bottom) {
+                    Divider().opacity(0.1)
+                }
 
-                ScrollView {
+                ScrollView(panelScrollAxes, showsIndicators: false) {
                     VStack(spacing: MenuBarMetrics.verticalStackSpacing) {
                         ForEach(Array(cards.enumerated()), id: \.element) { index, card in
                             panelCard(
@@ -91,9 +108,12 @@ struct LunarMenuBarView: View {
                         }
                     }
                     .padding(MenuBarMetrics.panelPadding)
+                    .frame(
+                        minWidth: shouldEnableHorizontalPanelScrolling ? MenuBarMetrics.minimumReadablePanelContentWidth : 0,
+                        alignment: .topLeading
+                    )
                     .entranceAnimation(hasAppeared: hasAppeared, reduceMotion: reduceMotion)
                 }
-                .scrollIndicators(.hidden)
             }
         }
         .tint(.accentColor)
@@ -840,6 +860,7 @@ struct LunarMenuBarView: View {
 
 enum MenuBarMetrics {
     static let panelSize = CGSize(width: 360, height: 600)
+    static let minimumReadablePanelContentWidth: CGFloat = 360
     static let panelPadding: CGFloat = 16
     static let verticalStackSpacing: CGFloat = 12
     static let calendarGridSpacing: CGFloat = 6

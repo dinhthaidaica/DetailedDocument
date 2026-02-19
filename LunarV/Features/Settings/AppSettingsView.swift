@@ -762,7 +762,7 @@ struct AppSettingsView: View {
                     .frame(maxWidth: .infinity)
                 }
 
-                Text("Thay đổi áp dụng ngay khi mở menu, nên ưu tiên cỡ vừa để dễ thao tác trên màn hình nhỏ.")
+                Text("Thay đổi áp dụng ngay khi mở menu. LunarV giữ tối thiểu 360px để tránh mất thành phần ở mép phải.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
