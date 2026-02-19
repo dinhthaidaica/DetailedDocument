@@ -21,6 +21,8 @@ struct AppSettingsView: View {
     @State private var internationalTimeZoneSearchText = ""
     @State private var automaticallyChecksForUpdates: Bool
     @State private var updateCheckFrequency: UpdateCheckFrequency
+    private static let internationalClockLocale = Locale(identifier: "vi_VN")
+    private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
 
     private let previewLunarService = VietnameseLunarDateService()
     private let trailingControlColumnWidth: CGFloat = 170
@@ -77,13 +79,13 @@ struct AppSettingsView: View {
             automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
             updateCheckFrequency = UpdateCheckFrequency.nearest(for: updater.updateCheckInterval)
         }
-        .onChange(of: automaticallyChecksForUpdates) { newValue in
+        .onChange(of: automaticallyChecksForUpdates) { _, newValue in
             updater.automaticallyChecksForUpdates = newValue
         }
-        .onChange(of: updateCheckFrequency) { newValue in
+        .onChange(of: updateCheckFrequency) { _, newValue in
             updater.updateCheckInterval = newValue.rawValue
         }
-        .onChange(of: searchText) { newValue in
+        .onChange(of: searchText) { _, newValue in
             let matches = filteredPanes(for: newValue)
             guard
                 let firstMatch = matches.first,
@@ -161,8 +163,7 @@ struct AppSettingsView: View {
         !normalizedSearchValue(searchText).isEmpty
     }
 
-    private var settingsSearchIndex: [SettingsSearchEntry] {
-        [
+    private static let settingsSearchIndexStorage: [SettingsSearchEntry] = [
             SettingsSearchEntry(
                 id: "appearance.displayPreset",
                 pane: .appearance,
@@ -469,7 +470,16 @@ struct AppSettingsView: View {
                 icon: "qrcode",
                 keywords: ["donate", "ủng hộ", "qr", "hỗ trợ", "quét mã"]
             ),
-        ]
+    ]
+
+    private static let searchIndexedFeatureValuesByPane: [SettingsPane: [String]] = {
+        Dictionary(grouping: settingsSearchIndexStorage, by: \.pane).mapValues { entries in
+            entries.flatMap { [$0.section, $0.title, $0.subtitle] + $0.keywords }
+        }
+    }()
+
+    private var settingsSearchIndex: [SettingsSearchEntry] {
+        Self.settingsSearchIndexStorage
     }
 
     private var filteredPanes: [SettingsPane] {
@@ -592,9 +602,7 @@ struct AppSettingsView: View {
     }
 
     private func paneSearchValues(for pane: SettingsPane) -> [String] {
-        let indexedFeatureValues = settingsSearchIndex
-            .filter { $0.pane == pane }
-            .flatMap { [$0.section, $0.title, $0.subtitle] + $0.keywords }
+        let indexedFeatureValues = Self.searchIndexedFeatureValuesByPane[pane] ?? []
         return [pane.title, pane.subtitle] + pane.searchKeywords + indexedFeatureValues
     }
 
@@ -2010,12 +2018,7 @@ struct AppSettingsView: View {
         guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
             return "--:--"
         }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "vi_VN")
-        formatter.timeZone = timeZone
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: Date())
+        return Self.internationalClockTimeFormatter(for: timeZone).string(from: Date())
     }
 
     private func internationalRelativeDayText(for timeZoneIdentifier: String) -> String {
@@ -2048,6 +2051,19 @@ struct AppSettingsView: View {
         default:
             return "\(dayOffset) ngày"
         }
+    }
+
+    private static func internationalClockTimeFormatter(for timeZone: TimeZone) -> DateFormatter {
+        if let formatter = internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] {
+            return formatter
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = internationalClockLocale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "HH:mm"
+        internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] = formatter
+        return formatter
     }
 
     @ViewBuilder

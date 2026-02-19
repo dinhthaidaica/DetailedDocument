@@ -42,6 +42,8 @@ final class LunarMenuBarViewModel: ObservableObject {
 
     private static let maxCachedMonths = 24
     private static let internationalClockLocale = Locale(identifier: "vi_VN")
+    private static var internationalClockTimeFormatterByTimeZoneID: [String: DateFormatter] = [:]
+    private static var internationalClockWeekdayFormatterByTimeZoneID: [String: DateFormatter] = [:]
 
     private let solarCalendar: Calendar
     private let lunarService: VietnameseLunarDateService
@@ -422,20 +424,38 @@ final class LunarMenuBarViewModel: ObservableObject {
     }
 
     private func formattedClockTime(_ date: Date, timeZone: TimeZone) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Self.internationalClockLocale
-        formatter.timeZone = timeZone
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
+        Self.internationalClockTimeFormatter(for: timeZone).string(from: date)
     }
 
     private func formattedClockWeekday(_ date: Date, timeZone: TimeZone) -> String {
+        let weekday = Self.internationalClockWeekdayFormatter(for: timeZone).string(from: date)
+        return weekday.capitalized(with: Self.internationalClockLocale)
+    }
+
+    private static func internationalClockTimeFormatter(for timeZone: TimeZone) -> DateFormatter {
+        if let formatter = internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] {
+            return formatter
+        }
+
         let formatter = DateFormatter()
-        formatter.locale = Self.internationalClockLocale
+        formatter.locale = internationalClockLocale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "HH:mm"
+        internationalClockTimeFormatterByTimeZoneID[timeZone.identifier] = formatter
+        return formatter
+    }
+
+    private static func internationalClockWeekdayFormatter(for timeZone: TimeZone) -> DateFormatter {
+        if let formatter = internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] {
+            return formatter
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = internationalClockLocale
         formatter.timeZone = timeZone
         formatter.dateFormat = "EEE"
-        let weekday = formatter.string(from: date)
-        return weekday.capitalized(with: Self.internationalClockLocale)
+        internationalClockWeekdayFormatterByTimeZoneID[timeZone.identifier] = formatter
+        return formatter
     }
 
     private func relativeDayText(for dayOffset: Int) -> String {
