@@ -33,7 +33,7 @@ enum VietnameseCalendarMetadata {
     ///   - pattern[3]: ngày Mão hoặc Dậu  (branchIndex mod 6 == 3)
     ///   - pattern[4]: ngày Thìn hoặc Tuất(branchIndex mod 6 == 4)
     ///   - pattern[5]: ngày Tỵ hoặc Hợi   (branchIndex mod 6 == 5)
-    private static let v = [
+    private static let auspiciousHourPatterns = [
         "110100101100", // Tý, Ngọ
         "001101001011", // Sửu, Mùi
         "110011010010", // Dần, Thân
