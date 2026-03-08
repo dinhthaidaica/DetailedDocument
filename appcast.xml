@@ -5,6 +5,14 @@
         <description>Cập nhật cho LunarV</description>
         <language>vi</language>
         <item>
+            <title>1.0.9</title>
+            <pubDate>Sun, 08 Mar 2026 09:15:53 +0000</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>1.0.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/PhamHungTien/LunarV/releases/download/v1.0.9/LunarV-1.0.9.zip" length="6791822" type="application/octet-stream" sparkle:edSignature="/gFBnIEiUzVOJI6+B5iw0/zTd0ofjgk2lQAPnx0oE8JMRIVKgpg+i12c/9VF0gPKxeO73FjxHuhPV5rG/f09Ag=="/>
+        </item>
+        <item>
             <title>1.0.8</title>
             <pubDate>Thu, 19 Feb 2026 14:40:26 +0000</pubDate>
             <sparkle:version>15</sparkle:version>
